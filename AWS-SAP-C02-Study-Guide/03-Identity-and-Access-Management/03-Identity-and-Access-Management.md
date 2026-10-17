@@ -1,6 +1,6 @@
 # Chapter 03 — Identity, Access Management & Federation
 > **Exam mapping:** D1 Task 1.2 (security controls for organizational complexity), D2 Task 2.3 (security controls for new solutions), D3 Task 3.2 (improve security of existing solutions) | **Weight signal:** High. IAM logic shows up in a large share of questions, often as the deciding detail inside a networking, data or migration scenario | **Study time:** ~7 h
-> [← Previous](02-Multi-Account-Governance.md) · [Index](00-README-Start-Here.md) · [Next →](04-Networking-VPC-and-Hybrid-Connectivity.md)
+> [← Previous](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) · [Index](../00-README-Start-Here.md) · [Next →](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md)
 
 ---
 
@@ -66,8 +66,8 @@ The usual differentiators between answer options are **"least operational overhe
 | 1 | **Identity-based** (AWS managed, customer managed, inline) | Users, groups, roles | ✅ | — | The main way to grant. |
 | 2 | **Resource-based** | Resources (S3 bucket, KMS key, SQS, SNS, Lambda, Secrets Manager, ECR, role **trust policy**, API Gateway, EventBridge bus, Backup vault, etc.) | ✅ | — | Has a `Principal` element. **Enables cross-account access without role assumption.** |
 | 3 | **Permissions boundary** | Users, roles (not groups) | ❌ | ✅ | Max permissions for an identity-based grant. Managed policy only. |
-| 4 | **SCP** (Organizations) | Root, OU, account | ❌ | ✅ | Limits **principals** in member accounts. Doesn't affect the management account or SLRs. See [Chapter 02](02-Multi-Account-Governance.md). |
-| 5 | **RCP** (Organizations) | Root, OU, account | ❌ | ✅ | Limits access **to resources** in member accounts, whoever the caller is (including external principals). Supported for a subset of services (e.g., S3, STS, KMS, SQS, Secrets Manager, and more). See [Chapter 02](02-Multi-Account-Governance.md). |
+| 4 | **SCP** (Organizations) | Root, OU, account | ❌ | ✅ | Limits **principals** in member accounts. Doesn't affect the management account or SLRs. See [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md). |
+| 5 | **RCP** (Organizations) | Root, OU, account | ❌ | ✅ | Limits access **to resources** in member accounts, whoever the caller is (including external principals). Supported for a subset of services (e.g., S3, STS, KMS, SQS, Secrets Manager, and more). See [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md). |
 | 6 | **Session policy** | Passed at `AssumeRole*` / `GetFederationToken` | ❌ | ✅ | Effective permissions = role/user identity policies ∩ session policy. Identity Center profiles and Roles Anywhere profiles use these too. |
 | 7 | **ACLs** (S3 ACLs, legacy) | Resources | ✅ | — | Cross-account only, no JSON. With S3 **Object Ownership = Bucket owner enforced** (default for new buckets since April 2023), ACLs are disabled. |
 | 8 | **VPC endpoint policies** | Gateway/interface endpoints | ❌ | ✅ | Act as an additional filter on requests that traverse the endpoint (a core data-perimeter control). |
@@ -248,7 +248,7 @@ For a request from principal in **trusted account A** to a resource in **trustin
 - **Bucket owner preferred**: the bucket owner takes ownership if the uploader sends the `bucket-owner-full-control` ACL. Uploaders can be forced to send it through a bucket policy condition on `s3:x-amz-acl`.
 - **Object writer**: legacy behaviour.
 
-**KMS cross-account requires both sides.** Key-policy details are in [Chapter 06](06-Security-Data-Protection-and-Threat-Detection.md).
+**KMS cross-account requires both sides.** Key-policy details are in [Chapter 06](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md).
 1. **Key policy in the key-owning account** allows the external account or role.
 2. **IAM policy in the external account** allows the KMS actions on the **key ARN** (aliases don't work cross-account in policy resources).
 
@@ -828,7 +828,7 @@ Gives workloads **outside AWS** (on-prem servers, containers, other clouds) **te
  SCP: Deny actions on resources outside org (aws:ResourceOrgID) except allow-listed
  VPC endpoint policies: only org principals → only org resources
 ```
-Details in [Chapter 02](02-Multi-Account-Governance.md).
+Details in [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md).
 
 ---
 
@@ -1242,4 +1242,4 @@ Details in [Chapter 02](02-Multi-Account-Governance.md).
 - Resource control policies: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html
 
 ---
-[← Previous](02-Multi-Account-Governance.md) · [Index](00-README-Start-Here.md) · [Next →](04-Networking-VPC-and-Hybrid-Connectivity.md)
+[← Previous](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) · [Index](../00-README-Start-Here.md) · [Next →](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md)

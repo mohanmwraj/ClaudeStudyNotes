@@ -1,6 +1,6 @@
 # Chapter 02 — Multi-Account Strategy & Governance (Organizations, Control Tower, RAM)
 > **Exam mapping:** D1 Task 1.2, D1 Task 1.4, D1 Task 1.5, D3 Task 3.2 | **Weight signal:** High (multi-account governance shows up in roughly 1 in 6 questions, often as the "frame" around a networking, security or cost question) | **Study time:** ~6 h
-> [← Previous](01-Exam-Blueprint-and-Strategy.md) · [Index](00-README-Start-Here.md) · [Next →](03-Identity-and-Access-Management.md)
+> [← Previous](../01-Exam-Blueprint-and-Strategy/01-Exam-Blueprint-and-Strategy.md) · [Index](../00-README-Start-Here.md) · [Next →](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md)
 
 ---
 
@@ -103,7 +103,7 @@ IAM's **centralized root access for member accounts** works only in organization
   - Delete an SQS queue policy that denies all principals.
   - Allow password recovery for a member account's root user.
 
-Pair it with an SCP that denies root actions in member accounts. Deep dive in [Chapter 03](03-Identity-and-Access-Management.md).
+Pair it with an SCP that denies root actions in member accounts. Deep dive in [Chapter 03](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md).
 
 #### Moving accounts and leaving the organization
 
@@ -555,7 +555,7 @@ VPC sharing lets multiple accounts **launch resources into the same VPC subnets*
 > - You want **fewer VPCs and IPs to manage** and no TGW per-GB processing for intra-VPC traffic.
 > - Central network control matters (participants can't open IGWs).
 >
-> Don't share across Prod and Non-Prod. More in [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
+> Don't share across Prod and Non-Prod. More in [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).
 
 ### 2.10 CloudFormation StackSets with service-managed permissions
 
@@ -625,7 +625,7 @@ Typical exam answer: "Deploy an IAM role, Config rule, GuardDuty setting or VPC 
 - **Amazon Security Lake**: OCSF normalization across org accounts and Regions, with a delegated admin.
 - Athena over the S3 bucket.
 - Centralized CloudWatch Logs through cross-account subscriptions or **CloudWatch cross-account observability** (monitoring account / source accounts linked by org or OU).
-- Detail in [Chapter 06](06-Security-Data-Protection-and-Threat-Detection.md) and [Chapter 15](15-Monitoring-Operations-and-Continuous-Improvement.md).
+- Detail in [Chapter 06](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) and [Chapter 15](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md).
 
 ### 2.13 IAM Identity Center at organization level (brief)
 
@@ -636,7 +636,7 @@ Typical exam answer: "Deploy an IAM role, Config rule, GuardDuty setting or VPC 
 - **Account instances** exist for isolated, app-specific use. They're not for multi-account workforce access.
 - Supports **ABAC** through attributes for access control.
 - An organization instance has one **primary Region**. Since early 2026, organization instances can be **replicated to additional Regions** for account access during a Regional outage. This needs a multi-Region customer managed KMS key, and assignments are still managed in the primary Region. It's newer than SAP-C02 content.
-- Full coverage in [Chapter 03](03-Identity-and-Access-Management.md).
+- Full coverage in [Chapter 03](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md).
 
 ### 2.14 Billing governance (Task 1.5)
 
@@ -648,7 +648,7 @@ Typical exam answer: "Deploy an IAM role, Config rule, GuardDuty setting or VPC 
 | **Cost Categories** | Rules that map costs (by account, tag, service, charge type and more) into business groupings, e.g., "BU = Retail", with split charges for shared costs | Show up in Cost Explorer, Budgets and CUR. Back RI/SP group sharing. |
 | **AWS Billing Conductor** | **Pro forma** billing. Billing groups get **custom pricing rules** (markups, discounts, credits) and custom line items. | Doesn't change the real AWS invoice. For **showback/chargeback at negotiated internal rates**, resellers and MSPs. |
 | **AWS Budgets** | Cost, usage, RI/SP coverage and utilization budgets with alerts. **Budget actions** can apply an **SCP** or IAM policy, or stop EC2/RDS, when a threshold is hit. | Per-account or org-wide (from the management account, filtered by linked account). Common for **sandbox spend control**. |
-| **Cost Anomaly Detection, Cost Explorer, CUR 2.0 / Data Exports, Billing views** | Org-wide analysis. **Billing views** (shareable via RAM) give BU owners scoped cost data without management account access. | Deep dive in [Chapter 16](16-Cost-Optimization-and-FinOps.md) |
+| **Cost Anomaly Detection, Cost Explorer, CUR 2.0 / Data Exports, Billing views** | Org-wide analysis. **Billing views** (shareable via RAM) give BU owners scoped cost data without management account access. | Deep dive in [Chapter 16](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md) |
 | **Billing transfer** (2025) | Lets an organization transfer billing responsibility to another org's management account (e.g., a partner or a parent company's payer) | New. Recognize the term only. |
 
 ### 2.15 Account vending, sandbox guardrails and account lifecycle
@@ -682,9 +682,9 @@ Typical exam answer: "Deploy an IAM role, Config rule, GuardDuty setting or VPC 
 5. **Close** it from the management account (90-day post-closure, reopenable), or remove it from the org.
 6. Watch the **closure quota**. Closed accounts count against the account quota until permanently closed. Update the root email first if you want to reuse the address.
 
-**Multi-account networking.** The Network account owns TGW, Cloud WAN, DX, inspection VPCs and IPAM. It shares through RAM and attaches workload VPCs, often automated by tag-based attachment workflows. Full coverage in [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
+**Multi-account networking.** The Network account owns TGW, Cloud WAN, DX, inspection VPCs and IPAM. It shares through RAM and attaches workload VPCs, often automated by tag-based attachment workflows. Full coverage in [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).
 
-**Delegated security services pattern.** The Security Tooling account is delegated admin for GuardDuty, Security Hub CSPM, Inspector, Macie, Detective, IAM Access Analyzer (org analyzer), Firewall Manager and Config. Each is set to **auto-enable for new org accounts**. Details in [Chapter 06](06-Security-Data-Protection-and-Threat-Detection.md).
+**Delegated security services pattern.** The Security Tooling account is delegated admin for GuardDuty, Security Hub CSPM, Inspector, Macie, Detective, IAM Access Analyzer (org analyzer), Firewall Manager and Config. Each is set to **auto-enable for new org accounts**. Details in [Chapter 06](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md).
 
 ---
 
@@ -729,7 +729,7 @@ Typical exam answer: "Deploy an IAM role, Config rule, GuardDuty setting or VPC 
 ```
 
 - **Use it** for central control of connectivity, DNS and IP space. Accounts in the org get the shares **without invitations**.
-- **Trade-offs:** the Network account becomes critical infrastructure. By default, TGW attachment-hour charges go to the TGW owner and data processing goes to the sending attachment's owner. **Flexible Cost Allocation** (November 2025) lets the TGW owner choose who is metered for data processing; see [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md). VPC sharing reduces TGW processing charges but puts several accounts in one trust zone.
+- **Trade-offs:** the Network account becomes critical infrastructure. By default, TGW attachment-hour charges go to the TGW owner and data processing goes to the sending attachment's owner. **Flexible Cost Allocation** (November 2025) lets the TGW owner choose who is metered for data processing; see [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md). VPC sharing reduces TGW processing charges but puts several accounts in one trust zone.
 
 ### Pattern C — Layered preventive guardrails (defense in depth)
 
@@ -1054,7 +1054,7 @@ D. The Analytics OU SCP must be attached directly to the `analytics-prod` accoun
 - **A:** IAM policies don't apply to member account root users. They must be maintained on every role, and account admins can remove them.
 - **C:** An allow-list SCP with a Region condition would block global services, and it doesn't exempt the break-glass role. Removing `FullAWSAccess` from the root also requires allow statements at every level. It's high maintenance and risky.
 - **D:** Detective and reactive only. It doesn't prevent creation, and deleting production resources automatically is dangerous.
-- **Reference:** [SCP examples — deny access based on Region](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html), [SCP syntax](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html)
+- **Reference:** [SCP examples — deny access based on Region](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html), [SCP syntax](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html)
 </details>
 
 <details><summary>Show answer — Q2</summary>
@@ -1140,7 +1140,7 @@ D. The Analytics OU SCP must be attached directly to the `analytics-prod` accoun
 - **B:** Wrong. Untagged resources aren't evaluated by tag policies, so creation without the tag isn't blocked.
 - **D:** Activating a cost allocation tag only makes it appear in billing data. It doesn't tag resources.
 - **E:** Budgets track spend and usage. They don't detect or enforce tagging.
-- **Reference:** [Tag policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html), [SCP examples — require tags](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_tagging.html)
+- **Reference:** [Tag policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html), [SCP examples — require tags](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html)
 </details>
 
 <details><summary>Show answer — Q10</summary>
@@ -1174,8 +1174,8 @@ D. The Analytics OU SCP must be attached directly to the `analytics-prod` accoun
 - [AWS Config multi-account multi-Region data aggregation](https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html) · [Conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html)
 - [Creating a CloudTrail trail for an organization](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html)
 - [IAM Identity Center — organization instances](https://docs.aws.amazon.com/singlesignon/latest/userguide/organization-instances-identity-center.html)
-- [Consolidated billing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/consolidated-billing.html) · [RI and Savings Plans discount sharing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-turn-off.html) · [Cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) · [Cost Categories](https://docs.aws.amazon.com/cost-management/latest/userguide/manage-cost-categories.html) · [AWS Billing Conductor](https://docs.aws.amazon.com/billingconductor/latest/userguide/what-is-billingconductor.html) · [Budgets actions](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html)
-- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/welcome.html)
+- [Consolidated billing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/consolidated-billing.html) · [RI and Savings Plans discount sharing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-turn-off.html) · [Cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) · [Cost Categories](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html) · [AWS Billing Conductor](https://docs.aws.amazon.com/billingconductor/latest/userguide/what-is-billingconductor.html) · [Budgets actions](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html)
+- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/introduction.html)
 
 ---
-[← Previous: 01 Exam Blueprint & Strategy](01-Exam-Blueprint-and-Strategy.md) · [Index](00-README-Start-Here.md) · [Next: 03 Identity & Access Management →](03-Identity-and-Access-Management.md)
+[← Previous: 01 Exam Blueprint & Strategy](../01-Exam-Blueprint-and-Strategy/01-Exam-Blueprint-and-Strategy.md) · [Index](../00-README-Start-Here.md) · [Next: 03 Identity & Access Management →](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md)

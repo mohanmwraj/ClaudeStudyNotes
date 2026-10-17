@@ -1,6 +1,6 @@
 # Chapter 04 — Networking: Multi-VPC, Hybrid Connectivity & Network Security
 > **Exam mapping:** D1 Task 1.1 (network connectivity strategies), D2 Task 2.3 (security controls) & 2.5 (performance), D3 Task 3.3 (performance) & 3.5 (cost) | **Weight signal:** **Very High**. Networking shows up in more SAP-C02 questions than any other topic, often as the hidden constraint in a migration, DR or security question. | **Study time:** ~10–12 h
-> [← Previous](03-Identity-and-Access-Management.md) · [Index](00-README-Start-Here.md) · [Next →](05-Edge-DNS-and-Content-Delivery.md)
+> [← Previous](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md) · [Index](../00-README-Start-Here.md) · [Next →](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md)
 
 This chapter follows the structure of the AWS whitepaper *Building a Scalable and Secure Multi-VPC AWS Network Infrastructure*: **(1) network connectivity** (VPC-to-VPC and hybrid), **(2) network security** (centralized egress, inspection, endpoints), and **(3) DNS management**. It also covers VPC fundamentals at Professional depth, monitoring, performance and data-transfer cost.
 
@@ -263,7 +263,7 @@ A **private, dedicated network connection** from your network to AWS at a **Dire
 | Speed change | No, you order a new connection | Partner can change it |
 
 - **Hosted VIF** (≠ hosted connection): the owner of a dedicated connection creates a VIF and gives it to another account.
-- **Lead time:** AWS reviews a port request in up to **72 business hours**, but the **cross-connect and carrier circuit typically take weeks to months**. Billing starts when the port is active or 90 days after the LOA is issued. **Exam reflex:** "need connectivity *next week*" → **Site-to-Site VPN now**, DX later. For bulk data with a deadline shorter than DX lead time, use online transfer (DataSync) over existing links or an offline transfer option (see [Chapter 13](13-Migration-and-Modernization.md) and [Chapter 08](08-Storage-and-Data-Transfer.md)).
+- **Lead time:** AWS reviews a port request in up to **72 business hours**, but the **cross-connect and carrier circuit typically take weeks to months**. Billing starts when the port is active or 90 days after the LOA is issued. **Exam reflex:** "need connectivity *next week*" → **Site-to-Site VPN now**, DX later. For bulk data with a deadline shorter than DX lead time, use online transfer (DataSync) over existing links or an offline transfer option (see [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) and [Chapter 08](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)).
 
 #### Virtual interfaces (VIFs)
 

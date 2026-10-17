@@ -625,7 +625,7 @@ Distribution check (single-answer questions): A ×4, B ×3, C ×3, D ×4.
 
 **References:**
 - https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html
-- https://docs.aws.amazon.com/lake-formation/latest/dg/data-filters-about.html
+- https://docs.aws.amazon.com/lake-formation/latest/dg/data-filtering.html
 - https://docs.aws.amazon.com/lake-formation/latest/dg/tag-based-access-control.html
 - https://docs.aws.amazon.com/lake-formation/latest/dg/resource-links-about.html
 
@@ -671,14 +671,14 @@ Count a multi-select question as correct only if every choice is right, as on th
 
 | If you missed… | Re-study |
 |---|---|
-| Q1, Q6, Q7, Q8 (serverless/containers, Aurora Serverless v2) | [07 — Compute, Containers & Serverless](../07-Compute-Containers-and-Serverless.md) · [09 — Databases & Caching](../09-Databases-and-Caching.md) · [14 — Deployment, DevOps & IaC](../14-Deployment-DevOps-and-IaC.md) · [16 — Cost Optimization & FinOps](../16-Cost-Optimization-and-FinOps.md) |
-| Q2, Q8, Q16 (DAX, Aurora, secrets) | [09 — Databases & Caching](../09-Databases-and-Caching.md) · [06 — Security, Data Protection & Threat Detection](../06-Security-Data-Protection-and-Threat-Detection.md) |
-| Q3, Q4, Q5 (SQS FIFO, Kinesis, Step Functions) | [10 — Application Integration & Event-Driven](../10-Application-Integration-and-Event-Driven.md) · [13 — Migration & Modernization](../13-Migration-and-Modernization.md) |
-| Q9, Q18 (Cognito, SaaS tenant isolation, ABAC) | [03 — Identity & Access Management](../03-Identity-and-Access-Management.md) · [02 — Multi-Account Governance](../02-Multi-Account-Governance.md) |
-| Q10, Q11, Q17 (CloudFront Functions, Global Accelerator, WAF/Shield) | [05 — Edge, DNS & Content Delivery](../05-Edge-DNS-and-Content-Delivery.md) · [06 — Security, Data Protection & Threat Detection](../06-Security-Data-Protection-and-Threat-Detection.md) · [04 — Networking, VPC & Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity.md) |
-| Q12, Q13 (S3 uploads, FSx for Lustre) | [08 — Storage & Data Transfer](../08-Storage-and-Data-Transfer.md) · [13 — Migration & Modernization](../13-Migration-and-Modernization.md) |
-| Q14, Q15 (warm standby, Route 53 ARC) | [12 — Resilience, HA & Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery.md) · [05 — Edge, DNS & Content Delivery](../05-Edge-DNS-and-Content-Delivery.md) · [15 — Monitoring, Operations & Continuous Improvement](../15-Monitoring-Operations-and-Continuous-Improvement.md) |
-| Q19, Q20 (Lake Formation, streaming → Parquet → Athena) | [11 — Analytics, Streaming & AI/ML](../11-Analytics-Streaming-and-AI-ML.md) · [02 — Multi-Account Governance](../02-Multi-Account-Governance.md) |
+| Q1, Q6, Q7, Q8 (serverless/containers, Aurora Serverless v2) | [07 — Compute, Containers & Serverless](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md) · [09 — Databases & Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md) · [14 — Deployment, DevOps & IaC](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md) · [16 — Cost Optimization & FinOps](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md) |
+| Q2, Q8, Q16 (DAX, Aurora, secrets) | [09 — Databases & Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md) · [06 — Security, Data Protection & Threat Detection](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) |
+| Q3, Q4, Q5 (SQS FIFO, Kinesis, Step Functions) | [10 — Application Integration & Event-Driven](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md) · [13 — Migration & Modernization](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) |
+| Q9, Q18 (Cognito, SaaS tenant isolation, ABAC) | [03 — Identity & Access Management](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md) · [02 — Multi-Account Governance](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) |
+| Q10, Q11, Q17 (CloudFront Functions, Global Accelerator, WAF/Shield) | [05 — Edge, DNS & Content Delivery](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) · [06 — Security, Data Protection & Threat Detection](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) · [04 — Networking, VPC & Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) |
+| Q12, Q13 (S3 uploads, FSx for Lustre) | [08 — Storage & Data Transfer](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) · [13 — Migration & Modernization](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) |
+| Q14, Q15 (warm standby, Route 53 ARC) | [12 — Resilience, HA & Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md) · [05 — Edge, DNS & Content Delivery](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) · [15 — Monitoring, Operations & Continuous Improvement](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md) |
+| Q19, Q20 (Lake Formation, streaming → Parquet → Athena) | [11 — Analytics, Streaming & AI/ML](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md) · [02 — Multi-Account Governance](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) |
 
 > [← Practice Papers index](README.md) · [Study Guide index](../00-README-Start-Here.md)
 

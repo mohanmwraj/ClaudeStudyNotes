@@ -1,7 +1,7 @@
 # Chapter 11 — Analytics, Streaming, Data Lakes & AI/ML Services
 
 > **Exam mapping:** D2 Task 2.4 (reliability), 2.5 (performance), 2.6 (cost) · D3 Task 3.3 (performance), 3.5 (cost) · D4 Task 4.4 (modernization opportunities) | **Weight signal:** Medium–High (analytics shows up inside many scenarios; Kinesis/Athena/Lake Formation/Redshift are frequent) | **Study time:** ~6 h
-> [← Previous](10-Application-Integration-and-Event-Driven.md) · [Index](00-README-Start-Here.md) · [Next →](12-Resilience-HA-and-Disaster-Recovery.md)
+> [← Previous](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md) · [Index](../00-README-Start-Here.md) · [Next →](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md)
 
 **Naming you may see on the exam (old ↔ new):** Kinesis Data Firehose ↔ **Amazon Data Firehose** · Kinesis Data Analytics (for Apache Flink / SQL) ↔ **Amazon Managed Service for Apache Flink** (the legacy SQL applications are gone, so build new work on Flink) · Amazon SageMaker ↔ **Amazon SageMaker AI** (the "next generation" Amazon SageMaker brand now covers the unified data + AI platform, **SageMaker Unified Studio**) · Amazon QuickSight ↔ **Amazon Quick Sight**, part of **Amazon Quick** (first launched in Oct 2025 as "Amazon Quick Suite"; the existing QuickSight APIs still work) · Amazon DataZone ↔ now underpins **Amazon SageMaker Catalog** in SageMaker Unified Studio.
 

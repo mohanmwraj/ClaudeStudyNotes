@@ -1,6 +1,6 @@
 # Chapter 09 — Databases & Caching: RDS, Aurora, DynamoDB, ElastiCache & Purpose-Built DBs
 > **Exam mapping:** D2 Task 2.2, 2.4, 2.5, 2.6 · D3 Task 3.3, 3.4 · D4 Task 4.3, 4.4 | **Weight signal:** High | **Study time:** ~6 h
-> [← Previous](08-Storage-and-Data-Transfer.md) · [Index](00-README-Start-Here.md) · [Next →](10-Application-Integration-and-Event-Driven.md)
+> [← Previous](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) · [Index](../00-README-Start-Here.md) · [Next →](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md)
 
 ---
 
@@ -19,7 +19,7 @@ Databases appear in more SAP-C02 questions than almost any other topic, because 
 | **Low-downtime change** | "major version upgrade with minimal downtime", "test schema change on production copy" | RDS/Aurora Blue/Green Deployments, Aurora cloning |
 | **Recovery from human error** | "accidental DELETE, recover in minutes" | Aurora Backtrack (MySQL), PITR, DynamoDB PITR |
 | **Cost** | "unpredictable / spiky traffic", "idle at night", "I/O is half the bill" | Aurora Serverless v2 (scale to 0 ACU), DynamoDB on-demand, Aurora I/O-Optimized, reserved instances / reserved capacity |
-| **Migration / modernization** | "SQL Server licensing cost", "Oracle to open source", "minimal code change" | DMS + SCT, Babelfish for Aurora PostgreSQL, RDS Custom, zero-ETL (link [Chapter 13](13-Migration-and-Modernization.md)) |
+| **Migration / modernization** | "SQL Server licensing cost", "Oracle to open source", "minimal code change" | DMS + SCT, Babelfish for Aurora PostgreSQL, RDS Custom, zero-ETL (link [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md)) |
 
 The exam favours **managed, purpose-built, least-operational-overhead** answers. When two options both work, the cheaper, more managed, or more native one usually wins, unless the stem names a constraint (OS access, specific RPO, licensing) that rules it out.
 
@@ -76,7 +76,7 @@ Failover triggers for Multi-AZ DB instance include: primary host failure, AZ net
 - **Manual snapshots** are kept until deleted (100 per Region default quota), can be **copied cross-Region and cross-account** and **shared** with other accounts. You can share snapshots encrypted with a **customer managed KMS key** (and you must share the key); snapshots encrypted with the AWS managed key `aws/rds` **cannot be shared**.
 - **Cross-Region automated backup replication:** RDS copies snapshots and transaction logs to a destination Region so you can **PITR in the DR Region** — a cheap pilot-light DR for RDS (default quota 20 per account; not for Multi-AZ DB clusters). Requires a KMS key in the destination Region for encrypted instances.
 - **Export snapshots to S3** in Apache Parquet for analytics.
-- **AWS Backup** provides centralized, policy-based backups, cross-account and cross-Region copy, Vault Lock (WORM) — the answer when the stem says "centrally manage backups across accounts" (see [Chapter 08](08-Storage-and-Data-Transfer.md) and [Chapter 12](12-Resilience-HA-and-Disaster-Recovery.md)).
+- **AWS Backup** provides centralized, policy-based backups, cross-account and cross-Region copy, Vault Lock (WORM) — the answer when the stem says "centrally manage backups across accounts" (see [Chapter 08](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) and [Chapter 12](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md)).
 
 #### Encryption constraints (frequently tested)
 - Encryption at rest (KMS, AES-256) **must be chosen at creation**. You **cannot encrypt an existing unencrypted instance in place** and cannot disable encryption once on.
@@ -124,7 +124,7 @@ Failover triggers for Multi-AZ DB instance include: primary host failure, AZ net
 - **DevOps Guru for RDS**: ML-based anomaly detection and recommendations.
 
 #### Pricing essentials
-On-demand per instance-hour; **Reserved Instances** (1/3 years; size-flexible within a family for most open-source engines and BYOL Oracle); storage GB-month and provisioned IOPS; backup storage beyond 100% of DB size; cross-Region data transfer; Multi-AZ doubles instance cost. License Included vs **BYOL** (Oracle). A stopped instance restarts automatically after **7 days**. *Emerging (not core for SAP-C02):* **Database Savings Plans** (launched Dec 2025) give a spend-based commitment across Aurora, RDS, DynamoDB, ElastiCache (Valkey), DocumentDB, Neptune, Keyspaces, Timestream, DMS and OpenSearch — see [Chapter 16](16-Cost-Optimization-and-FinOps.md).
+On-demand per instance-hour; **Reserved Instances** (1/3 years; size-flexible within a family for most open-source engines and BYOL Oracle); storage GB-month and provisioned IOPS; backup storage beyond 100% of DB size; cross-Region data transfer; Multi-AZ doubles instance cost. License Included vs **BYOL** (Oracle). A stopped instance restarts automatically after **7 days**. *Emerging (not core for SAP-C02):* **Database Savings Plans** (launched Dec 2025) give a spend-based commitment across Aurora, RDS, DynamoDB, ElastiCache (Valkey), DocumentDB, Neptune, Keyspaces, Timestream, DMS and OpenSearch — see [Chapter 16](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md).
 
 ---
 
@@ -179,7 +179,7 @@ On-demand per instance-hour; **Reserved Instances** (1/3 years; size-flexible wi
 - **Parallel Query (Aurora MySQL):** pushes filtering/aggregation down to thousands of storage nodes — speeds up analytic queries on OLTP data without a separate warehouse (for heavy analytics, prefer zero-ETL to Redshift).
 - **Aurora I/O-Optimized vs Aurora Standard:** Standard charges per million I/O requests; I/O-Optimized has no I/O charges but higher instance and storage prices. **Choose I/O-Optimized when I/O spend is ≥ 25% of total Aurora spend.** You can switch Standard → I/O-Optimized **once every 30 days** and back at any time.
 - **Babelfish for Aurora PostgreSQL:** adds a **TDS endpoint** that understands **T-SQL** and the SQL Server wire protocol, so SQL Server applications can run against Aurora PostgreSQL with little code change. Use **Babelfish Compass** to assess compatibility. Answers "move off SQL Server licensing with minimal application changes".
-- **Zero-ETL integration to Amazon Redshift:** near-real-time replication of Aurora MySQL/PostgreSQL (and RDS for MySQL/PostgreSQL/Oracle, DynamoDB) data into Redshift without building pipelines — answers "analytics on transactional data without ETL and without impacting the OLTP database" (link [Chapter 11](11-Analytics-Streaming-and-AI-ML.md)).
+- **Zero-ETL integration to Amazon Redshift:** near-real-time replication of Aurora MySQL/PostgreSQL (and RDS for MySQL/PostgreSQL/Oracle, DynamoDB) data into Redshift without building pipelines — answers "analytics on transactional data without ETL and without impacting the OLTP database" (link [Chapter 11](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md)).
 - **Integrations:** invoke Lambda from the DB, load from/save to S3, Aurora ML (SageMaker AI, Bedrock, Comprehend), pgvector for embeddings, Database Activity Streams, cluster cache management (Aurora PostgreSQL).
 - **Aurora PostgreSQL Limitless Database** (GA late 2024): automated **horizontal sharding** behind a single endpoint — a *DB shard group* of routers and shards, **sharded tables** (distributed by a shard key) and **reference tables** (replicated to all shards), serverless scaling — for **millions of write transactions per second** and petabytes. Answers "relational, PostgreSQL, write throughput beyond a single writer, avoid building app-level sharding".
 - **Amazon Aurora DSQL** (GA May 2025): **serverless, distributed, PostgreSQL-compatible** database with **active-active** single- and multi-Region clusters, strong consistency, optimistic concurrency control, and **99.99% single-Region / 99.999% multi-Region** availability. Multi-Region clusters must stay within one Region set (North America, Europe, Asia Pacific). Not every PostgreSQL feature is supported (check compatibility). Treat as *emerging* for SAP-C02 — it may appear as a distractor or as the answer to "active-active multi-Region relational with strong consistency and no failover".
@@ -352,21 +352,21 @@ Model **access patterns first**, then keys. Store multiple entity types in one t
 - Amazon Quantum Ledger Database (immutable, cryptographically verifiable journal) **reached end of support on 31 July 2025**. AWS's migration guidance is **Aurora PostgreSQL** (with audit tooling such as pgAudit, Database Activity Streams, and S3 for history). Older questions may still list QLDB for "immutable, verifiable ledger of changes owned by a central authority"; on the real exam choose it only if it is clearly the only ledger option offered. For decentralized multi-party trust, the historical answer was Amazon Managed Blockchain.
 
 #### Amazon Redshift (brief)
-Columnar, MPP **data warehouse** for OLAP: complex aggregations over TB–PB, Redshift Serverless, RA3 managed storage, Spectrum for S3, data sharing, **zero-ETL** from Aurora/RDS/DynamoDB. If the stem says "analytics/BI on historical data", it is not an OLTP database question — see [Chapter 11](11-Analytics-Streaming-and-AI-ML.md).
+Columnar, MPP **data warehouse** for OLAP: complex aggregations over TB–PB, Redshift Serverless, RA3 managed storage, Spectrum for S3, data sharing, **zero-ETL** from Aurora/RDS/DynamoDB. If the stem says "analytics/BI on historical data", it is not an OLTP database question — see [Chapter 11](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md).
 
 #### Amazon OpenSearch Service (brief)
 **Search and log analytics** (full-text search, fuzzy matching, relevance, aggregations, vector search). Common pattern: DynamoDB/Aurora as system of record → Streams/CDC or **zero-ETL** → OpenSearch for search. Not a primary transactional store.
 
 ---
 
-### 2.7 Migration & modernization angles (D4 — details in [Chapter 13](13-Migration-and-Modernization.md))
+### 2.7 Migration & modernization angles (D4 — details in [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md))
 - **Homogeneous** (Oracle → RDS for Oracle, MySQL → Aurora MySQL): native tools (Data Pump, `mysqldump`, Percona XtraBackup → Aurora MySQL from S3, pg_dump), or **DMS full load + CDC** for minimal downtime. Aurora MySQL can be created from an RDS MySQL snapshot or as an **Aurora read replica of RDS MySQL/PostgreSQL** then promoted — near-zero-downtime path from RDS to Aurora.
 - **Heterogeneous** (Oracle/SQL Server → Aurora PostgreSQL/MySQL): **AWS SCT** or **DMS Schema Conversion** converts schema and code; **DMS** moves data with CDC. Expect stored-procedure rewrite effort.
 - **SQL Server → Aurora PostgreSQL with minimal app change:** **Babelfish** (T-SQL + TDS endpoint).
 - **Relational → DynamoDB:** model access patterns first; DMS supports DynamoDB as a target; large one-off loads via S3 + **Import from S3**.
 - **Unsupported customizations** (OS access, third-party agents on DB host) → **RDS Custom** or EC2.
 - **Database Freedom** drivers: licence cost (Oracle/SQL Server Enterprise), scaling limits, operational toil.
-- Large initial loads with limited bandwidth: Snowball Edge + DMS (see [Chapter 08](08-Storage-and-Data-Transfer.md)).
+- Large initial loads with limited bandwidth: Snowball Edge + DMS (see [Chapter 08](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)).
 
 ---
 
@@ -503,7 +503,7 @@ What is the data model / access pattern?
 | Data loss on failover | None | None (acknowledged by ≥ 1 reader) | Possible (lag) | Possible (lag) | None (shared volume) |
 | Engines | All RDS | MySQL, PostgreSQL | All RDS (cascading limits vary) | All RDS engines | Aurora |
 
-### 4.3 Cross-Region DR options by database (detail in [Chapter 12](12-Resilience-HA-and-Disaster-Recovery.md))
+### 4.3 Cross-Region DR options by database (detail in [Chapter 12](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md))
 
 | Database | Backup & restore | Pilot light / warm standby | Hot / active-active | Typical RPO / RTO (best option) |
 |---|---|---|---|---|
@@ -980,4 +980,4 @@ E. Move the production clusters to Aurora Standard storage and reduce the number
 - [AWS Well-Architected — Reliability Pillar](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html)
 
 ---
-> [← Previous: Storage & Data Transfer](08-Storage-and-Data-Transfer.md) · [Index](00-README-Start-Here.md) · [Next: Application Integration & Event-Driven →](10-Application-Integration-and-Event-Driven.md)
+> [← Previous: Storage & Data Transfer](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) · [Index](../00-README-Start-Here.md) · [Next: Application Integration & Event-Driven →](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md)

@@ -1,6 +1,6 @@
 # Chapter 17 — Practice Papers
 
-> [← Chapter 16](../16-Cost-Optimization-and-FinOps.md) · [Index](../00-README-Start-Here.md) · [Next → Chapter 18](../18-Cheat-Sheets-and-Comparisons.md)
+> [← Chapter 16](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md) · [Index](../00-README-Start-Here.md) · [Next → Chapter 18](../18-Cheat-Sheets-and-Comparisons/18-Cheat-Sheets-and-Comparisons.md)
 
 ## Why there are no real "previous papers"
 AWS certification exam content is covered by the **AWS Certification Program Agreement / NDA**. AWS never publishes past SAP-C02 papers, and "dumps" sold online are unauthorized, often wrong, and can get a certification revoked. The only **official** questions available for free are AWS's **10-question sample set**. This chapter gives you:

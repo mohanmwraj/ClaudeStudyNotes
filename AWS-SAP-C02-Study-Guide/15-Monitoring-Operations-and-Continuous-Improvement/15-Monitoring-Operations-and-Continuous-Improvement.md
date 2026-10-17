@@ -1,6 +1,6 @@
 # Chapter 15 — Observability, Operations & Continuous Improvement (Domain 3)
 > **Exam mapping:** D3 Task 3.1 (operational excellence), 3.2 (security), 3.3 (performance), 3.4 (reliability); D1 Task 1.4 (multi-account environment, central logging) & 1.5 (visibility) — cost (3.5) is in Chapter 16 | **Weight signal:** High (Domain 3 = 25 % of the exam; observability shows up in many D1/D2 questions too) | **Study time:** ~7 h
-> [← Previous](14-Deployment-DevOps-and-IaC.md) · [Index](00-README-Start-Here.md) · [Next →](16-Cost-Optimization-and-FinOps.md)
+> [← Previous](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md) · [Index](../00-README-Start-Here.md) · [Next →](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md)
 
 > **Status box — service changes you must know (as of 2026-10-17).** The exam was written before some of these changes, so an answer naming an "old" service can still be the intended one. Know both.
 > - **AWS Systems Manager Incident Manager** and **Systems Manager Change Manager**: no longer open to new customers since **7 Nov 2025**. Existing customers can keep using them. AWS points new users to **Systems Manager OpsCenter** and to AWS Partner tools for paging. On the exam, "response plans, escalation, on-call engagement" still means Incident Manager.
@@ -1092,7 +1092,7 @@ Best-practice areas: **Organization, Prepare, Operate, Evolve**.
 - [CloudTrail organization trails](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html) · [CloudTrail Lake availability change](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-lake-service-availability-change.html)
 - [Amazon Security Lake](https://docs.aws.amazon.com/security-lake/latest/userguide/what-is-security-lake.html)
 - [AWS Config Developer Guide](https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html) · [Conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html) · [Aggregators](https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html)
-- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/welcome.html)
+- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/introduction.html)
 
 **Events, Health, advisors**
 - [Amazon EventBridge User Guide](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html)
@@ -1107,9 +1107,9 @@ Best-practice areas: **Organization, Prepare, Operate, Evolve**.
 
 **Operational Excellence and troubleshooting**
 - [Well-Architected Framework — Operational Excellence design principles](https://docs.aws.amazon.com/wellarchitected/latest/framework/oe-design-principles.html) · [Operational Excellence Pillar whitepaper](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html)
-- [AWS Well-Architected Tool](https://docs.aws.amazon.com/wellarchitected/latest/userguide/intro.html)
+- [AWS Well-Architected Tool](https://docs.aws.amazon.com/wellarchitected/latest/userguide/tool.html)
 - [AWS Fault Injection Service](https://docs.aws.amazon.com/fis/latest/userguide/what-is.html)
 - [Troubleshoot Application Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-troubleshooting.html) · [NAT gateway basics](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-basics.html) · [Amazon RDS Proxy](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html)
 
 ---
-[← Previous: Chapter 14 — Deployment, DevOps & IaC](14-Deployment-DevOps-and-IaC.md) · [Index](00-README-Start-Here.md) · [Next: Chapter 16 — Cost Optimization & FinOps →](16-Cost-Optimization-and-FinOps.md)
+[← Previous: Chapter 14 — Deployment, DevOps & IaC](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md) · [Index](../00-README-Start-Here.md) · [Next: Chapter 16 — Cost Optimization & FinOps →](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md)

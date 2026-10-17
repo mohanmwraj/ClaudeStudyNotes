@@ -1,6 +1,6 @@
 # Chapter 07 — Compute: EC2, Auto Scaling, Load Balancing, Containers & Lambda
 > **Exam mapping:** D2 Task 2.1, 2.4, 2.5, 2.6 · D3 Task 3.3, 3.4, 3.5 · D4 Task 4.3, 4.4 | **Weight signal:** High | **Study time:** ~7 h
-> [← Previous](06-Security-Data-Protection-and-Threat-Detection.md) · [Index](00-README-Start-Here.md) · [Next →](08-Storage-and-Data-Transfer.md)
+> [← Previous](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) · [Index](../00-README-Start-Here.md) · [Next →](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)
 
 ---
 
@@ -337,7 +337,7 @@ Anything longer than 15 min → **Step Functions** (orchestrate), **Fargate/ECS 
 - **Versions** are immutable; **aliases** point to versions and support **weighted routing** between two versions → **CodeDeploy** canary (`Canary10Percent5Minutes`), linear, all-at-once with CloudWatch alarm rollback and pre/post-traffic hooks (SAM `AutoPublishAlias` + `DeploymentPreference`).
 - **Extensions** (monitoring agents, secrets caching), **Function URLs** (dedicated HTTPS endpoint, IAM or no auth; CORS), **response streaming**.
 - **Code signing** with AWS Signer to only allow trusted code; **Lambda Insights**, X-Ray, **CloudWatch Application Signals**.
-- Lambda@Edge and CloudFront Functions: see [Chapter 05](05-Edge-DNS-and-Content-Delivery.md).
+- Lambda@Edge and CloudFront Functions: see [Chapter 05](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md).
 
 #### Cost model
 
@@ -513,7 +513,7 @@ Managed lifecycle (install, version compatibility, upgrade) for: **VPC CNI, Core
 
 - PaaS orchestration for web apps and workers (Java, .NET on Windows/Linux, Node.js, Python, PHP, Ruby, Go, Docker). Creates EC2/ASG/ELB/CloudWatch resources **in your account** that you can still see and tune (`.ebextensions`, platform hooks, saved configurations).
 - **Good fit**: replatforming a traditional web app (especially **.NET/IIS** or Java Tomcat) where the team wants managed patching (**managed platform updates**), health dashboards and simple deployments without learning containers — a common D4 "replatform with minimal changes" answer. Worker environments pull from SQS.
-- **Deployment policies (brief)**: all at once, rolling, rolling with additional batch, **immutable** (new ASG, swap), **traffic splitting** (canary on new instances); **blue/green** via environment clone + **CNAME swap** (or Route 53 weighted). Details in [Chapter 14](14-Deployment-DevOps-and-IaC.md).
+- **Deployment policies (brief)**: all at once, rolling, rolling with additional batch, **immutable** (new ASG, swap), **traffic splitting** (canary on new instances); **blue/green** via environment clone + **CNAME swap** (or Route 53 weighted). Details in [Chapter 14](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md).
 - **Not a fit**: microservices at scale, fine-grained infra control, event-driven serverless, Kubernetes standardization. An RDS instance created inside the environment is tied to its lifecycle — decouple the database for production.
 
 ---
@@ -538,7 +538,7 @@ Managed lifecycle (install, version compatibility, upgrade) for: **VPC CNI, Core
 | **EFA** | OS-bypass low-latency interconnect for MPI/NCCL (see 2.1) |
 | **Cluster placement group** | Physical proximity for low latency / high bisection bandwidth |
 | **Hpc instances** (Hpc7g, Hpc7a, Hpc6id...) | HPC-optimized price-performance with EFA |
-| **FSx for Lustre** | Parallel file system, sub-ms latency, very high throughput; **S3 data repository association** (lazy load, export) — see [Chapter 08](08-Storage-and-Data-Transfer.md) |
+| **FSx for Lustre** | Parallel file system, sub-ms latency, very high throughput; **S3 data repository association** (lazy load, export) — see [Chapter 08](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) |
 | **AWS Batch** | Loosely coupled / array workloads and MNP |
 | **Amazon DCV** (formerly NICE DCV) | Remote visualization of results |
 
@@ -546,7 +546,7 @@ Patterns: **loosely coupled** (embarrassingly parallel: Batch array jobs, Spot, 
 
 ---
 
-### 2.12 Outposts, Local Zones and Wavelength (brief — see [Chapter 05](05-Edge-DNS-and-Content-Delivery.md))
+### 2.12 Outposts, Local Zones and Wavelength (brief — see [Chapter 05](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md))
 
 - **AWS Outposts** (racks or servers): AWS infrastructure **in your data centre**, managed by AWS, extending a parent Region's VPC (subnets on the Outpost). Run EC2, EBS, ECS, EKS, RDS, EMR, S3 on Outposts locally. Use for **data residency**, **single-digit ms latency to on-prem systems**, local data processing. Requires service link connectivity to the Region (control plane). Host-level spread placement groups exist only on Outposts.
 - **Local Zones**: AWS-operated extensions of a Region in metro areas (media rendering, gaming, real-time apps needing low latency to end users in that city). Opt-in; subset of services (EC2, EBS, ECS, EKS, ALB, some RDS...).
@@ -664,7 +664,7 @@ Producers -> SQS queue --(backlog per task metric)--> ECS service on Fargate
  Spoke VPCs --TGW--> Inspection VPC: GWLB endpoints -> GWLB -> firewall ASG (GENEVE 6081)
  Internet ingress: IGW edge route table -> GWLBE -> app ALB
 ```
-Detailed in [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
+Detailed in [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).
 
 ---
 
@@ -793,7 +793,7 @@ Detailed in [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
 - "On-prem servers as EKS nodes with AWS-managed control plane" → **EKS Hybrid Nodes**; "fully on-prem, disconnected" → **EKS Anywhere**; ECS equivalent → **ECS Anywhere**.
 - "Service-to-service discovery on ECS without ALBs" → **ECS Service Connect** (App Mesh is end-of-support).
 - "Blue/green for ECS" → **ECS native blue/green** (now AWS's recommended approach) or **CodeDeploy** (older exam items).
-- "Containerize existing Java/.NET apps with a tool" → App2Container appears in older material, but it has been **closed to new customers since 7 Nov 2025**. Recognize it in older-style questions, but don't propose it for new work. Current modernization tooling is covered in [Chapter 13](13-Migration-and-Modernization.md).
+- "Containerize existing Java/.NET apps with a tool" → App2Container appears in older material, but it has been **closed to new customers since 7 Nov 2025**. Recognize it in older-style questions, but don't propose it for new work. Current modernization tooling is covered in [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md).
 - "Avoid Docker Hub rate limits" → **ECR pull-through cache**.
 - "Continuous vulnerability scanning incl. language packages" → **ECR enhanced scanning (Inspector)**.
 - "Containers images in DR Region" → **ECR cross-Region replication**.
@@ -1114,7 +1114,7 @@ E. Schedule a nightly AWS Batch job that runs `docker pull` and `docker push` to
 - ECS task execution role: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html
 - ECS task role: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
 - ECS Service Connect: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-connect.html
-- ECS deployment types: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-types.html
+- ECS deployment types: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_service-options.html
 - ECS Express Mode: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-overview.html
 - EKS Auto Mode: https://docs.aws.amazon.com/eks/latest/userguide/automode.html
 - EKS Pod Identity: https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html
@@ -1136,4 +1136,4 @@ E. Schedule a nightly AWS Batch job that runs `docker pull` and `docker push` to
 - Well-Architected Framework — Performance Efficiency Pillar: https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
 
 ---
-> [← Previous](06-Security-Data-Protection-and-Threat-Detection.md) · [Index](00-README-Start-Here.md) · [Next →](08-Storage-and-Data-Transfer.md)
+> [← Previous](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) · [Index](../00-README-Start-Here.md) · [Next →](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)

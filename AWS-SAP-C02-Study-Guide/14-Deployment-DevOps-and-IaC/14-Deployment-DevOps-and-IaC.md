@@ -1,6 +1,6 @@
 # Chapter 14 — Deployment Strategy, CI/CD & Infrastructure as Code
 > **Exam mapping:** D2 Task 2.1 (deployment strategy), D3 Task 3.1 (operational excellence), D1 Task 1.4 (multi-account environment) | **Weight signal:** High | **Study time:** ~7 h
-> [← Previous](13-Migration-and-Modernization.md) · [Index](00-README-Start-Here.md) · [Next →](15-Monitoring-Operations-and-Continuous-Improvement.md)
+> [← Previous](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) · [Index](../00-README-Start-Here.md) · [Next →](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md)
 
 ---
 
@@ -174,7 +174,7 @@ MyFunction:
 - HashiCorp Terraform (BSL-licensed; OpenTofu is the open-source fork) uses the AWS provider (and `awscc` provider via Cloud Control API).
 - **Remote state in S3** with bucket **versioning**, SSE-KMS encryption, Block Public Access, and a restrictive bucket policy; **state locking** traditionally with a **DynamoDB table**; newer Terraform versions support **native S3 locking** (`use_lockfile = true`) and HashiCorp has marked DynamoDB-based locking **deprecated**. Expect either answer on SAP-C02; "S3 + DynamoDB" is the classic exam phrasing.
 - Multi-account: a central state bucket per environment/account; Terraform assumes roles per target account via provider `assume_role`.
-- **Account Factory for Terraform (AFT)** — Control Tower solution that provisions and customises accounts via a GitOps pipeline (account request repo → CodePipeline/CodeBuild in the AFT management account). Covered in [Chapter 02](02-Multi-Account-Governance.md).
+- **Account Factory for Terraform (AFT)** — Control Tower solution that provisions and customises accounts via a GitOps pipeline (account request repo → CodePipeline/CodeBuild in the AFT management account). Covered in [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md).
 - Service Catalog supports Terraform via **Terraform Cloud** and **External** product types (Terraform Open Source product type is deprecated for new products).
 - Exam angle: Terraform is a valid answer when the stem says "the company already standardises on Terraform" or "multi-cloud"; otherwise AWS-native (CloudFormation/CDK) is usually the "least operational overhead" answer.
 

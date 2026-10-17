@@ -299,7 +299,7 @@ Which combination of steps should the architect recommend? **(Select THREE.)**
 
 **Concept to remember:** "Which hop is slow across microservices" points to **distributed tracing**. As of 2026, the strategic choice is **OpenTelemetry (ADOT) to X-Ray / Application Signals**, not new X-Ray SDK work.
 
-**References:** [Migrating from X-Ray instrumentation to OpenTelemetry](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html) · [X-Ray SDK and daemon end-of-support timeline](https://docs.aws.amazon.com/xray/latest/devguide/xray-daemon-eos.html) · [AWS Distro for OpenTelemetry](https://aws.amazon.com/otel/) · [CloudWatch application monitoring](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html)
+**References:** [Migrating from X-Ray instrumentation to OpenTelemetry](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html) · [X-Ray SDK and daemon end-of-support timeline](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html) · [AWS Distro for OpenTelemetry](https://aws.amazon.com/otel/) · [CloudWatch application monitoring](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html)
 
 ---
 
@@ -623,20 +623,20 @@ The rest of the configuration is already right: `SseKmsEncryptedObjects` is enab
 
 | If you missed… | Re-study |
 |---|---|
-| Q4 (patch policies, DHMC), Q7 (GuardDuty org), Q19 (Budgets SCP actions) | [02 — Multi-Account Governance](../02-Multi-Account-Governance.md) |
-| Q17 (cross-account KMS), Q18 (Access Analyzer), Q20 (IAM for secrets) | [03 — Identity and Access Management](../03-Identity-and-Access-Management.md) |
-| Q9 (gateway endpoints vs NAT gateway) | [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity.md) |
-| Q16 (CloudFront cache and origin request policies) | [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery.md) |
-| Q5 (Config remediation), Q6 (Security Hub automation), Q7 (GuardDuty), Q8 (Inspector), Q17 (KMS), Q20 (Secrets Manager) | [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection.md) |
-| Q1 (Lambda and RDS Proxy), Q11 (Graviton), Q12 (Spot), Q15 (Auto Scaling) | [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless.md) |
-| Q10 (S3 lifecycle and Glacier traps) | [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer.md) |
-| Q1 (RDS Proxy), Q13 (ElastiCache), Q14 (Aurora custom endpoints) | [09 — Databases and Caching](../09-Databases-and-Caching.md) |
-| Q6 (EventBridge-driven response) | [10 — Application Integration and Event-Driven](../10-Application-Integration-and-Event-Driven.md) |
-| Q15 (warm pools, predictive scaling for availability) | [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery.md) |
-| Q10, Q11, Q13, Q20 (post-migration optimization) | [13 — Migration and Modernization](../13-Migration-and-Modernization.md) |
-| Q8 (pipeline scan gates) | [14 — Deployment, DevOps and IaC](../14-Deployment-DevOps-and-IaC.md) |
-| Q2 (Synthetics, composite alarms), Q3 (OpenTelemetry tracing), Q4 (Patch Manager), Q5 (auto-remediation) | [15 — Monitoring, Operations and Continuous Improvement](../15-Monitoring-Operations-and-Continuous-Improvement.md) |
-| Q9, Q10, Q11, Q12, Q19 (cost levers) | [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps.md) |
+| Q4 (patch policies, DHMC), Q7 (GuardDuty org), Q19 (Budgets SCP actions) | [02 — Multi-Account Governance](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) |
+| Q17 (cross-account KMS), Q18 (Access Analyzer), Q20 (IAM for secrets) | [03 — Identity and Access Management](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md) |
+| Q9 (gateway endpoints vs NAT gateway) | [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) |
+| Q16 (CloudFront cache and origin request policies) | [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) |
+| Q5 (Config remediation), Q6 (Security Hub automation), Q7 (GuardDuty), Q8 (Inspector), Q17 (KMS), Q20 (Secrets Manager) | [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) |
+| Q1 (Lambda and RDS Proxy), Q11 (Graviton), Q12 (Spot), Q15 (Auto Scaling) | [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md) |
+| Q10 (S3 lifecycle and Glacier traps) | [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) |
+| Q1 (RDS Proxy), Q13 (ElastiCache), Q14 (Aurora custom endpoints) | [09 — Databases and Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md) |
+| Q6 (EventBridge-driven response) | [10 — Application Integration and Event-Driven](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md) |
+| Q15 (warm pools, predictive scaling for availability) | [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md) |
+| Q10, Q11, Q13, Q20 (post-migration optimization) | [13 — Migration and Modernization](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) |
+| Q8 (pipeline scan gates) | [14 — Deployment, DevOps and IaC](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md) |
+| Q2 (Synthetics, composite alarms), Q3 (OpenTelemetry tracing), Q4 (Patch Manager), Q5 (auto-remediation) | [15 — Monitoring, Operations and Continuous Improvement](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md) |
+| Q9, Q10, Q11, Q12, Q19 (cost levers) | [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md) |
 
 **Patterns to take away from this paper**
 1. **Fix the root cause with the smallest managed change:** RDS Proxy rather than a bigger database, gateway endpoints rather than fewer NAT gateways, cache policies rather than longer TTLs.

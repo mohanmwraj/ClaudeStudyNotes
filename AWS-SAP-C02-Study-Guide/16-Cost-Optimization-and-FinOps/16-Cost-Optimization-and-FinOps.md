@@ -1,6 +1,6 @@
 # Chapter 16 — Cost Optimization, Cost Visibility & FinOps
 > **Exam mapping:** D1 Task 1.5 (cost optimization & visibility strategies), D2 Task 2.6 (cost optimization strategy for new solutions), D3 Task 3.5 (cost optimization opportunities in existing solutions) — and cost appears as a *constraint* ("most cost-effective", "minimize cost", "reduce spend without…") in roughly a quarter of all questions | **Weight signal:** High | **Study time:** ~7 h
-> [← Previous](15-Monitoring-Operations-and-Continuous-Improvement.md) · [Index](00-README-Start-Here.md) · [Next →](17-Practice-Papers/README.md)
+> [← Previous](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md) · [Index](../00-README-Start-Here.md) · [Next →](../17-Practice-Papers/README.md)
 
 > **Pricing disclaimer.** All dollar figures in this chapter are **US East (N. Virginia) list prices used for illustration** (checked October 2026). Prices change and vary by Region. The exam never asks you to recall a price; it asks you to recognise *which lever is cheaper*. Learn the **ratios and the mechanisms**, not the cents.
 
@@ -1086,7 +1086,7 @@ References: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_
 
 **Frameworks & pricing fundamentals**
 - Cost Optimization Pillar — AWS Well-Architected Framework: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
-- How AWS Pricing Works (whitepaper): https://docs.aws.amazon.com/whitepapers/latest/how-aws-pricing-works/how-aws-pricing-works.html
+- How AWS Pricing Works (whitepaper): https://docs.aws.amazon.com/whitepapers/latest/how-aws-pricing-works/abstract-and-introduction.html
 
 **Purchasing options**
 - What are Savings Plans?: https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html
@@ -1112,7 +1112,7 @@ References: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_
 - AWS Cost Explorer: https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html
 - Forecasting with Cost Explorer: https://docs.aws.amazon.com/cost-management/latest/userguide/ce-forecast.html
 - AWS Data Exports (CUR 2.0, FOCUS): https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html
-- Cloud Intelligence Dashboards on AWS: https://docs.aws.amazon.com/guidance/latest/cloud-intelligence-dashboards/welcome.html
+- Cloud Intelligence Dashboards on AWS: https://docs.aws.amazon.com/guidance/latest/cloud-intelligence-dashboards/getting-started.html
 - AWS Budgets: https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html
 - Budget actions: https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html
 - AWS Cost Anomaly Detection: https://docs.aws.amazon.com/cost-management/latest/userguide/manage-ad.html
@@ -1120,7 +1120,7 @@ References: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_
 - Activating user-defined cost allocation tags: https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html
 - Tag policies: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html
 - Enforce required tag keys in IaC: https://docs.aws.amazon.com/organizations/latest/userguide/enforce-required-tag-keys-iac.html
-- AWS Cost Categories: https://docs.aws.amazon.com/cost-management/latest/userguide/manage-cost-categories.html
+- AWS Cost Categories: https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html
 - AWS Billing Conductor: https://docs.aws.amazon.com/billingconductor/latest/userguide/what-is-billingconductor.html
 - AWS Pricing Calculator: https://docs.aws.amazon.com/pricing-calculator/latest/userguide/what-is-pricing-calculator.html
 - Cost Optimization Hub: https://docs.aws.amazon.com/cost-management/latest/userguide/cost-optimization-hub.html
@@ -1149,4 +1149,4 @@ References: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_
 
 ---
 
-> [← Previous](15-Monitoring-Operations-and-Continuous-Improvement.md) · [Index](00-README-Start-Here.md) · [Next →](17-Practice-Papers/README.md)
+> [← Previous](../15-Monitoring-Operations-and-Continuous-Improvement/15-Monitoring-Operations-and-Continuous-Improvement.md) · [Index](../00-README-Start-Here.md) · [Next →](../17-Practice-Papers/README.md)

@@ -1,6 +1,6 @@
 # Chapter 08 — Storage: S3, EBS, EFS, FSx, Storage Gateway, Backup & Data Transfer
 > **Exam mapping:** D2 Task 2.2, D2 Task 2.5, D2 Task 2.6, D3 Task 3.3, D3 Task 3.5, D4 Task 4.2, D4 Task 4.3 | **Weight signal:** High | **Study time:** ~9 h
-> [← Previous](07-Compute-Containers-and-Serverless.md) · [Index](00-README-Start-Here.md) · [Next →](09-Databases-and-Caching.md)
+> [← Previous](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md) · [Index](../00-README-Start-Here.md) · [Next →](../09-Databases-and-Caching/09-Databases-and-Caching.md)
 
 > **Facts verified on docs.aws.amazon.com / aws.amazon.com as of October 2026.** Where the current AWS service has changed since the SAP-C02 exam was written, both views appear as **"Exam view"** and **"Current reality"**. On exam day, pick the answer that fits the exam's view of the world unless the stem clearly signals the newer feature.
 

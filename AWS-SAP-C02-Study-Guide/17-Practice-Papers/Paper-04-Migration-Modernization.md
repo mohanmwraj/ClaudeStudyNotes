@@ -310,7 +310,7 @@ Which combination of actions meets these requirements? **(Select TWO.)**
 
 **References**
 - https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html
-- https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/welcome.html
+- https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/introduction.html
 
 ---
 
@@ -370,7 +370,7 @@ Which combination of actions meets these requirements? **(Select TWO.)**
 **References**
 - https://docs.aws.amazon.com/mgn/latest/ug/replication-server-settings.html
 - https://docs.aws.amazon.com/mgn/latest/ug/Network-Requirements.html
-- https://docs.aws.amazon.com/mgn/latest/ug/vpc-endpoints.html
+- https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/connect-to-application-migration-service-data-and-control-planes-over-a-private-network.html
 - https://docs.aws.amazon.com/mgn/latest/ug/ec2-launch.html
 - https://docs.aws.amazon.com/mgn/latest/ug/launching-test-gs.html
 
@@ -674,7 +674,7 @@ This is the classic post-rehost **replatform** step.
 **References**
 - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html
 - https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/AutoFailover.html
-- https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/active-standby-broker-deployment.html
+- https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-broker-architecture.html
 
 ---
 
@@ -721,13 +721,13 @@ This is the classic post-rehost **replatform** step.
 - **≥ 16/20 — ready.** Your Domain 4 judgment is at exam level. Keep timing practice going with mixed-domain papers.
 - **13–15 — review weak domains.** Use the answer key's Domain/Task column to find patterns (for example, missing database-migration or file-storage questions) and re-read those chapter sections.
 - **< 13 — re-study the linked chapters**, then retake this paper in a few days:
-  - Migration strategy, discovery, MGN, DMS, mainframe, VMware, App2Container, cutover: [../13-Migration-and-Modernization.md](../13-Migration-and-Modernization.md)
-  - DataSync, Transfer Family, FSx for Windows, FSx for ONTAP, offline transfer: [../08-Storage-and-Data-Transfer.md](../08-Storage-and-Data-Transfer.md)
-  - Aurora, Babelfish, RDS Multi-AZ, ElastiCache, RDS on Outposts: [../09-Databases-and-Caching.md](../09-Databases-and-Caching.md)
-  - Control Tower, OUs, guardrails, account vending: [../02-Multi-Account-Governance.md](../02-Multi-Account-Governance.md)
-  - Direct Connect, Transit Gateway, IPAM, hybrid latency: [../04-Networking-VPC-and-Hybrid-Connectivity.md](../04-Networking-VPC-and-Hybrid-Connectivity.md)
-  - ECS/Fargate, strangler-fig routing, containerization: [../07-Compute-Containers-and-Serverless.md](../07-Compute-Containers-and-Serverless.md)
-  - Amazon MQ vs SQS/SNS/MSK: [../10-Application-Integration-and-Event-Driven.md](../10-Application-Integration-and-Event-Driven.md)
-  - BYOL / License Manager, rightsizing, Savings Plans: [../16-Cost-Optimization-and-FinOps.md](../16-Cost-Optimization-and-FinOps.md)
+  - Migration strategy, discovery, MGN, DMS, mainframe, VMware, App2Container, cutover: [../13-Migration-and-Modernization.md](../13-Migration-and-Modernization/13-Migration-and-Modernization.md)
+  - DataSync, Transfer Family, FSx for Windows, FSx for ONTAP, offline transfer: [../08-Storage-and-Data-Transfer.md](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)
+  - Aurora, Babelfish, RDS Multi-AZ, ElastiCache, RDS on Outposts: [../09-Databases-and-Caching.md](../09-Databases-and-Caching/09-Databases-and-Caching.md)
+  - Control Tower, OUs, guardrails, account vending: [../02-Multi-Account-Governance.md](../02-Multi-Account-Governance/02-Multi-Account-Governance.md)
+  - Direct Connect, Transit Gateway, IPAM, hybrid latency: [../04-Networking-VPC-and-Hybrid-Connectivity.md](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md)
+  - ECS/Fargate, strangler-fig routing, containerization: [../07-Compute-Containers-and-Serverless.md](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md)
+  - Amazon MQ vs SQS/SNS/MSK: [../10-Application-Integration-and-Event-Driven.md](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md)
+  - BYOL / License Manager, rightsizing, Savings Plans: [../16-Cost-Optimization-and-FinOps.md](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md)
 
 > [← Practice papers index](README.md) · [Study guide index](../00-README-Start-Here.md)

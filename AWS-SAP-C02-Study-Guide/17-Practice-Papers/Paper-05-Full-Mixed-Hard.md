@@ -533,7 +533,7 @@ AWS's cross-account CodePipeline walkthrough needs three things:
 
 **References**
 - [Amazon ECS clusters for Fargate (capacity providers, base/weight, Spot interruption)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html)
-- [Capacity provider strategies](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cluster-capacity-providers.html)
+- [Capacity provider strategies](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/capacity-launch-type-comparison.html)
 
 ---
 
@@ -651,7 +651,7 @@ AWS's cross-account CodePipeline walkthrough needs three things:
 
 **References**
 - [Reserved Instances and Savings Plans discount sharing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-turn-off.html)
-- [Organizing costs using AWS Cost Categories](https://docs.aws.amazon.com/cost-management/latest/userguide/manage-cost-categories.html)
+- [Organizing costs using AWS Cost Categories](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html)
 - [AWS Data Exports (CUR 2.0)](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 
 ---
@@ -730,7 +730,7 @@ AWS's cross-account CodePipeline walkthrough needs three things:
 
 **References**
 - [Session management (AWS caching best practices)](https://aws.amazon.com/caching/session-management/)
-- [Sticky sessions for your Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html)
+- [Sticky sessions for your Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html#sticky-sessions)
 - [Target groups for ALBs (routing algorithms, least outstanding requests)](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html)
 - [What is Amazon ElastiCache?](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.html)
 
@@ -748,18 +748,18 @@ AWS's cross-account CodePipeline walkthrough needs three things:
 
 | Questions | Theme | Re-study |
 |---|---|---|
-| Q5, Q9, Q10, Q17 | Organizations, SCPs/RCPs, StackSets, Service Catalog, billing | [02 — Multi-Account Governance](../02-Multi-Account-Governance.md) · [03 — Identity and Access Management](../03-Identity-and-Access-Management.md) |
-| Q6, Q7, Q8, Q16 | Cloud WAN, transit gateway, private NAT gateway, PrivateLink, VPC Lattice, data transfer | [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity.md) |
-| Q1, Q3, Q16 | Route 53 routing and health checks, CloudFront | [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery.md) |
-| Q4, Q5 | KMS, S3 encryption, data perimeter | [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection.md) |
-| Q12, Q19, Q20 | ECS capacity providers, Lambda concurrency, API Gateway, stateless tiers | [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless.md) |
-| Q3, Q4 | S3 replication, Multi-Region Access Points | [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer.md) |
-| Q1, Q2, Q20 | DynamoDB global tables, Aurora Global Database, ElastiCache | [09 — Databases and Caching](../09-Databases-and-Caching.md) |
-| Q13 | EventBridge global endpoints | [10 — Application Integration and Event-Driven](../10-Application-Integration-and-Event-Driven.md) |
-| Q1, Q2, Q3, Q13, Q14, Q15 | Multi-Region DR, DRS, FIS, Resilience Hub | [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery.md) |
-| Q7, Q14, Q18, Q20 | Migration targets, hybrid edge, modernization | [13 — Migration and Modernization](../13-Migration-and-Modernization.md) |
-| Q9, Q10, Q11 | StackSets, Service Catalog, cross-account CI/CD | [14 — Deployment, DevOps and IaC](../14-Deployment-DevOps-and-IaC.md) |
-| Q12, Q16, Q17 | Spot, data transfer cost, commitment sharing, chargeback | [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps.md) |
+| Q5, Q9, Q10, Q17 | Organizations, SCPs/RCPs, StackSets, Service Catalog, billing | [02 — Multi-Account Governance](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) · [03 — Identity and Access Management](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md) |
+| Q6, Q7, Q8, Q16 | Cloud WAN, transit gateway, private NAT gateway, PrivateLink, VPC Lattice, data transfer | [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) |
+| Q1, Q3, Q16 | Route 53 routing and health checks, CloudFront | [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) |
+| Q4, Q5 | KMS, S3 encryption, data perimeter | [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md) |
+| Q12, Q19, Q20 | ECS capacity providers, Lambda concurrency, API Gateway, stateless tiers | [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md) |
+| Q3, Q4 | S3 replication, Multi-Region Access Points | [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md) |
+| Q1, Q2, Q20 | DynamoDB global tables, Aurora Global Database, ElastiCache | [09 — Databases and Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md) |
+| Q13 | EventBridge global endpoints | [10 — Application Integration and Event-Driven](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md) |
+| Q1, Q2, Q3, Q13, Q14, Q15 | Multi-Region DR, DRS, FIS, Resilience Hub | [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md) |
+| Q7, Q14, Q18, Q20 | Migration targets, hybrid edge, modernization | [13 — Migration and Modernization](../13-Migration-and-Modernization/13-Migration-and-Modernization.md) |
+| Q9, Q10, Q11 | StackSets, Service Catalog, cross-account CI/CD | [14 — Deployment, DevOps and IaC](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md) |
+| Q12, Q16, Q17 | Spot, data transfer cost, commitment sharing, chargeback | [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md) |
 
 > **Pattern check.** If most of your misses were **multi-select** questions where you got one option right and one wrong, your knowledge is there but your elimination isn't. For each option, find the **one detail** that makes it wrong: a quota (29 s, 120 s), a default (MREC, `isolate-attachments: false`), or a scope rule (SCPs and RCPs skip the management account, an alias works only in its own account).
 

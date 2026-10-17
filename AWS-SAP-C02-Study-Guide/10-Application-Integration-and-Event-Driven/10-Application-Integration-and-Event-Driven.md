@@ -1,7 +1,7 @@
 # Chapter 10 — Application Integration: APIs, Messaging, Events & Workflows
 
 > **Exam mapping:** D2 Task 2.1, D2 Task 2.4, D2 Task 2.5, D3 Task 3.3, D3 Task 3.4, D4 Task 4.4 | **Weight signal:** High | **Study time:** ~7 h
-> [← Previous](09-Databases-and-Caching.md) · [Index](00-README-Start-Here.md) · [Next →](11-Analytics-Streaming-and-AI-ML.md)
+> [← Previous](../09-Databases-and-Caching/09-Databases-and-Caching.md) · [Index](../00-README-Start-Here.md) · [Next →](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md)
 
 ---
 
@@ -18,7 +18,7 @@ At Associate level you learned "SQS decouples, SNS fans out." At Professional le
 | Expose backend to partners with quotas, keys, private access, long-running requests | **API Gateway REST** (usage plans, private endpoint, resource policy, WAF, caching) vs HTTP API vs AppSync; async pattern when > 29 s |
 | Migrate on-prem JMS/AMQP/MQTT apps with minimal code change | **Amazon MQ** (lift-and-shift) vs re-architect to SQS/SNS |
 | Multi-account / multi-Region event routing and DR | EventBridge cross-account/cross-Region targets, **global endpoints**, archive & replay; SNS cross-account subscriptions |
-| Modernize a monolith gradually | **Strangler fig** behind API Gateway / ALB, events via EventBridge (see [Chapter 13](13-Migration-and-Modernization.md)) |
+| Modernize a monolith gradually | **Strangler fig** behind API Gateway / ALB, events via EventBridge (see [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md)) |
 
 The decisive skills:
 
@@ -505,7 +505,7 @@ Clients ─▶ API Gateway / ALB (path-based routing)
               ├── /orders/*  ─▶ new microservice (Lambda/ECS) ──events──▶ EventBridge
               └── /*         ─▶ legacy monolith (VPC link / private integration)
 ```
-Route functionality piece by piece to new services; **events** (EventBridge, or CDC from the legacy DB) keep old and new data in sync; retire the monolith gradually. Pair with **AWS Migration Hub Refactor Spaces** (manages the routing and network plumbing). Full treatment in [Chapter 13](13-Migration-and-Modernization.md).
+Route functionality piece by piece to new services; **events** (EventBridge, or CDC from the legacy DB) keep old and new data in sync; retire the monolith gradually. Pair with **AWS Migration Hub Refactor Spaces** (manages the routing and network plumbing). Full treatment in [Chapter 13](../13-Migration-and-Modernization/13-Migration-and-Modernization.md).
 
 ### 3.13 Multi-account event hub
 ```text
@@ -521,7 +521,7 @@ Watch the **no-multi-hop** behaviour; use direct cross-account targets (2025) to
 - **EventBridge global endpoints** for ingestion failover (RTO/RPO ~6–7 min), with event replication.
 - SNS/SQS are Regional: for DR, deploy the stack in both Regions, have producers publish to the active Region (Route 53/ARC routing), or replicate by subscribing a queue in Region B to the topic in Region A (SNS supports cross-Region SQS subscriptions).
 - Step Functions are Regional: deploy state machines via IaC in both Regions; long-running executions don't migrate.
-- See [Chapter 12](12-Resilience-HA-and-Disaster-Recovery.md).
+- See [Chapter 12](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md).
 
 ---
 
@@ -938,4 +938,4 @@ Watch the **no-multi-hop** behaviour; use direct cross-account targets (2025) to
 
 ---
 
-[← Previous: Chapter 9 — Databases & Caching](09-Databases-and-Caching.md) · [Index](00-README-Start-Here.md) · [Next: Chapter 11 — Analytics, Streaming & AI/ML →](11-Analytics-Streaming-and-AI-ML.md)
+[← Previous: Chapter 9 — Databases & Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md) · [Index](../00-README-Start-Here.md) · [Next: Chapter 11 — Analytics, Streaming & AI/ML →](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md)

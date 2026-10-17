@@ -288,7 +288,7 @@ Which approach meets the deadline?
 **Concept to remember:** Region-deny SCP = `Deny` + `NotAction` (global services) + `aws:RequestedRegion` + `ArnNotLike aws:PrincipalARN` (exempt roles). SCPs do not affect the management account or service-linked roles. Control Tower offers the same thing as its Region deny control.
 
 **References:**
-- [SCP examples — deny access based on requested Region](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html)
+- [SCP examples — deny access based on requested Region](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html)
 - [Service control policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)
 - [Global condition keys — aws:RequestedRegion, aws:PrincipalARN](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html)
 
@@ -477,7 +477,7 @@ Which approach meets the deadline?
 
 **References:**
 - [Permissions boundaries for IAM entities](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
-- [IAM condition keys (iam:PermissionsBoundary)](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsidentityandaccessmanagementiam.html)
+- [IAM condition keys (iam:PermissionsBoundary)](https://docs.aws.amazon.com/service-authorization/latest/reference/list_iam.html)
 - [Policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
 
 ---
@@ -657,7 +657,7 @@ Which approach meets the deadline?
 
 **References:**
 - [What is AWS Transform MGN (Application Migration Service)?](https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html)
-- [Migrating with AWS MGN — launching test and cutover instances](https://docs.aws.amazon.com/mgn/latest/ug/launching-servers.html)
+- [Migrating with AWS MGN — launching test and cutover instances](https://docs.aws.amazon.com/mgn/latest/ug/launching-target-servers.html)
 - [VM Import/Export](https://docs.aws.amazon.com/vm-import/latest/userguide/what-is-vmimport.html)
 
 ---
@@ -718,17 +718,17 @@ Which approach meets the deadline?
 | **< 13 / 20** | Re-study needed | Work through the chapters below for every question you missed, then retake this paper in 48 hours without looking at the solutions. |
 
 **Chapters to re-study, by question:**
-- Q1, Q2, Q12 (SCPs, Control Tower, tagging and chargeback): [02 — Multi-Account Governance](../02-Multi-Account-Governance.md)
-- Q9, Q10 (Identity Center, permissions boundaries): [03 — Identity and Access Management](../03-Identity-and-Access-Management.md)
-- Q3–Q7 (VPC sharing, GWLB/TGW, Direct Connect, VPN, PrivateLink): [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity.md)
-- Q8 (Route 53 Resolver hybrid DNS): [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery.md)
-- Q11 (CloudTrail, Object Lock, KMS): [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection.md)
-- Q15 (Lambda concurrency): [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless.md)
-- Q17, Q20 (S3 storage classes, data transfer): [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer.md)
-- Q14, Q19 (Aurora Global Database, DMS): [09 — Databases and Caching](../09-Databases-and-Caching.md)
-- Q13, Q14 (AWS Backup, DR strategies): [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery.md)
-- Q18, Q19, Q20 (MGN, heterogeneous DB migration, transfer planning): [13 — Migration and Modernization](../13-Migration-and-Modernization.md)
-- Q12, Q16, Q17 (cost allocation, Savings Plans, storage cost): [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps.md)
+- Q1, Q2, Q12 (SCPs, Control Tower, tagging and chargeback): [02 — Multi-Account Governance](../02-Multi-Account-Governance/02-Multi-Account-Governance.md)
+- Q9, Q10 (Identity Center, permissions boundaries): [03 — Identity and Access Management](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md)
+- Q3–Q7 (VPC sharing, GWLB/TGW, Direct Connect, VPN, PrivateLink): [04 — Networking, VPC and Hybrid Connectivity](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md)
+- Q8 (Route 53 Resolver hybrid DNS): [05 — Edge, DNS and Content Delivery](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md)
+- Q11 (CloudTrail, Object Lock, KMS): [06 — Security, Data Protection and Threat Detection](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md)
+- Q15 (Lambda concurrency): [07 — Compute, Containers and Serverless](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md)
+- Q17, Q20 (S3 storage classes, data transfer): [08 — Storage and Data Transfer](../08-Storage-and-Data-Transfer/08-Storage-and-Data-Transfer.md)
+- Q14, Q19 (Aurora Global Database, DMS): [09 — Databases and Caching](../09-Databases-and-Caching/09-Databases-and-Caching.md)
+- Q13, Q14 (AWS Backup, DR strategies): [12 — Resilience, HA and Disaster Recovery](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md)
+- Q18, Q19, Q20 (MGN, heterogeneous DB migration, transfer planning): [13 — Migration and Modernization](../13-Migration-and-Modernization/13-Migration-and-Modernization.md)
+- Q12, Q16, Q17 (cost allocation, Savings Plans, storage cost): [16 — Cost Optimization and FinOps](../16-Cost-Optimization-and-FinOps/16-Cost-Optimization-and-FinOps.md)
 
 > [← Practice Papers index](README.md) · [Study Guide start](../00-README-Start-Here.md)
 

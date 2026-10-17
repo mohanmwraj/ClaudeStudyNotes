@@ -1,6 +1,6 @@
 # Chapter 05 — Edge Services: Route 53, CloudFront, Global Accelerator & Edge Compute
 > **Exam mapping:** D1 Task 1.1, D1 Task 1.3, D2 Task 2.2, D2 Task 2.4, D2 Task 2.5, D3 Task 3.3 | **Weight signal:** High | **Study time:** ~6 h
-> [← Previous](04-Networking-VPC-and-Hybrid-Connectivity.md) · [Index](00-README-Start-Here.md) · [Next →](06-Security-Data-Protection-and-Threat-Detection.md)
+> [← Previous](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) · [Index](../00-README-Start-Here.md) · [Next →](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md)
 
 ---
 
@@ -115,7 +115,7 @@ Key details:
   3. Optionally delete the authorization afterwards (the association remains).
 - **Route 53 Profiles** (newer): bundle PHZs, Resolver rules and DNS Firewall rule groups into a Profile and **share it via AWS RAM** to accounts/OUs, then associate the Profile with VPCs — far less operational overhead at scale than per-VPC authorizations. Expect this as the "least operational overhead" answer for hundreds of VPCs.
 - **Overlapping namespaces:** if a PHZ and a Resolver forwarding rule both match a name, the **forwarding rule wins**; between overlapping PHZs (e.g., `example.com` and `dev.example.com`) the **most specific** wins. If a PHZ matches the name but doesn't contain the record, Resolver returns NXDOMAIN — it does not fall back to public DNS.
-- **Split-horizon (split-view) DNS:** create a **public** and a **private** hosted zone with the **same name**. VPC clients get private answers (internal ALB, private IPs); internet clients get public answers. Classic use: `app.example.com` resolves to a private endpoint inside the VPC and to CloudFront externally. On-premises clients get the private view only if they forward to a Route 53 Resolver **inbound endpoint** (see [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md) for Resolver inbound/outbound endpoints, forwarding rules, rule sharing via RAM, and DNS Firewall).
+- **Split-horizon (split-view) DNS:** create a **public** and a **private** hosted zone with the **same name**. VPC clients get private answers (internal ALB, private IPs); internet clients get public answers. Classic use: `app.example.com` resolves to a private endpoint inside the VPC and to CloudFront externally. On-premises clients get the private view only if they forward to a Route 53 Resolver **inbound endpoint** (see [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) for Resolver inbound/outbound endpoints, forwarding rules, rule sharing via RAM, and DNS Firewall).
 - **Interface VPC endpoints** with private DNS rely on AWS-managed PHZs; in hub-and-spoke designs you disable private DNS on spoke endpoints and create your own PHZ for the service name associated to all VPCs (covered in ch04).
 
 ### 2.5 DNSSEC
@@ -128,7 +128,7 @@ Key details:
 
 ### 2.6 Route 53 Resolver (pointer)
 
-Resolver (VPC+2) answers for PHZs, VPC DNS and public names. **Inbound endpoints** let on-prem resolve AWS private names; **outbound endpoints + forwarding rules** let VPCs resolve on-prem names; rules are shared via RAM; **Resolver DNS Firewall** filters outbound DNS (exfiltration control); **Resolver query logging** to CloudWatch Logs/S3/Firehose. Full treatment: [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
+Resolver (VPC+2) answers for PHZs, VPC DNS and public names. **Inbound endpoints** let on-prem resolve AWS private names; **outbound endpoints + forwarding rules** let VPCs resolve on-prem names; rules are shared via RAM; **Resolver DNS Firewall** filters outbound DNS (exfiltration control); **Resolver query logging** to CloudWatch Logs/S3/Firehose. Full treatment: [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).
 
 ### 2.7 Amazon Application Recovery Controller (ARC) — formerly Route 53 ARC
 
@@ -328,7 +328,7 @@ A **network-layer (Layer 4) accelerator**. Clients connect to **two static anyca
 
 ### 2.15 Edge security: AWS WAF and AWS Shield (brief — details in ch06)
 
-- **AWS WAF** attaches to **CloudFront** (web ACL in **Global** scope, managed from us-east-1) and, in Regional scope, to **ALB, API Gateway REST APIs, AppSync, Cognito user pools, App Runner, Verified Access**. Rules: AWS Managed Rules (core rule set, known bad inputs, SQLi, IP reputation, **Bot Control**, **account takeover / account creation fraud prevention**), rate-based rules, geo match, IP sets, regex, header checks, CAPTCHA/Challenge. WAF on CloudFront blocks attacks at the edge before they consume origin capacity. **Firewall Manager** enforces WAF/Shield policies across an Organization. See [Chapter 06](06-Security-Data-Protection-and-Threat-Detection.md).
+- **AWS WAF** attaches to **CloudFront** (web ACL in **Global** scope, managed from us-east-1) and, in Regional scope, to **ALB, API Gateway REST APIs, AppSync, Cognito user pools, App Runner, Verified Access**. Rules: AWS Managed Rules (core rule set, known bad inputs, SQLi, IP reputation, **Bot Control**, **account takeover / account creation fraud prevention**), rate-based rules, geo match, IP sets, regex, header checks, CAPTCHA/Challenge. WAF on CloudFront blocks attacks at the edge before they consume origin capacity. **Firewall Manager** enforces WAF/Shield policies across an Organization. See [Chapter 06](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md).
 - **Shield Standard:** automatic, free L3/L4 protection for all customers; strongest on CloudFront, Route 53 and Global Accelerator because of their edge footprint.
 - **Shield Advanced:** paid subscription per Organization (monthly fee with a 1-year commitment, plus data-transfer usage fees) for **CloudFront, Route 53 hosted zones, Global Accelerator, ELB and EC2 Elastic IPs**: enhanced detection, **automatic application-layer DDoS mitigation** (it manages WAF rules for you), **Shield Response Team (SRT)** 24/7, **cost protection** (credits for scaling charges caused by a DDoS event), health-based detection with Route 53 health checks, WAF fees included for protected resources.
 - Phrasing: "protection from **DDoS-driven cost spikes** and **24/7 expert response**" → **Shield Advanced**. "Block SQL injection/XSS/bots at the edge" → **WAF on CloudFront**.
@@ -964,4 +964,4 @@ References: [Restrict access to an Amazon S3 origin](https://docs.aws.amazon.com
 - [AWS Best Practices for DDoS Resiliency](https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/aws-best-practices-ddos-resiliency.html)
 
 ---
-[← Previous](04-Networking-VPC-and-Hybrid-Connectivity.md) · [Index](00-README-Start-Here.md) · [Next →](06-Security-Data-Protection-and-Threat-Detection.md)
+[← Previous](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md) · [Index](../00-README-Start-Here.md) · [Next →](../06-Security-Data-Protection-and-Threat-Detection/06-Security-Data-Protection-and-Threat-Detection.md)

@@ -1,6 +1,6 @@
 # Chapter 12 — Reliability, High Availability & Disaster Recovery
 > **Exam mapping:** D1 Task 1.3 (reliable & resilient architectures), D2 Task 2.2 (business continuity), D2 Task 2.4 (reliability), D3 Task 3.4 (improve reliability) | **Weight signal:** Very High: expect 8–12 questions where resilience or DR decides the answer | **Study time:** ~7 h
-> [← Previous](11-Analytics-Streaming-and-AI-ML.md) · [Index](00-README-Start-Here.md) · [Next →](13-Migration-and-Modernization.md)
+> [← Previous](../11-Analytics-Streaming-and-AI-ML/11-Analytics-Streaming-and-AI-ML.md) · [Index](../00-README-Start-Here.md) · [Next →](../13-Migration-and-Modernization/13-Migration-and-Modernization.md)
 
 ---
 
@@ -56,7 +56,7 @@ SAP-C02 rarely asks "what is Multi-AZ?". It gives you a business with an **RTO, 
 Key "foundations" points that show up as distractors:
 - **Service quotas** are per account **per Region**. A DR Region with default quotas cannot absorb production load. Request increases ahead of time; use **Service Quotas** + **quota request templates** in AWS Organizations so new accounts start with the right quotas.
 - **IP address planning**: non-overlapping CIDRs across Regions and on-prem so that DR VPCs can peer or attach to Transit Gateway.
-- **Redundant connectivity**: Direct Connect resiliency (two locations, two connections each for maximum resiliency) plus VPN backup. (See [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).)
+- **Redundant connectivity**: Direct Connect resiliency (two locations, two connections each for maximum resiliency) plus VPN backup. (See [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).)
 
 ### 2.3 Availability math
 

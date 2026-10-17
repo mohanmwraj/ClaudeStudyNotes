@@ -1,6 +1,6 @@
 # Chapter 06 — Security: Encryption, Secrets, Edge Protection, Detection & Compliance
 > **Exam mapping:** D1 Task 1.2, D2 Task 2.3, D3 Task 3.2 | **Weight signal:** High | **Study time:** ~7 h
-> [← Previous](05-Edge-DNS-and-Content-Delivery.md) · [Index](00-README-Start-Here.md) · [Next →](07-Compute-Containers-and-Serverless.md)
+> [← Previous](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) · [Index](../00-README-Start-Here.md) · [Next →](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md)
 
 ---
 
@@ -300,7 +300,7 @@ Rules to memorize:
 - **ALB/NLB/CloudFront TLS policies** control protocol and ciphers. CloudFront viewer protocol policy `redirect-to-https` / `https-only`, and origin protocol policy `https-only` for end-to-end encryption.
 - **RDS:** `rds.force_ssl=1` (PostgreSQL/SQL Server) or `require_secure_transport=ON` (MySQL/MariaDB).
 - **Inter-node/physical:** AWS encrypts traffic between AZs and across Regions on the AWS backbone, and Nitro instances can encrypt instance-to-instance traffic automatically. "Must encrypt in transit inside the VPC" still often means TLS at the application level, or **VPC Lattice / service mesh mTLS**.
-- **Hybrid:** Site-to-Site VPN (IPsec), or **Direct Connect + MACsec** (dedicated 10/100 Gbps at supported locations) or VPN over DX for encryption on the private link. See [Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md).
+- **Hybrid:** Site-to-Site VPN (IPsec), or **Direct Connect + MACsec** (dedicated 10/100 Gbps at supported locations) or VPN over DX for encryption on the private link. See [Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md).
 
 ### 2.7 Perimeter: AWS WAF, Shield, Firewall Manager
 
@@ -475,7 +475,7 @@ Rules to memorize:
 
 ### 2.11 Data perimeter overview
 
-A **data perimeter** ensures *only trusted identities* access *trusted resources* from *expected networks*. It's built with three policy types and a small set of global condition keys. Full treatment is in [Chapter 02](02-Multi-Account-Governance.md) and [Chapter 03](03-Identity-and-Access-Management.md).
+A **data perimeter** ensures *only trusted identities* access *trusted resources* from *expected networks*. It's built with three policy types and a small set of global condition keys. Full treatment is in [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md) and [Chapter 03](../03-Identity-and-Access-Management/03-Identity-and-Access-Management.md).
 
 | Perimeter | Control | Key conditions |
 |---|---|---|
@@ -575,7 +575,7 @@ The security services in this chapter **monitor** the perimeter: CloudTrail **ne
                                    App in private subnets
  Firewall Manager (org admin) enforces the WAF policy + Shield Advanced on every CloudFront/ALB
 ```
-- Stops attackers bypassing CloudFront and hitting the ALB directly. Use the **CloudFront managed prefix list** in the ALB security group, and/or a secret header checked by WAF on the ALB. Alternatively use **CloudFront VPC origins** to keep the ALB private (see [Chapter 05](05-Edge-DNS-and-Content-Delivery.md)).
+- Stops attackers bypassing CloudFront and hitting the ALB directly. Use the **CloudFront managed prefix list** in the ALB security group, and/or a secret header checked by WAF on the ALB. Alternatively use **CloudFront VPC origins** to keep the ALB private (see [Chapter 05](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md)).
 
 ### Pattern 6 — Tamper-evident and tamper-proof audit logging
 
@@ -675,7 +675,7 @@ The security services in this chapter **monitor** the perimeter: CloudTrail **ne
 | L7 filtering (SQLi, XSS, bad bots, rate limiting, geo) on CloudFront/ALB/API GW/AppSync/Cognito | **AWS WAF** |
 | DDoS expert response, cost protection, L7 auto-mitigation, NLB/EIP DDoS protection | **Shield Advanced** |
 | Enforce WAF/Shield/SG/Network Firewall/DNS Firewall **across all accounts automatically** | **Firewall Manager** |
-| Stateful L3–L7 inspection of VPC traffic (IDS/IPS, domain allow lists for egress, Suricata rules) | **AWS Network Firewall** ([Chapter 04](04-Networking-VPC-and-Hybrid-Connectivity.md)) |
+| Stateful L3–L7 inspection of VPC traffic (IDS/IPS, domain allow lists for egress, Suricata rules) | **AWS Network Firewall** ([Chapter 04](../04-Networking-VPC-and-Hybrid-Connectivity/04-Networking-VPC-and-Hybrid-Connectivity.md)) |
 | Block DNS queries to malicious domains from VPCs | **Route 53 Resolver DNS Firewall** |
 | Instance-level stateful allow rules | Security groups |
 | Subnet-level stateless allow/**deny** (block specific IPs at subnet) | NACLs |
@@ -956,7 +956,7 @@ The security services in this chapter **monitor** the perimeter: CloudTrail **ne
 - **D:** Terminating destroys volatile and disk evidence. Isolate and preserve first.
 - **E:** GuardDuty is detection-only. Threat lists add custom indicators for **detection**; they don't block traffic.
 - **F:** Config evaluates resource configuration, not GuardDuty findings. It would also need per-account rules, and stopping the instance loses memory evidence.
-- **References:** [GuardDuty with EventBridge](https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings_eventbridge.html) · [Remediating a compromised EC2 instance](https://docs.aws.amazon.com/guardduty/latest/ug/compromised-ec2.html) · [AWS Security Incident Response Guide](https://docs.aws.amazon.com/whitepapers/latest/aws-security-incident-response-guide/aws-security-incident-response-guide.html)
+- **References:** [GuardDuty with EventBridge](https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings_eventbridge.html) · [Remediating a compromised EC2 instance](https://docs.aws.amazon.com/guardduty/latest/ug/compromised-ec2.html) · [AWS Security Incident Response Guide](https://docs.aws.amazon.com/pdfs/whitepapers/latest/aws-security-incident-response-guide/aws-security-incident-response-guide.pdf)
 </details>
 
 <details><summary><strong>Q5</strong> Show answer</summary>
@@ -1080,9 +1080,9 @@ The security services in this chapter **monitor** the perimeter: CloudTrail **ne
 - [AWS Artifact](https://docs.aws.amazon.com/artifact/latest/ug/what-is-aws-artifact.html)
 - [AWS Audit Manager availability change](https://docs.aws.amazon.com/audit-manager/latest/userguide/audit-manager-availability-change.html)
 - [AWS Service Availability Updates, March 2026](https://aws.amazon.com/about-aws/whats-new/2026/03/aws-service-availability)
-- [AWS Security Incident Response Guide](https://docs.aws.amazon.com/whitepapers/latest/aws-security-incident-response-guide/aws-security-incident-response-guide.html)
-- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/welcome.html)
+- [AWS Security Incident Response Guide](https://docs.aws.amazon.com/pdfs/whitepapers/latest/aws-security-incident-response-guide/aws-security-incident-response-guide.pdf)
+- [AWS Security Reference Architecture (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/introduction.html)
 - [Building a data perimeter on AWS (whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/building-a-data-perimeter-on-aws/building-a-data-perimeter-on-aws.html)
 
 ---
-[← Previous: Chapter 05 — Edge](05-Edge-DNS-and-Content-Delivery.md) · [Index](00-README-Start-Here.md) · [Next: Chapter 07 — Compute →](07-Compute-Containers-and-Serverless.md)
+[← Previous: Chapter 05 — Edge](../05-Edge-DNS-and-Content-Delivery/05-Edge-DNS-and-Content-Delivery.md) · [Index](../00-README-Start-Here.md) · [Next: Chapter 07 — Compute →](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md)

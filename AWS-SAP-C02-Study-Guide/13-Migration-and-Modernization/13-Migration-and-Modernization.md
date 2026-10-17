@@ -1,7 +1,7 @@
 # Chapter 13 — Migration & Modernization (Domain 4)
 
 > **Exam mapping:** D4 Task 4.1 (select existing workloads and processes for potential migration), D4 Task 4.2 (determine the optimal migration approach), D4 Task 4.3 (determine a new architecture for existing workloads), D4 Task 4.4 (determine opportunities for modernization and enhancements) | **Weight signal:** High (Domain 4 = 20% ≈ 13 scored questions; migration also appears inside D1/D2 stems) | **Study time:** ~8 h
-> [← Previous](12-Resilience-HA-and-Disaster-Recovery.md) · [Index](00-README-Start-Here.md) · [Next →](14-Deployment-DevOps-and-IaC.md)
+> [← Previous](../12-Resilience-HA-and-Disaster-Recovery/12-Resilience-HA-and-Disaster-Recovery.md) · [Index](../00-README-Start-Here.md) · [Next →](../14-Deployment-DevOps-and-IaC/14-Deployment-DevOps-and-IaC.md)
 
 ---
 
@@ -104,7 +104,7 @@ A structured, workshop-based assessment (run by AWS or a partner) that scores re
 
 Business-case components to remember: on-prem costs (hardware refresh, facilities, power, licences, staff), migration costs (dual running, tooling, partners, training), AWS run costs (rightsized, with Savings Plans), and **non-cost benefits** (agility, resilience, staff productivity, sustainability).
 
-#### Landing zone readiness (link: [Chapter 02](02-Multi-Account-Governance.md))
+#### Landing zone readiness (link: [Chapter 02](../02-Multi-Account-Governance/02-Multi-Account-Governance.md))
 
 **Nothing migrates until the landing zone exists.** Minimum before wave 1: multi-account structure (AWS Organizations / Control Tower), SCPs and guardrails, IAM Identity Center federation, centralised logging (CloudTrail org trail, Config), network (Transit Gateway, DX/VPN, IP plan that doesn't overlap on-prem, Route 53 Resolver hybrid DNS), security baseline (GuardDuty, Security Hub, KMS keys), backup policy, tagging standard, and account vending for migration-wave accounts. Exam trap: answers that start replicating servers before connectivity/identity/logging exist are wrong when the stem emphasises governance.
 
@@ -518,7 +518,7 @@ Put a **routing facade** in front of the legacy app, then carve capabilities out
 - Decompose by **business capability**/subdomain, with **database-per-service** ownership (avoid shared-database coupling). Services communicate via APIs and **events**. Use the **saga** pattern (Step Functions) for distributed transactions and a **transactional outbox** for reliable event publishing.
 - Don't over-decompose: deployment, observability and network-call overhead all grow with service count.
 
-#### Containers (see [Chapter 07](07-Compute-Containers-and-Serverless.md))
+#### Containers (see [Chapter 07](../07-Compute-Containers-and-Serverless/07-Compute-Containers-and-Serverless.md))
 
 | Option | When |
 |---|---|
@@ -527,12 +527,12 @@ Put a **routing facade** in front of the legacy app, then carve capabilities out
 | **EKS (Fargate, managed node groups, or Auto Mode)** | Kubernetes standardisation and portability; existing K8s skills/tooling, Helm; multi-cloud consistency |
 | **App Runner** | Simple web apps/APIs from source or image with minimal config. *Closed to new customers since 30 Apr 2026.* Still a valid exam answer; today use ECS on Fargate |
 
-#### Serverless and event-driven (see [Chapter 10](10-Application-Integration-and-Event-Driven.md))
+#### Serverless and event-driven (see [Chapter 10](../10-Application-Integration-and-Event-Driven/10-Application-Integration-and-Event-Driven.md))
 
 - **Lambda + API Gateway + DynamoDB** for request/response, **Step Functions** for orchestration, **EventBridge** for event routing between domains, **SQS/SNS** to decouple producers from consumers and absorb spikes, **Kinesis/MSK** for streams.
 - Replace cron servers with **EventBridge Scheduler**. Replace file-drop polling with **S3 event notifications**.
 
-#### Purpose-built databases (see [Chapter 09](09-Databases-and-Caching.md))
+#### Purpose-built databases (see [Chapter 09](../09-Databases-and-Caching/09-Databases-and-Caching.md))
 
 | Need | Service |
 |---|---|
@@ -1030,7 +1030,7 @@ This is the **strangler fig** pattern. The ALB acts as the routing facade, a sin
 - **C** is wrong: containerizing the whole monolith doesn't let claims intake scale or release independently, and EKS node groups add operational overhead.
 - **D** is wrong: vertical scaling is not modernization and doesn't enable independent releases.
 
-References: [Strangler fig pattern (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/strangler-fig.html) · [ALB listener rules](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-update-rules.html)
+References: [Strangler fig pattern (Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/strangler-fig.html) · [ALB listener rules](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html)
 </details>
 
 <details><summary>Show answer — Q8</summary>
@@ -1056,7 +1056,7 @@ References: [License Manager host resource groups](https://docs.aws.amazon.com/l
 - **D** is wrong: a long TTL delays both cutover and rollback propagation.
 - **E** is wrong: shipping a device takes days, and the data would be stale.
 
-References: [DMS ongoing replication best practices](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_BestPractices.html) · [MGN launching cutover instances](https://docs.aws.amazon.com/mgn/latest/ug/launching-cutover-gs.html) · [Route 53 TTL](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-basic.html)
+References: [DMS ongoing replication best practices](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_BestPractices.html) · [MGN launching cutover instances](https://docs.aws.amazon.com/mgn/latest/ug/launch-cutover-gs.html) · [Route 53 TTL](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-basic.html)
 </details>
 
 <details><summary>Show answer — Q10</summary>
@@ -1077,9 +1077,9 @@ References: [AWS Mainframe Modernization](https://docs.aws.amazon.com/m2/latest/
 
 **Strategy & methodology**
 - [AWS Prescriptive Guidance — Large migration guide: migration strategies (7 Rs)](https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html)
-- [AWS Prescriptive Guidance — Migration strategies and phases](https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/welcome.html)
+- [AWS Prescriptive Guidance — Migration strategies and phases](https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/introduction.html)
 - [AWS Cloud Adoption Framework (whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/welcome.html)
-- [Best practices for assessing applications to be retired](https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-retiring-applications/)
+- [Best practices for assessing applications to be retired](https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-retiring-applications/introduction.html)
 - [AWS Migration Acceleration Program](https://aws.amazon.com/migration-acceleration-program/)
 - [Migration Evaluator](https://aws.amazon.com/migration-evaluator/)
 
