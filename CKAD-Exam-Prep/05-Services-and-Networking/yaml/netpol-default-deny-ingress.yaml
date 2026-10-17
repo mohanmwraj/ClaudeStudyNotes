@@ -1,0 +1,14 @@
+# Default-deny INGRESS for every Pod in the namespace. Egress is not affected.
+# Afterwards only traffic allowed by some other policy (or coming from the Pod's own node, e.g. kubelet
+# probes) reaches the Pods. Replies to connections the Pods open themselves still work (policies are stateful).
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-default-deny-ingress.yaml
+# Test: kubectl -n netpol-demo exec frontend -- wget -qO- --timeout=2 http://api     -> times out
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: netpol-demo          # a policy only ever selects Pods in its own namespace
+spec:
+  podSelector: {}                 # {} = every Pod in the namespace
+  policyTypes:
+  - Ingress                       # isolated for ingress; no "ingress:" rules -> nothing is allowed in

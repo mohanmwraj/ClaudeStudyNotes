@@ -1,0 +1,35 @@
+# Liveness probe with an httpGet handler, a named port and a custom header.
+# Apply:   kubectl apply -f probe-liveness-http.yaml
+# Observe: kubectl describe pod liveness-http | grep -A1 Liveness
+# Break it on purpose and watch RESTARTS climb (the start command recreates the file, so it heals):
+#   kubectl exec liveness-http -- rm /usr/share/nginx/html/healthz
+#   kubectl get pod liveness-http -w
+#   kubectl get events --field-selector involvedObject.name=liveness-http,reason=Unhealthy
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-http
+  labels:
+    app: liveness-http
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    # write a tiny dedicated health endpoint, then run nginx in the foreground (PID 1)
+    command: ["sh", "-c", "echo ok > /usr/share/nginx/html/healthz && exec nginx -g 'daemon off;'"]
+    ports:
+    - name: http                # named port: probes may reference it by name
+      containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /healthz          # status 200-399 = success
+        port: http              # port name or number
+        scheme: HTTP            # default; HTTPS would skip certificate verification
+        httpHeaders:            # optional extra request headers
+        - name: X-Probe
+          value: liveness
+      initialDelaySeconds: 5    # default 0
+      periodSeconds: 10         # default 10
+      timeoutSeconds: 2         # default 1
+      successThreshold: 1       # default 1 and MUST be 1 for liveness/startup
+      failureThreshold: 3       # default 3 -> restart after ~3 x 10s of failures

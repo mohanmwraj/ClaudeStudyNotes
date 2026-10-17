@@ -1,0 +1,35 @@
+# Practice Q14 setup: a two-container Deployment with NAMED container ports (the Service is your job).
+# kubectl apply -f q14-shop-deployment.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q14
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+  namespace: sn-q14
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shop
+  template:
+    metadata:
+      labels:
+        app: shop
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - name: http-web
+          containerPort: 80
+      - name: exporter
+        image: busybox:1.36
+        command: ["sh", "-c", "mkdir -p /www && echo 'shop_up 1' > /www/metrics && httpd -f -p 9090 -h /www"]
+        ports:
+        - name: metrics
+          containerPort: 9090

@@ -1,0 +1,49 @@
+# Name-based virtual hosting: route by the HTTP Host header, incl. a wildcard host and a host-less rule.
+# Prereqs: controller with IngressClass "nginx"; backends from ingress-backends.yaml.
+# Apply: kubectl apply -f ingress-host-based.yaml
+# Test (H = controller address):
+#   curl -H "Host: app.example.com" http://$H/      -> app-...
+#   curl -H "Host: api.example.com" http://$H/      -> api-...
+#   curl -H "Host: foo.example.com" http://$H/      -> fallback-...  (wildcard: exactly one DNS label)
+#   curl -H "Host: a.b.example.com" http://$H/      -> NOT the wildcard rule (two labels)
+# Imperative:
+#   kubectl create ingress vhosts --class=nginx \
+#     --rule="app.example.com/*=app-svc:80" --rule="api.example.com/*=api-svc:8080" \
+#     --rule="*.example.com/*=fallback-svc:80"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vhosts
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: app.example.com           # precise match on the Host header
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app-svc
+            port:
+              number: 80
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-svc
+            port:
+              number: 8080
+  - host: "*.example.com"           # QUOTE it: a leading * is YAML alias syntax. Matches foo.example.com only,
+    http:                           # not example.com and not a.b.example.com
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fallback-svc
+            port:
+              number: 80

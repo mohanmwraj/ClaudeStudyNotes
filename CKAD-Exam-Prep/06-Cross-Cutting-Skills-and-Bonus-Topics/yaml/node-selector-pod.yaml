@@ -1,0 +1,36 @@
+# nodeSelector: the simplest node constraint - every key/value must match the node's labels (ANDed).
+# Prepare: kubectl get nodes --show-labels
+#          kubectl label node <node-name> disktype=ssd
+# Apply:   kubectl apply -f node-selector-pod.yaml
+# Verify:  kubectl get pods ssd-pod linux-only -o wide          (NODE column)
+# No matching node -> Pod stays Pending with an event like:
+#          0/3 nodes are available: 3 node(s) didn't match Pod's node affinity/selector.
+# Undo:    kubectl label node <node-name> disktype-
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ssd-pod
+  labels:
+    app: ssd-pod
+spec:
+  nodeSelector:
+    disktype: ssd                    # custom label you added to a node
+  containers:
+  - name: nginx
+    image: nginx:1.27
+---
+# Well-known labels set by the kubelet exist on every node, e.g. kubernetes.io/os, kubernetes.io/arch,
+# kubernetes.io/hostname (and topology.kubernetes.io/zone on most cloud nodes).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linux-only
+  labels:
+    app: linux-only
+spec:
+  nodeSelector:
+    kubernetes.io/os: linux
+    kubernetes.io/arch: amd64        # change to arm64 on an ARM laptop/cluster
+  containers:
+  - name: nginx
+    image: nginx:1.27

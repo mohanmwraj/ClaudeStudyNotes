@@ -1,0 +1,81 @@
+# Taints repel Pods; tolerations only PERMIT a Pod onto a tainted node - they do not attract it.
+# For "dedicated nodes" combine a toleration with nodeSelector/nodeAffinity (first Pod below).
+# Prepare: kubectl taint nodes <node-name> dedicated=gpu:NoSchedule
+#          kubectl label nodes <node-name> dedicated=gpu
+# Apply:   kubectl apply -f taints-tolerations-pod.yaml
+# Verify:  kubectl get pods -l demo=tolerations -o wide
+#          kubectl describe node <node-name> | grep -i -A3 taints
+# Undo:    kubectl taint nodes <node-name> dedicated=gpu:NoSchedule-     (trailing '-' removes the taint)
+#          kubectl label nodes <node-name> dedicated-
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-job
+  labels:
+    demo: tolerations
+spec:
+  tolerations:
+  - key: dedicated
+    operator: Equal                  # default operator: key, value and effect must match
+    value: gpu
+    effect: NoSchedule
+  nodeSelector:
+    dedicated: gpu                   # attracts the Pod to the dedicated node
+  containers:
+  - name: worker
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+---
+# Exists matches any value of the key; leaving out effect matches every effect of that key.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerate-any-dedicated
+  labels:
+    demo: tolerations
+spec:
+  tolerations:
+  - key: dedicated
+    operator: Exists                 # no value allowed with Exists
+  containers:
+  - name: worker
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+---
+# NoExecute + tolerationSeconds: keep running up to 60 s after the taint appears, then get evicted.
+# Try: kubectl taint nodes <node-name> maintenance=true:NoExecute   (evicts every Pod that does not tolerate it!)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerate-noexecute-60s
+  labels:
+    demo: tolerations
+spec:
+  tolerations:
+  - key: maintenance
+    operator: Equal
+    value: "true"                    # quoted: taint values are strings
+    effect: NoExecute
+    tolerationSeconds: 60            # only valid together with effect NoExecute
+  containers:
+  - name: worker
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+---
+# Run on the control-plane node: tolerate its taint AND select it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: on-control-plane
+  labels:
+    demo: tolerations
+spec:
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""   # the label exists with an empty value
+  containers:
+  - name: nginx
+    image: nginx:1.27

@@ -1,0 +1,5 @@
+# Keep shell scripts runnable on Linux/WSL/macOS even if this kit is committed from Windows
+*.sh   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.md   text eol=lf

@@ -1,0 +1,25 @@
+# Allow ingress to the api Pods ONLY from frontend Pods in the same namespace, on TCP 80.
+# Selecting api with an Ingress policy already isolates it -- no separate default-deny is needed
+# for "only X may connect".
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-allow-from-pods.yaml
+# Test: kubectl -n netpol-demo exec frontend -- wget -qO- --timeout=2 http://api   -> api-ok
+#       kubectl -n netpol-demo exec intruder -- wget -qO- --timeout=2 http://api   -> times out
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-frontend
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api                    # the Pods this policy protects
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:                # podSelector ALONE = Pods in the policy's own namespace
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 80                    # the Pod's port (container/targetPort), not the Service port

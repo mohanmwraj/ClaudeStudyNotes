@@ -1,0 +1,24 @@
+# NodePort Service: reachable on <any-node-IP>:30080 from outside the cluster, and on its ClusterIP inside.
+# Prereq: the 'web' Deployment from svc-clusterip.yaml (Pods labelled app=web).
+# Apply:  kubectl apply -f svc-nodeport.yaml
+# Test:   curl http://<node-InternalIP>:30080      (node IPs: kubectl get nodes -o wide)
+# Imperative options:
+#   kubectl expose deployment web --name=web-np --type=NodePort --port=80 --target-port=80
+#     -> nodePort is random; set it afterwards:
+#        kubectl patch svc web-np -p '{"spec":{"ports":[{"port":80,"nodePort":30080}]}}'
+#   kubectl create service nodeport web-np --tcp=80:80 --node-port=30080
+#     -> selector becomes app=web-np (NOT app=web); fix it: kubectl set selector svc web-np app=web
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-np
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80                  # ClusterIP port (a NodePort Service still gets a ClusterIP)
+    targetPort: 80            # container port
+    nodePort: 30080           # optional; default range 30000-32767; omit it to get a random free port

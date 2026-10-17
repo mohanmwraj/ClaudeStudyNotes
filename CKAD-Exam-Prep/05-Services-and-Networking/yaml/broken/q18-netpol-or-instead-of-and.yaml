@@ -1,0 +1,118 @@
+# Practice Q18 setup -- INTENTIONALLY TOO PERMISSIVE NetworkPolicy. Apply it, then solve the task
+# without reading further.
+# kubectl apply -f q18-netpol-or-instead-of-and.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q18
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q18-ops
+  labels:
+    team: ops
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q18-dev
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-api
+  namespace: sn-q18
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metrics-api
+  template:
+    metadata:
+      labels:
+        app: metrics-api
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-api
+  namespace: sn-q18
+spec:
+  selector:
+    app: metrics-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus
+  namespace: sn-q18-ops
+  labels:
+    app: prometheus
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: client
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: grafana
+  namespace: sn-q18-ops
+  labels:
+    app: grafana
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: client
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus
+  namespace: sn-q18-dev
+  labels:
+    app: prometheus
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: client
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus
+  namespace: sn-q18
+spec:
+  podSelector:
+    matchLabels:
+      app: metrics-api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          team: ops
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 80

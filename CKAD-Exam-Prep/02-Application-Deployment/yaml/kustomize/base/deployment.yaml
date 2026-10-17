@@ -1,0 +1,41 @@
+# Base Deployment used by base/kustomization.yaml (apply with kubectl apply -k, not -f:
+# the ConfigMap "web-config" only exists when Kustomize generates it).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27          # overlays change it with the "images:" field, not by editing this file
+        ports:
+        - containerPort: 80
+        env:
+        - name: APP_NAME
+          value: web
+        envFrom:
+        - configMapRef:
+            name: web-config       # generator name; Kustomize rewrites it to web-config-<hash>
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

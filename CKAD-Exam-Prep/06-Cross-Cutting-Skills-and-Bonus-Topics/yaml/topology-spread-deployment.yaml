@@ -1,0 +1,42 @@
+# Topology spread constraints: spread replicas evenly across nodes (hard rule) and zones (soft rule).
+# Apply:   kubectl apply -f topology-spread-deployment.yaml
+# Verify:  kubectl get pods -l app=spread-web -o wide
+#          kubectl get pods -l app=spread-web -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | sort | uniq -c
+#          -> pod counts per node differ by at most maxSkew (1)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spread-web
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: spread-web
+  template:
+    metadata:
+      labels:
+        app: spread-web
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1                               # max difference in matching pods between domains
+        topologyKey: kubernetes.io/hostname      # one domain per node
+        whenUnsatisfiable: DoNotSchedule         # hard: stay Pending rather than exceed the skew
+        labelSelector:
+          matchLabels:
+            app: spread-web                      # which pods are counted - should match the pod's own labels
+        matchLabelKeys:
+        - pod-template-hash                      # count only pods of the same rollout revision
+        nodeTaintsPolicy: Honor                  # leave tainted nodes we do not tolerate out of the count
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone # nodes without this label are just not scored
+        whenUnsatisfiable: ScheduleAnyway        # soft: prefer lower skew, never block
+        labelSelector:
+          matchLabels:
+            app: spread-web
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi

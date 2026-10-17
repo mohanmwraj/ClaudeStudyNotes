@@ -1,0 +1,63 @@
+# Inter-pod affinity and anti-affinity: "one cache per node, and each web pod next to a cache".
+# Apply:   kubectl apply -f pod-affinity-anti-affinity.yaml
+# Verify:  kubectl get pods -l 'app in (cache,web-store)' -o wide
+#          -> at most one cache pod per node; web-store pods only on nodes that run a cache pod
+# Note:    with fewer schedulable nodes than cache replicas, the extra cache pods stay Pending
+#          ("node(s) didn't match pod anti-affinity rules") - that is the hard rule working.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: cache                        # never two cache pods ...
+            topologyKey: kubernetes.io/hostname   # ... in the same node domain (required, never empty)
+      containers:
+      - name: redis
+        image: redis:7.2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-store
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-store
+  template:
+    metadata:
+      labels:
+        app: web-store
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: cache                        # only on a node already running a cache pod
+            topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:                      # preferred rules wrap the term in podAffinityTerm
+              labelSelector:
+                matchLabels:
+                  app: web-store
+              topologyKey: kubernetes.io/hostname # prefer spreading web-store pods across nodes
+      containers:
+      - name: nginx
+        image: nginx:1.27

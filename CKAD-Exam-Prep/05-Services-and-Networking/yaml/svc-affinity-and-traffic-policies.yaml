@@ -1,0 +1,69 @@
+# Service knobs beyond the basics: session affinity, internal/external traffic policy, trafficDistribution.
+# Prereq: the 'web' Deployment from svc-clusterip.yaml (Pods labelled app=web, containerPort named http).
+# Apply: kubectl apply -f svc-affinity-and-traffic-policies.yaml
+# Check: kubectl get svc -l demo=traffic-policies -o wide
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-sticky
+  labels:
+    demo: traffic-policies
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: http              # named port from the web Deployment
+  sessionAffinity: ClientIP       # None (default) | ClientIP: same client IP -> same Pod
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 600         # default 10800 (3 hours)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-node-local
+  labels:
+    demo: traffic-policies
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  internalTrafficPolicy: Local    # in-cluster clients only reach endpoints on THEIR node; no local endpoint -> dropped
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-zonal
+  labels:
+    demo: traffic-policies
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  trafficDistribution: PreferSameZone   # prefer endpoints in the client's zone, else cluster-wide.
+                                        # PreferSameZone / PreferSameNode: beta v1.34, GA v1.35 (fine on v1.37).
+                                        # On a v1.33 cluster use PreferClose (field GA v1.33; now a deprecated alias).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-ext-local
+  labels:
+    demo: traffic-policies
+spec:
+  type: NodePort                  # externalTrafficPolicy is only valid for NodePort / LoadBalancer
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  externalTrafficPolicy: Local    # keep client source IP; nodes without a ready local Pod do not forward

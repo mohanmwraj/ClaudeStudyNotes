@@ -1,0 +1,66 @@
+# Init containers run one after another, each to successful completion, BEFORE any app container starts.
+#   1) wait-for-backend  blocks until the backend Service answers HTTP (dependency gate)
+#   2) write-content     prepares a file in a shared emptyDir that nginx then serves (one-way data hand-off)
+# kubectl apply -f init-container.yaml
+# kubectl get pod init-demo -w            # Init:0/2 -> Init:1/2 -> PodInitializing -> Running
+# kubectl logs init-demo -c wait-for-backend ; kubectl exec init-demo -- curl -s localhost
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: init-demo-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: init-demo-backend
+  template:
+    metadata:
+      labels:
+        app: init-demo-backend
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: init-demo-backend
+spec:
+  selector:
+    app: init-demo-backend
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-demo
+  labels:
+    app: init-demo
+spec:
+  initContainers:                    # no probes/lifecycle allowed on regular init containers
+  - name: wait-for-backend
+    image: busybox:1.36
+    command: ["sh", "-c", "until wget -q -T 2 -O /dev/null http://init-demo-backend; do echo 'waiting for init-demo-backend'; sleep 2; done"]
+  - name: write-content
+    image: busybox:1.36
+    # must be idempotent: init containers re-run if the pod restarts
+    command: ["sh", "-c", "echo \"prepared by an init container at $(date)\" > /work/index.html"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: workdir
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: workdir
+    emptyDir: {}

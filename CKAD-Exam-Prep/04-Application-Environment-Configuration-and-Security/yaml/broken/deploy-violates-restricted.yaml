@@ -1,0 +1,29 @@
+# INTENTIONALLY BROKEN (for practice): this Deployment is created fine in a namespace labelled
+# pod-security.kubernetes.io/enforce=restricted, but its Pods are rejected by Pod Security Admission.
+# Apply:   kubectl apply -f ../namespace-pod-security-labels.yaml
+#          kubectl apply -n secure-apps -f deploy-violates-restricted.yaml
+#            # Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false ...
+# Symptom: kubectl get deploy,rs -n secure-apps            # READY 0/2, ReplicaSet CURRENT 0
+#          kubectl describe rs -n secure-apps -l app=worker  # FailedCreate ... is forbidden: violates PodSecurity
+# Fix:     add the securityContext from ../pod-restricted-compliant.yaml to the Pod template
+#          (runAsNonRoot, runAsUser, seccompProfile RuntimeDefault, allowPrivilegeEscalation false,
+#          capabilities drop ALL), then: kubectl apply -n secure-apps -f deploy-violates-restricted.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: busybox:1.36
+        command: ["sh", "-c", "while true; do echo working; sleep 10; done"]
+        # no securityContext at all -> violates "restricted"

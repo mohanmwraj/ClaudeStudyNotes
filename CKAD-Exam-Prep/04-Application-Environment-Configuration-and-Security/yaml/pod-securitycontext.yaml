@@ -1,0 +1,38 @@
+# Demonstrates: pod-level vs container-level securityContext - users, groups, fsGroup,
+# supplementalGroups, and a container-level override.
+# Apply:   kubectl apply -f pod-securitycontext.yaml
+# Verify:  kubectl exec security-context-demo -c app -- id
+#            # uid=1000 gid=3000 groups=2000,3000,4000   (fsGroup + runAsGroup + supplementalGroups)
+#          kubectl exec security-context-demo -c override -- id     # uid=2000 (container wins)
+#          kubectl exec security-context-demo -c app -- sh -c 'ls -ld /data/demo; touch /data/demo/f; ls -ln /data/demo/f'
+#            # dir group 2000 with setgid bit (drwxrwsrwx); new file owned by 1000:2000
+#          kubectl exec security-context-demo -c app -- ps      # processes run as uid 1000
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+spec:
+  securityContext:                       # POD level: defaults for all containers + volume settings
+    runAsUser: 1000                      # UID for all container processes
+    runAsGroup: 3000                     # primary GID (omit -> GID 0)
+    fsGroup: 2000                        # pod-level only: group owner of supported volumes
+    fsGroupChangePolicy: OnRootMismatch  # pod-level only: skip recursive chown if root dir already matches
+    supplementalGroups: [4000]           # pod-level only: extra GIDs for every process
+  volumes:
+  - name: data
+    emptyDir: {}
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    volumeMounts:
+    - name: data
+      mountPath: /data/demo
+    securityContext:                     # CONTAINER level
+      allowPrivilegeEscalation: false    # container-level only
+  - name: override
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    securityContext:
+      runAsUser: 2000                    # same field at both levels -> container value wins
+      allowPrivilegeEscalation: false

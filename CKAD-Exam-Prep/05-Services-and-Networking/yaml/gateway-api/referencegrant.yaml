@@ -1,0 +1,47 @@
+# ReferenceGrant: created in the TARGET namespace by the owner of the referenced object; it allows
+# references FROM another namespace. Needed for Route -> Service and Gateway -> Secret across namespaces
+# (not for Route -> Gateway attachment, which uses allowedRoutes).
+# Here: HTTPRoutes in namespace "shop" may use Services in namespace "payments" as backendRefs.
+# Without the grant the Route's ResolvedRefs condition is False with reason RefNotPermitted.
+# Prereqs: gateway.yaml + httproute-basic.yaml; a Service payments-api:8080 in namespace payments.
+# Apply: kubectl apply -f referencegrant.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+---
+apiVersion: gateway.networking.k8s.io/v1beta1    # Gateway API v1.5+ also serves ReferenceGrant as .../v1
+kind: ReferenceGrant
+metadata:
+  name: allow-shop-httproutes
+  namespace: payments             # the namespace of the object being referenced
+spec:
+  from:                           # who may refer (group/kind/namespace; no names)
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: shop
+  to:                             # what may be referred to, in THIS namespace
+  - group: ""                     # "" = core API group
+    kind: Service
+    # name: payments-api          # optional: restrict to one object
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pay
+  namespace: shop
+spec:
+  parentRefs:
+  - name: shared-gw
+    namespace: infra
+  hostnames:
+  - shop.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /pay
+    backendRefs:
+    - name: payments-api
+      namespace: payments         # cross-namespace backend -> requires the ReferenceGrant above
+      port: 8080

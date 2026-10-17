@@ -1,0 +1,39 @@
+# Namespaces with labels (selectable) and annotations (not selectable) + a namespaced object inside one.
+# Apply:   kubectl apply -f namespace.yaml
+# Verify:  kubectl get ns -l team=payments --show-labels
+#          kubectl get ns payments-dev -o jsonpath='{.metadata.annotations.owner}{"\n"}'
+#          kubectl get cm -n payments-dev
+# Note:    the API server adds the label kubernetes.io/metadata.name=<name> to every namespace automatically
+#          (NetworkPolicy namespaceSelectors rely on it).
+# Cleanup: kubectl delete ns payments-dev payments-qa     (deletes everything inside them)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments-dev            # RFC 1123 DNS label: lowercase, digits, '-', max 63 chars
+  labels:
+    team: payments
+    env: dev
+    pod-security.kubernetes.io/warn: baseline   # Pod Security Admission: warn (not block) on baseline violations
+  annotations:
+    owner: "payments-team@example.com"
+    description: "Development namespace for the payments service"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments-qa
+  labels:
+    team: payments
+    env: qa
+  annotations:
+    owner: "payments-team@example.com"
+---
+# A namespaced object names its namespace here (or you pass -n on the command line).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-settings
+  namespace: payments-dev
+data:
+  LOG_LEVEL: "debug"
+  FEATURE_X_ENABLED: "true"     # quoted on purpose: ConfigMap data values must be strings

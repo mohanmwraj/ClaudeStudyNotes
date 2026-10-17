@@ -1,0 +1,42 @@
+# Canary, part 1: the STABLE track. 4 of 5 Pods -> ~80% of Service traffic.
+# Apply:  kubectl apply -f stable-deployment.yaml -f service.yaml
+# Labels: app=web (shared with the canary, used by the Service) + track=stable (keeps the selectors apart).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-stable
+  labels:
+    app: web
+    track: stable
+spec:
+  replicas: 4
+  selector:
+    matchLabels:                   # MUST contain track, otherwise it overlaps the canary Deployment's Pods
+      app: web
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: web
+        track: stable
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        lifecycle:
+          postStart:               # lab-only: each track answers with its own page so the split is countable
+            exec:
+              command: ["sh", "-c", "echo 'web STABLE v1' > /usr/share/nginx/html/index.html"]
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

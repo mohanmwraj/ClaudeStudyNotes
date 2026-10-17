@@ -1,0 +1,186 @@
+# Practice Q7 setup: existing NetworkPolicies + Pods. The task is to make "newpod" work by LABELLING it --
+# do not create, modify or delete any NetworkPolicy. Apply it, then solve the task without reading further.
+# kubectl apply -f q07-netpol-label-pods.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q7
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: sn-q7
+  labels:
+    app: web
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.27-alpine
+    ports:
+    - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: sn-q7
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db
+  namespace: sn-q7
+  labels:
+    app: db
+spec:
+  containers:
+  - name: redis
+    image: redis:7.2
+    ports:
+    - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: sn-q7
+spec:
+  selector:
+    app: db
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  namespace: sn-q7
+  labels:
+    app: newpod
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: client
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: sn-q7
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-ingress
+  namespace: sn-q7
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          web-access: "true"
+    ports:
+    - protocol: TCP
+      port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-ingress
+  namespace: sn-q7
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          db-access: "true"
+    ports:
+    - protocol: TCP
+      port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-client-egress
+  namespace: sn-q7
+spec:
+  podSelector:
+    matchLabels:
+      web-access: "true"
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: web
+    ports:
+    - protocol: TCP
+      port: 80
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-client-egress
+  namespace: sn-q7
+spec:
+  podSelector:
+    matchLabels:
+      db-access: "true"
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: db
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

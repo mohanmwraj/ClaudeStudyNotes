@@ -1,0 +1,9 @@
+# Build-context exclusions (podman reads .containerignore first, otherwise .dockerignore).
+# Smaller context = faster builds, stable layer cache, and no secrets copied into layers by "COPY . ."
+.git
+.gitignore
+*.tar
+*.tar.gz
+**/*.swp
+.env
+secrets/

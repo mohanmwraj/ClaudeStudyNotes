@@ -1,0 +1,30 @@
+# Allow-all policies. Because policies are additive (a union), an allow-all rule wins over any default-deny
+# for the Pods it selects -- there is no way to "deny" on top of it.
+#   1) all ingress to web Pods (from anywhere, any port)
+#   2) all egress from every Pod in the namespace
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-allow-all-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-all-ingress
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: web                    # or {} for every Pod in the namespace
+  policyTypes:
+  - Ingress
+  ingress:
+  - {}                            # ONE empty rule = all sources, all ports.  (ingress: [] would allow nothing)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-egress
+  namespace: netpol-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - {}                            # all destinations, all ports

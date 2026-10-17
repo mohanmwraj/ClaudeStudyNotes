@@ -1,0 +1,55 @@
+# Architect variant (beyond the exam): exact weighted canary with Gateway API, independent of replica counts.
+# Requires the Gateway API CRDs, a Gateway controller and an existing Gateway named "example-gateway".
+# Apply:   kubectl apply -f httproute-weighted.yaml
+# Shift:   edit the two weight values (e.g. 50/50, then 0/100) and re-apply
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-stable                 # one Service per track (also handy for testing each track directly)
+spec:
+  selector:
+    app: web
+    track: stable
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-canary
+spec:
+  selector:
+    app: web
+    track: canary
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web
+spec:
+  parentRefs:
+  - name: example-gateway          # Gateway that accepts this route
+  hostnames:
+  - "web.example.com"
+  rules:
+  - matches:                       # header-based override: testers send "X-Canary: always"
+    - headers:
+      - type: Exact
+        name: X-Canary
+        value: always
+    backendRefs:
+    - name: web-canary
+      port: 80
+  - backendRefs:                   # everyone else: weights are relative (90 + 10 = 100 -> 90% / 10%)
+    - name: web-stable
+      port: 80
+      weight: 90
+    - name: web-canary
+      port: 80
+      weight: 10

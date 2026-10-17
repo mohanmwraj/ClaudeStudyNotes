@@ -1,0 +1,28 @@
+# FIXED - autoscaling/v2 HorizontalPodAutoscaler migrated from ../deprecated/hpa-v2beta2.yaml
+# Change from v2beta2: apiVersion only. From v2beta1: targetAverageUtilization -> target block (below).
+# Apply:  kubectl apply -f hpa-autoscaling-v2.yaml   (needs metrics-server and CPU requests on the target)
+# Imperative equivalent (kubectl v1.33+ generates autoscaling/v2 when the server serves it):
+#   kubectl autoscale deployment legacy-web --min=2 --max=6 --cpu=70% --dry-run=client -o yaml
+#   (--cpu=70% = average utilization, --cpu=500m = average value. The old form --cpu-percent=70 is
+#    deprecated since kubectl v1.34; it still works on v1.37 but prints a deprecation warning.)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: legacy-web-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: legacy-web
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization            # Utilization | AverageValue | Value
+        averageUtilization: 70       # percent of the Pods' CPU requests
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300

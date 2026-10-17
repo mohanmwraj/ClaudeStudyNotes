@@ -1,0 +1,29 @@
+# Allow DNS egress for ALL Pods in the namespace -- add this whenever egress is restricted.
+# CoreDNS Pods run in kube-system and keep the legacy label k8s-app=kube-dns (Service: kube-system/kube-dns).
+# Allow BOTH UDP and TCP 53 (large answers and some resolvers fall back to TCP).
+# Lab: test-pods.yaml (+ netpol-default-deny-egress.yaml).  Apply: kubectl apply -f netpol-allow-dns-egress.yaml
+# Test: kubectl -n netpol-demo exec frontend -- nslookup api.netpol-demo.svc.cluster.local   -> resolves again
+# Simpler (less strict) variant: keep only the "ports" part (no "to:") = DNS to any destination.
+# NodeLocal DNSCache clusters: Pods talk to a node-local IP (often 169.254.20.10) -> allow it with an ipBlock.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: netpol-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:                # same element: the DNS Pods IN kube-system (AND)
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

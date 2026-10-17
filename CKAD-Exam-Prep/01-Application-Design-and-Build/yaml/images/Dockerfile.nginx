@@ -1,0 +1,15 @@
+# Minimal "exam-style" Dockerfile: official nginx image + your own content.
+#
+# Build:  podman build -t web-nginx:v1 -f Dockerfile.nginx .      (or: docker build -t web-nginx:v1 -f Dockerfile.nginx .)
+# Run:    podman run -d --name web-nginx -p 8081:80 web-nginx:v1 && curl -s localhost:8081
+#
+# Inherited from the base image (podman image inspect nginx:1.27-alpine):
+#   ENTRYPOINT ["/docker-entrypoint.sh"]   CMD ["nginx", "-g", "daemon off;"]   STOPSIGNAL SIGQUIT   EXPOSE 80
+# A Pod that sets only "command: [nginx]" drops that CMD -> nginx daemonizes -> the container exits immediately.
+FROM nginx:1.27-alpine
+
+ENV APP_ENV=dev
+
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80

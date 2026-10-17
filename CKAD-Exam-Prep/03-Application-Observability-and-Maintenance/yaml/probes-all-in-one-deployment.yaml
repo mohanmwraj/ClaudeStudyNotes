@@ -1,0 +1,106 @@
+# Every probe type in one production-style Deployment, plus a native sidecar with its own probes.
+#   startupProbe   -> up to 24 x 5s = 120s to start; liveness/readiness wait for it
+#   livenessProbe  -> restarts a hung container; probe-level terminationGracePeriodSeconds: 10
+#   readinessProbe -> gates Service traffic; successThreshold 2 = must pass twice in a row
+#   log-shipper    -> native sidecar (initContainers + restartPolicy: Always, GA v1.33);
+#                     its startupProbe gates the app container, its readinessProbe counts toward Pod Ready
+# Apply:  kubectl apply -f probes-all-in-one-deployment.yaml
+# Verify: kubectl rollout status deploy/web-probes
+#         kubectl get pods -l app=web-probes          (READY 2/2 = web + sidecar)
+#         kubectl logs deploy/web-probes -c log-shipper -f   (then curl the Service from a temp pod)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-probes
+  labels:
+    app: web-probes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-probes
+  template:
+    metadata:
+      labels:
+        app: web-probes
+    spec:
+      terminationGracePeriodSeconds: 30        # pod-level: used for normal deletes/rollouts
+      initContainers:
+      - name: log-shipper
+        image: busybox:1.36
+        restartPolicy: Always                  # this one line turns an init container into a sidecar
+        command: ["sh", "-c", "tail -n+1 -F /var/log/nginx/access.log"]
+        startupProbe:                          # app containers start only after this succeeds
+          exec:
+            command: ["test", "-d", "/var/log/nginx"]
+          periodSeconds: 2
+          failureThreshold: 5
+        readinessProbe:                        # a sidecar's readiness is part of Pod readiness
+          exec:
+            command: ["test", "-f", "/var/log/nginx/access.log"]
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+        volumeMounts:
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+          readOnly: true
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - name: http
+          containerPort: 80
+        startupProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          failureThreshold: 24                 # 24 x 5s = 120s maximum startup time
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+            httpHeaders:
+            - name: X-Probe
+              value: liveness
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+          terminationGracePeriodSeconds: 10    # liveness/startup only (stable v1.28); overrides the 30s above on a probe kill
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 2
+          failureThreshold: 2
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        volumeMounts:
+        - name: nginx-logs                     # hides the image's access.log -> /dev/stdout symlink,
+          mountPath: /var/log/nginx            # so nginx writes real files that the sidecar tails
+      volumes:
+      - name: nginx-logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-probes
+spec:
+  selector:
+    app: web-probes
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

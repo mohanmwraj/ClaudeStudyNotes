@@ -1,0 +1,36 @@
+# Demonstrates: readOnlyRootFilesystem with emptyDir volumes for the paths the app must write.
+# nginx needs to write its cache dir and pid file, so those get emptyDirs.
+# Apply:   kubectl apply -f pod-readonly-rootfs.yaml
+# Verify:  kubectl get pod readonly-rootfs-demo                         # Running
+#          kubectl exec readonly-rootfs-demo -- touch /test.txt
+#            # touch: cannot touch '/test.txt': Read-only file system
+#          kubectl exec readonly-rootfs-demo -- touch /tmp/ok.txt        # works (emptyDir)
+#          kubectl exec readonly-rootfs-demo -- grep NoNewPrivs /proc/1/status   # NoNewPrivs: 1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readonly-rootfs-demo
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    ports:
+    - containerPort: 80
+    securityContext:
+      readOnlyRootFilesystem: true       # container-level only
+      allowPrivilegeEscalation: false    # sets no_new_privs
+    volumeMounts:
+    - name: cache
+      mountPath: /var/cache/nginx        # nginx temp/cache directories
+    - name: run
+      mountPath: /var/run                # nginx.pid (/var/run -> /run in this image)
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: cache
+    emptyDir: {}
+  - name: run
+    emptyDir: {}
+  - name: tmp
+    emptyDir:
+      sizeLimit: 64Mi                    # cap scratch space (counts as ephemeral storage)

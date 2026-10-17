@@ -1,0 +1,29 @@
+# Classic sidecar = simply a second regular container (works on every Kubernetes version).
+# The app writes to a file; the sidecar streams it to stdout so "kubectl logs <pod> -c log-tailer" shows it.
+# Limits vs native sidecars: no start ordering, stopped at the same time as the app (may lose the last
+# lines), and it keeps a Job pod running forever.
+# kubectl apply -f sidecar-classic-logging.yaml && kubectl logs classic-sidecar -c log-tailer -f
+apiVersion: v1
+kind: Pod
+metadata:
+  name: classic-sidecar
+  labels:
+    app: classic-sidecar
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do echo \"$(date) INFO app heartbeat\" >> /var/log/app/app.log; sleep 5; done"]
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+  - name: log-tailer
+    image: busybox:1.36
+    command: ["sh", "-c", "tail -n +1 -F /var/log/app/app.log"]   # -F keeps retrying until the file exists
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+      readOnly: true
+  volumes:
+  - name: logs
+    emptyDir: {}

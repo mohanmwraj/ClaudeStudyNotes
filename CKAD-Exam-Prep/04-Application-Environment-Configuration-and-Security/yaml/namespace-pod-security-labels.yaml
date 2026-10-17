@@ -1,0 +1,31 @@
+# Demonstrates: Pod Security Admission (PSA) namespace labels - levels privileged | baseline |
+# restricted, modes enforce | audit | warn, optional -version pins.
+# Apply:   kubectl apply -f namespace-pod-security-labels.yaml
+# Imperative equivalents:
+#   kubectl create namespace secure-apps
+#   kubectl label namespace secure-apps pod-security.kubernetes.io/enforce=restricted \
+#     pod-security.kubernetes.io/warn=restricted pod-security.kubernetes.io/audit=restricted
+#   kubectl label --overwrite namespace legacy-apps pod-security.kubernetes.io/enforce=baseline
+# Preview impact on existing pods (no change made):
+#   kubectl label --dry-run=server --overwrite namespace legacy-apps pod-security.kubernetes.io/enforce=restricted
+# Verify:  kubectl get namespace secure-apps --show-labels
+#          kubectl run test -n secure-apps --image=nginx:1.27   # rejected: violates PodSecurity "restricted:latest"
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-apps
+  labels:
+    pod-security.kubernetes.io/enforce: restricted       # reject non-compliant Pods
+    pod-security.kubernetes.io/enforce-version: latest   # default when the -version label is absent
+    pod-security.kubernetes.io/warn: restricted          # warning to the client (also for Deployments etc.)
+    pod-security.kubernetes.io/audit: restricted         # annotation in the audit log
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: legacy-apps
+  labels:
+    pod-security.kubernetes.io/enforce: baseline         # block known privilege escalations only
+    pod-security.kubernetes.io/enforce-version: v1.33    # pin the policy to a Kubernetes minor version
+    pod-security.kubernetes.io/warn: restricted          # tell users what "restricted" would reject
+    pod-security.kubernetes.io/audit: restricted

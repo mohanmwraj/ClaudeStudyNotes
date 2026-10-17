@@ -1,0 +1,32 @@
+# Demonstrates: object-count and storage ResourceQuotas (protects the API server/etcd and
+# caps storage per namespace).
+# Prereq:  kubectl create namespace dev
+# Apply:   kubectl apply -f resourcequota-object-count.yaml
+# Imperative equivalent (subset):
+#   kubectl create quota object-counts -n dev \
+#     --hard=pods=10,services=5,configmaps=10,secrets=10,count/deployments.apps=5
+# Verify:  kubectl describe quota object-counts -n dev
+#          kubectl create configmap x1 -n dev ... (repeat) -> 'exceeded quota: object-counts'
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: object-counts
+  namespace: dev
+spec:
+  hard:
+    # "specialized" names (core kinds)
+    pods: "10"
+    services: "5"
+    services.nodeports: "2"
+    services.loadbalancers: "0"          # forbid LoadBalancer Services in this namespace
+    configmaps: "10"
+    secrets: "10"
+    persistentvolumeclaims: "4"
+    # generic syntax: count/<resource>.<group>   (core group: count/<resource>)
+    count/deployments.apps: "5"
+    count/jobs.batch: "5"
+    count/cronjobs.batch: "2"
+    count/crontabs.stable.example.com: "3"   # works for custom resources too
+    # storage
+    requests.storage: 20Gi               # sum of PVC storage requests
+    standard.storageclass.storage.k8s.io/requests.storage: 10Gi   # per StorageClass "standard"

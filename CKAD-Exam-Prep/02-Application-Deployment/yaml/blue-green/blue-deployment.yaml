@@ -1,0 +1,42 @@
+# Blue/green, part 1: the CURRENT version ("blue"), receiving all traffic through Service "shop".
+# Apply:  kubectl apply -f blue-deployment.yaml -f service.yaml
+# Pods carry app=shop (shared) + version=blue (distinguishing). The Service selects app=shop,version=blue.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-blue
+  labels:
+    app: shop
+    version: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:                   # include the colour so blue and green selectors never overlap
+      app: shop
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: shop
+        version: blue
+    spec:
+      containers:
+      - name: shop
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        lifecycle:
+          postStart:               # lab-only: make each colour answer with its own page (curl shows which one serves)
+            exec:
+              command: ["sh", "-c", "echo 'shop BLUE v1' > /usr/share/nginx/html/index.html"]
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

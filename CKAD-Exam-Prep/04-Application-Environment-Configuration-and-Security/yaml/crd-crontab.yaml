@@ -1,0 +1,76 @@
+# Demonstrates: a complete CustomResourceDefinition (CRD) - names, scope, versions,
+# structural schema with validation + defaults, printer columns, status and scale subresources.
+# Based on the CronTab example in the Kubernetes docs (Tasks > Extend Kubernetes > CRDs).
+#
+# Apply:   kubectl apply -f crd-crontab.yaml
+# Verify:  kubectl get crd crontabs.stable.example.com
+#          kubectl api-resources --api-group=stable.example.com
+#          kubectl explain crontab.spec
+# Then create instances with cr-crontab-instance.yaml.
+# WARNING: `kubectl delete crd crontabs.stable.example.com` deletes EVERY CronTab object too.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: crontabs.stable.example.com      # MUST be <spec.names.plural>.<spec.group>
+spec:
+  group: stable.example.com              # REST path: /apis/stable.example.com/v1/...
+  scope: Namespaced                      # Namespaced | Cluster
+  names:
+    plural: crontabs                     # used in URLs and `kubectl get crontabs`
+    singular: crontab                    # CLI alias; used by `kubectl explain crontab`
+    kind: CronTab                        # CamelCase kind used in manifests
+    listKind: CronTabList                # optional, defaults to <kind>List
+    shortNames: ["ct"]                   # `kubectl get ct`
+    categories: ["all"]                  # makes `kubectl get all` include CronTabs
+  versions:
+  - name: v1
+    served: true                         # this version is exposed by the API server
+    storage: true                        # exactly ONE version must be the storage version
+    schema:
+      openAPIV3Schema:                   # required in apiextensions.k8s.io/v1 (structural schema)
+        type: object
+        properties:
+          spec:
+            type: object
+            required: ["cronSpec", "image"]
+            properties:
+              cronSpec:
+                type: string
+                pattern: '^(\d+|\*)(/\d+)?(\s+(\d+|\*)(/\d+)?){4}$'   # 5-field cron expression
+              image:
+                type: string
+                maxLength: 512             # bounding strings keeps CEL rule cost estimates low
+              replicas:
+                type: integer
+                minimum: 1
+                maximum: 10
+                default: 1                 # applied by the API server when the field is omitted
+            x-kubernetes-validations:      # CEL validation rule (GA since v1.29)
+            - rule: "!self.image.endsWith(':latest')"
+              message: "image must be pinned to a tag other than :latest"
+          status:
+            type: object
+            properties:
+              replicas:
+                type: integer
+              labelSelector:
+                type: string
+    additionalPrinterColumns:            # extra columns for `kubectl get crontabs`
+    - name: Spec
+      type: string
+      jsonPath: .spec.cronSpec
+    - name: Image
+      type: string
+      jsonPath: .spec.image
+    - name: Replicas
+      type: integer
+      jsonPath: .spec.replicas
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+    subresources:
+      status: {}                         # enables /status; spec and status are updated separately
+      scale:                             # enables `kubectl scale crontab/<name> --replicas=N`
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
+        labelSelectorPath: .status.labelSelector

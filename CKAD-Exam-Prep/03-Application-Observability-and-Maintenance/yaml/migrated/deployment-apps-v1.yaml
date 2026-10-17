@@ -1,0 +1,28 @@
+# FIXED - apps/v1 Deployment migrated from ../deprecated/deployment-extensions-v1beta1.yaml
+# Changes: apiVersion apps/v1 + spec.selector (REQUIRED in apps/v1, immutable after creation).
+# The selector repeats ALL template labels - exactly what extensions/v1beta1 used to default - so the
+# manifest can also be applied over an object that was originally created through the old API.
+# Apply:  kubectl apply --dry-run=server -f deployment-apps-v1.yaml && kubectl apply -f deployment-apps-v1.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-web
+  labels:
+    app: legacy-web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:              # must match (be a subset of) the template labels
+      app: legacy-web
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: legacy-web
+        tier: frontend
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - containerPort: 80

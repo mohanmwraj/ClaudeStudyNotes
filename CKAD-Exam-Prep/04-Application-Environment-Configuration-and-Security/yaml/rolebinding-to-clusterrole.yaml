@@ -1,0 +1,51 @@
+# Demonstrates: reusing a ClusterRole in ONE namespace via a RoleBinding - define the rules
+# once, bind them per namespace. Also binds the built-in "view" ClusterRole to a
+# ServiceAccount from another namespace.
+# Prereq:  kubectl create namespace dev
+#          kubectl create namespace ci && kubectl create serviceaccount ci-bot -n ci
+# Apply:   kubectl apply -f rolebinding-to-clusterrole.yaml
+# Imperative equivalents:
+#   kubectl create clusterrole deployment-scaler --verb=get,list,watch,update,patch \
+#     --resource=deployments,deployments/scale
+#   kubectl create rolebinding jane-deployment-scaler -n dev --clusterrole=deployment-scaler --user=jane
+#   kubectl create rolebinding ci-bot-view -n dev --clusterrole=view --serviceaccount=ci:ci-bot
+# Verify (in can-i, "deployments/x" means a deployment NAMED x - use --subresource for subresources):
+#          kubectl auth can-i patch deployments --subresource=scale -n dev --as=jane       # yes
+#          kubectl auth can-i patch deployments --subresource=scale -n default --as=jane   # no (other ns)
+#          kubectl auth can-i list pods -n dev --as=system:serviceaccount:ci:ci-bot         # yes
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: deployment-scaler
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding                        # RoleBinding + ClusterRole = rules apply only in metadata.namespace
+metadata:
+  name: jane-deployment-scaler
+  namespace: dev
+subjects:
+- kind: User
+  name: jane
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: deployment-scaler
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-bot-view
+  namespace: dev                         # ci-bot may read (not Secrets) in "dev" only
+subjects:
+- kind: ServiceAccount
+  name: ci-bot
+  namespace: ci                          # the SA may live in a different namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view                             # built-in: read-only, excludes Secrets, Roles and RoleBindings

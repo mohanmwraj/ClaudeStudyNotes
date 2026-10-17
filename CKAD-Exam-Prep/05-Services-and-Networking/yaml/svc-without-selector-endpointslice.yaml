@@ -1,0 +1,41 @@
+# Service WITHOUT a selector + a manually managed EndpointSlice.
+# Use it to give an in-cluster name to something Kubernetes does not manage (a VM, a database in another
+# network, a migration target) by IP. The control plane does not create or update EndpointSlices for a
+# selector-less Service -- you own them.
+# Apply: kubectl apply -f svc-without-selector-endpointslice.yaml
+# Check: kubectl get endpointslices -l kubernetes.io/service-name=legacy-db
+#        kubectl describe svc legacy-db
+# (Older docs create a core v1 Endpoints object instead; that API is deprecated since v1.33.)
+apiVersion: v1
+kind: Service
+metadata:
+  name: legacy-db
+spec:
+  # no selector on purpose
+  ports:
+  - name: postgres            # the EndpointSlice port name below must match this name
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: legacy-db-1                                         # convention: <service-name>-<suffix>
+  labels:
+    kubernetes.io/service-name: legacy-db                   # links this slice to the Service
+    endpointslice.kubernetes.io/managed-by: cluster-admins  # anything except the controller's own value
+addressType: IPv4             # IPv4 | IPv6 | FQDN
+ports:
+- name: postgres              # must equal the Service port name ("" if the Service port is unnamed)
+  protocol: TCP
+  port: 5432                  # the port on the endpoints (like targetPort)
+endpoints:
+- addresses:
+  - "10.10.0.15"              # not loopback, not link-local, not another Service's ClusterIP
+  conditions:
+    ready: true
+- addresses:
+  - "10.10.0.16"
+  conditions:
+    ready: true

@@ -1,0 +1,13 @@
+# Default-deny ALL traffic (ingress and egress) for every Pod in the namespace.
+# The usual zero-trust baseline: then add one allow policy per required flow, plus DNS egress.
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-default-deny-all.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: netpol-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress

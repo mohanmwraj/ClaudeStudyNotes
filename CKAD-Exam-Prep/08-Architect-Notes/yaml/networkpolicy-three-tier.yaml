@@ -1,0 +1,128 @@
+# networkpolicy-three-tier.yaml
+# Demonstrates: explicit allow-list NetworkPolicies for a three-tier app in namespace "shop":
+#     gateway pods (namespace infra-gateway) -> frontend:8080 -> api:8080 -> db:5432
+#   plus Prometheus scraping and one external egress destination for the api tier.
+# Assumes namespace-baseline.yaml is applied (default-deny ingress+egress, DNS allowed).
+# Because egress is denied by default, every hop needs TWO rules:
+#   an egress rule on the caller AND an ingress rule on the callee.
+# Pod labels used: tier=frontend | tier=api | tier=db (all in namespace shop).
+# Ports in policies are POD (container) ports, not Service ports: the api Service listens
+# on 80 but forwards to containerPort 8080, so the policy allows 8080.
+# Apply:
+#   kubectl apply -f networkpolicy-three-tier.yaml
+# Verify (requires a CNI that enforces NetworkPolicy):
+#   kubectl -n shop get networkpolicy
+#   kubectl -n shop describe networkpolicy api
+#   From a frontend pod: wget -qO- -T 2 http://api/readyz   -> works
+#                        nc -zv -w 2 db 5432                  -> times out (frontend may not reach db)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend
+  namespace: shop
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    # Data-plane pods of the Gateway/Ingress implementation. Use the namespace where your
+    # implementation actually runs its proxy pods (often its own system namespace).
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: infra-gateway
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: api
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api
+  namespace: shop
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:               # same namespace only (no namespaceSelector)
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: db
+    ports:
+    - protocol: TCP
+      port: 5432
+  # External dependency (e.g. a payment provider). NetworkPolicy only knows CIDRs, not DNS
+  # names; for FQDN-based egress use CNI-specific policies or an egress gateway (see 04/05).
+  - to:
+    - ipBlock:
+        cidr: 203.0.113.0/24     # documentation range (RFC 5737) - replace
+    ports:
+    - protocol: TCP
+      port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db
+  namespace: shop
+spec:
+  podSelector:
+    matchLabels:
+      tier: db
+  policyTypes:
+  - Ingress
+  - Egress                       # no egress rules: the db initiates nothing (DNS still allowed)
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: api
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: shop
+spec:
+  podSelector: {}                # every pod in shop ...
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # ... may be scraped by Prometheus pods in namespace "monitoring" (AND of both selectors)
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: metrics              # named container port: whatever port each pod calls "metrics"

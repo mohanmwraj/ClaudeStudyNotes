@@ -1,0 +1,58 @@
+# Node affinity: required (hard) and preferred (soft) rules with In, Gt and DoesNotExist operators.
+# Prepare: kubectl label node <node-name> disktype=ssd
+# Apply:   kubectl apply -f node-affinity-pod.yaml
+# Verify:  kubectl get pods -l demo=node-affinity -o wide
+# Note:    on a single-node lab (the node is the control plane) "affinity-not-control-plane" stays Pending - by design.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: affinity-ssd
+  labels:
+    demo: node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:   # hard rule, checked only at scheduling time
+        nodeSelectorTerms:                              # several terms are ORed
+        - matchExpressions:                             # expressions inside ONE term are ANDed
+          - key: disktype
+            operator: In
+            values: ["ssd", "nvme"]
+          - key: kubernetes.io/os
+            operator: In
+            values: ["linux"]
+      preferredDuringSchedulingIgnoredDuringExecution:  # soft rules: add score, never block
+      - weight: 80                                      # 1-100
+        preference:
+          matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values: ["zone-a"]
+      - weight: 20
+        preference:
+          matchExpressions:
+          - key: cpu-generation                         # Gt/Lt compare integers (node affinity only)
+            operator: Gt
+            values: ["3"]                               # values are always strings in YAML
+  containers:
+  - name: nginx
+    image: nginx:1.27
+---
+# "Anywhere except control-plane nodes": NotIn / DoesNotExist give node ANTI-affinity.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: affinity-not-control-plane
+  labels:
+    demo: node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: DoesNotExist                      # no values with Exists/DoesNotExist
+  containers:
+  - name: nginx
+    image: nginx:1.27

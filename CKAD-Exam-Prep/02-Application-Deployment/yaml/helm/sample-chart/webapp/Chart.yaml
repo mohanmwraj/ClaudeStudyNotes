@@ -1,0 +1,12 @@
+# Chart metadata for the CKAD study chart (offline practice: no repository needed).
+# Lint:    helm lint sample-chart/webapp
+# Install: helm install web sample-chart/webapp -n helm-lab --create-namespace
+apiVersion: v2                     # v2 = Helm 3+ chart format (supports dependencies in this file)
+name: webapp                       # chart name (default value of .Chart.Name, used in resource names)
+description: Minimal CKAD study chart - one Deployment, one Service and a ConfigMap-driven web page
+type: application                  # application (installable) | library (helpers only, not installable)
+version: 0.1.0                     # CHART version (SemVer). Bump it whenever the chart changes; shown as webapp-0.1.0
+appVersion: "1.27"                 # version of the packaged app (informational). Used here as the default image tag
+keywords:
+  - ckad
+  - nginx

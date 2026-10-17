@@ -1,0 +1,64 @@
+# HPA (autoscaling/v2) on average CPU utilization, plus the Deployment and Service it scales.
+# Requires: metrics-server (`kubectl top pods` must work) and CPU requests on every container of the target.
+# Apply:    kubectl apply -f hpa-cpu.yaml
+# Load:     kubectl run load --rm -it --image=busybox:1.36 --restart=Never -- sh -c 'while true; do wget -q -O- http://hpa-demo >/dev/null; done'
+# Watch:    kubectl get hpa hpa-demo -w           (scale-down starts only after the 300 s stabilization window)
+# Imperative equivalent:
+#   kubectl v1.34+:  kubectl autoscale deployment hpa-demo --min=1 --max=5 --cpu=50%
+#   kubectl <=1.33:  kubectl autoscale deployment hpa-demo --min=1 --max=5 --cpu-percent=50
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-demo
+spec:
+  replicas: 1                     # the HPA owns the replica count once it exists
+  selector:
+    matchLabels:
+      app: hpa-demo
+  template:
+    metadata:
+      labels:
+        app: hpa-demo
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m              # Utilization targets are a percentage of THIS request
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hpa-demo
+spec:
+  selector:
+    app: hpa-demo
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-demo
+spec:
+  scaleTargetRef:                 # the workload to scale (needs the scale subresource)
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo
+  minReplicas: 1                  # optional, default 1
+  maxReplicas: 5                  # required
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization         # percent of the pods' CPU requests, averaged over all pods
+        averageUtilization: 50

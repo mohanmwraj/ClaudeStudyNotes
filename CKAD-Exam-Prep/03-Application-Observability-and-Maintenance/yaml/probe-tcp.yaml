@@ -1,0 +1,28 @@
+# tcpSocket probes for a non-HTTP service (Redis on 6379).
+# Apply:  kubectl apply -f probe-tcp.yaml
+# Verify: kubectl get pod tcp-probe -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}{"\n"}'
+# Note:   a TCP probe only proves that the port accepts connections. For "is Redis really answering?"
+#         an exec probe is stronger:  exec: {command: ["redis-cli", "ping"]}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tcp-probe
+  labels:
+    app: tcp-probe
+spec:
+  containers:
+  - name: redis
+    image: redis:7.2
+    ports:
+    - name: redis
+      containerPort: 6379
+    readinessProbe:
+      tcpSocket:
+        port: redis           # named port; success = TCP connection established
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    livenessProbe:
+      tcpSocket:
+        port: 6379            # a number works too
+      initialDelaySeconds: 15
+      periodSeconds: 20

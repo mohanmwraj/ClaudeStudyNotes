@@ -1,0 +1,32 @@
+# ReplicaSet: keeps N pods matching its selector alive. No rollout/rollback - use a Deployment for that.
+# There is no "kubectl create replicaset": write YAML, or generate a Deployment and change
+# kind -> ReplicaSet and delete "strategy: {}".
+# Caution: it ADOPTS any existing bare pod whose labels match the selector (and deletes surplus pods).
+# kubectl apply -f replicaset.yaml && kubectl get rs frontend-rs && kubectl get pods -l app=frontend --show-labels
+# kubectl scale rs frontend-rs --replicas=5
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: frontend-rs
+  labels:
+    app: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+    matchExpressions:                # set-based selector, ANDed with matchLabels
+    - key: tier
+      operator: In                   # In | NotIn | Exists | DoesNotExist
+      values: ["web", "cache"]
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: web
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4
+        ports:
+        - containerPort: 80

@@ -1,0 +1,19 @@
+# BROKEN ON PURPOSE - ErrImagePull -> ImagePullBackOff
+# Bug:  the image tag does not exist (nginx:1.277 instead of nginx:1.27).
+# See:  kubectl get pod imagepull-demo                  -> ErrImagePull, then ImagePullBackOff
+#       kubectl describe pod imagepull-demo | tail -8   -> Failed to pull image "nginx:1.277": ... not found
+#       kubectl logs imagepull-demo                     -> ... is waiting to start: trying and failing to pull image
+# Fix:  the image field IS mutable on a Pod, so no recreate is needed:
+#       kubectl set image pod/imagepull-demo web=nginx:1.27
+# Other causes with the same symptom: private registry without imagePullSecrets ("pull access denied",
+# "401 Unauthorized"), wrong registry host ("no such host"), malformed reference -> InvalidImageName.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagepull-demo
+  labels:
+    app: imagepull-demo
+spec:
+  containers:
+  - name: web
+    image: nginx:1.277

@@ -1,0 +1,59 @@
+# Demonstrates: ConfigMaps as files - whole map, selected keys (items) with file modes, and a
+# single file placed into an existing directory with subPath.
+# Prereq:  kubectl apply -f configmap.yaml
+# Apply:   kubectl apply -f pod-configmap-volume.yaml
+# Verify:  kubectl exec cm-volume-demo -- ls -l /etc/app /etc/app-selected
+#          kubectl exec cm-volume-demo -- cat /etc/app-selected/application.properties
+#          kubectl exec cm-volume-demo -- curl -s localhost     # -> hello from a ConfigMap
+# Updates: files under /etc/app refresh automatically (kubelet sync + cache TTL, ~1-2 min);
+#          the subPath file /etc/nginx/conf.d/default.conf NEVER updates (restart the Pod).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+data:
+  default.conf: |
+    server {
+      listen 80;
+      default_type text/plain;
+      location / {
+        return 200 'hello from a ConfigMap\n';
+      }
+    }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-volume-demo
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: config-all                   # every key becomes a file in /etc/app (dir is replaced!)
+      mountPath: /etc/app
+      readOnly: true
+    - name: config-selected              # only the keys listed in items
+      mountPath: /etc/app-selected
+    - name: nginx-conf                   # ONE file inside an existing dir - the rest of
+      mountPath: /etc/nginx/conf.d/default.conf   #   /etc/nginx/conf.d stays intact
+      subPath: default.conf              # key name; subPath mounts get NO live updates
+  volumes:
+  - name: config-all
+    configMap:
+      name: app-config
+  - name: config-selected
+    configMap:
+      name: app-config
+      defaultMode: 0440                  # octal in YAML (JSON needs decimal, e.g. 288); default 0644
+      items:
+      - key: app.properties              # key in the ConfigMap ...
+        path: application.properties     # ... file name (relative path) in the volume
+      - key: LOG_LEVEL
+        path: conf/log-level             # sub-directories are allowed
+        mode: 0400                       # per-file mode overrides defaultMode
+  - name: nginx-conf
+    configMap:
+      name: nginx-conf

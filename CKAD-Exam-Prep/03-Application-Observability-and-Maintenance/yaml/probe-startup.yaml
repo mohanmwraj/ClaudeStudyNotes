@@ -1,0 +1,38 @@
+# startupProbe protecting a slow-starting app. Liveness and readiness probes only start after
+# the startup probe has succeeded once.
+# The "app" needs ~30s before nginx listens. Startup budget = failureThreshold x periodSeconds = 12 x 5s = 60s.
+# Apply:  kubectl apply -f probe-startup.yaml
+# Watch:  kubectl get pod startup-probe -w     (Running 0/1 for ~30s, then 1/1, RESTARTS stays 0)
+# Experiment: change failureThreshold to 3 (budget 15s < 30s startup) -> "failed startup probe,
+#             will be restarted" forever.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: startup-probe
+  labels:
+    app: startup-probe
+spec:
+  containers:
+  - name: slow-app
+    image: nginx:1.27
+    command: ["sh", "-c", "echo 'warming up for 30s'; sleep 30; exec nginx -g 'daemon off;'"]
+    ports:
+    - name: http
+      containerPort: 80
+    startupProbe:
+      httpGet:
+        path: /
+        port: http
+      periodSeconds: 5
+      failureThreshold: 12        # 12 x 5s = 60s maximum startup time
+    livenessProbe:                # disabled until the startupProbe succeeds
+      httpGet:
+        path: /
+        port: http
+      periodSeconds: 10
+      failureThreshold: 3
+    readinessProbe:               # disabled until the startupProbe succeeds
+      httpGet:
+        path: /
+        port: http
+      periodSeconds: 5

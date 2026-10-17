@@ -1,0 +1,34 @@
+# Job + native sidecar (initContainers[].restartPolicy: Always, GA v1.33).
+# The sidecar starts first, keeps running, and does NOT block Job completion: once "main" exits 0 the
+# kubelet stops the sidecar and the Job completes. A classic sidecar in .containers would keep the pod
+# Running forever, so the Job would never complete.
+# kubectl apply -f job-with-native-sidecar.yaml
+# kubectl wait --for=condition=complete job/job-sidecar --timeout=120s
+# kubectl logs job/job-sidecar -c log-shipper
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-sidecar
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: log-shipper
+        image: busybox:1.36
+        restartPolicy: Always        # <- this single field makes it a native sidecar
+        command: ["sh", "-c", "touch /var/log/job/out.log; tail -n +1 -F /var/log/job/out.log"]
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/job
+      containers:
+      - name: main
+        image: busybox:1.36
+        command: ["sh", "-c", "for i in 1 2 3 4 5; do echo \"step $i\" >> /var/log/job/out.log; sleep 2; done"]
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/job
+      volumes:
+      - name: logs
+        emptyDir: {}

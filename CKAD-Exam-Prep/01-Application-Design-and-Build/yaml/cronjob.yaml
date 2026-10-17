@@ -1,0 +1,28 @@
+# CronJob: creates a Job on a schedule. All important spec fields, with their defaults.
+# Generate:  kubectl create cronjob report --image=busybox:1.36 --schedule="*/5 * * * *" --dry-run=client -o yaml -- sh -c 'date' > cronjob.yaml
+# kubectl apply -f cronjob.yaml && kubectl get cronjob report
+# Run it now instead of waiting:  kubectl create job report-manual-1 --from=cronjob/report
+# kubectl get jobs --watch ; kubectl logs job/report-manual-1
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: report                       # max 52 characters (the controller appends an 11-character suffix to Job names)
+spec:
+  schedule: "*/5 * * * *"            # minute hour day-of-month month day-of-week -> every 5 minutes
+  timeZone: "Etc/UTC"                # GA v1.27; unset = time zone of kube-controller-manager
+  concurrencyPolicy: Forbid          # Allow (default) | Forbid (skip a run while the previous one runs) | Replace
+  startingDeadlineSeconds: 120       # a missed run may still start up to 120 s late; unset = no deadline
+  successfulJobsHistoryLimit: 3      # default 3
+  failedJobsHistoryLimit: 1          # default 1
+  suspend: false                     # true = create no new Jobs (running Jobs are not affected)
+  jobTemplate:                       # a Job spec, nested, without apiVersion/kind
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 100
+      template:
+        spec:
+          restartPolicy: OnFailure   # Never or OnFailure
+          containers:
+          - name: report
+            image: busybox:1.36
+            command: ["sh", "-c", "date; echo 'generating report'; sleep 10"]

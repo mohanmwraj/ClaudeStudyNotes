@@ -1,0 +1,39 @@
+# PodDisruptionBudget with minAvailable: keep at least 2 of the 3 pdb-web pods up during voluntary
+# disruptions (kubectl drain, Eviction API, cluster-autoscaler scale-down). Direct deletes and rollouts ignore it.
+# Apply:      kubectl apply -f pdb-min-available.yaml
+# Verify:     kubectl get pdb pdb-web      -> MIN AVAILABLE 2, ALLOWED DISRUPTIONS 1 (once all 3 pods are Ready)
+# Imperative: kubectl create pdb pdb-web --selector=app=pdb-web --min-available=2
+# Try:        kubectl drain <node> --ignore-daemonsets --pod-selector=app=pdb-web --timeout=60s ; kubectl uncordon <node>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdb-web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pdb-web
+  template:
+    metadata:
+      labels:
+        app: pdb-web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+        readinessProbe:               # the PDB counts only Ready pods as healthy
+          httpGet:
+            path: /
+            port: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-web
+spec:
+  minAvailable: 2                     # integer, or a percentage string such as "66%" (rounded UP)
+  selector:
+    matchLabels:
+      app: pdb-web                    # should match the Deployment's pod labels exactly

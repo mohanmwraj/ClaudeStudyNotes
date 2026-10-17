@@ -1,0 +1,50 @@
+# Advanced Job failure handling: podFailurePolicy (GA v1.31) and backoffLimitPerIndex (GA v1.33).
+# kubectl apply -f job-pod-failure-policy.yaml
+# kubectl get jobs fail-fast-job per-index-job
+# kubectl get job fail-fast-job -o jsonpath='{.status.conditions[?(@.type=="Failed")].reason}{"\n"}'   # PodFailurePolicy
+# kubectl get job per-index-job -o jsonpath='{.status.completedIndexes} / failed: {.status.failedIndexes}{"\n"}'
+#
+# 1) Fail fast: exit code 42 = non-retryable bug -> fail the whole Job at once instead of retrying 6 times;
+#    pod disruptions (node drain, preemption) are retried without consuming backoffLimit.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fail-fast-job
+spec:
+  backoffLimit: 6
+  podFailurePolicy:                  # rules are evaluated in order; the first matching rule wins
+    rules:
+    - action: FailJob                # FailJob | Ignore | Count | FailIndex
+      onExitCodes:
+        containerName: main          # optional; omitted = any container
+        operator: In                 # In | NotIn
+        values: [42]
+    - action: Ignore                 # do not count towards backoffLimit, just recreate the pod
+      onPodConditions:
+      - type: DisruptionTarget
+  template:
+    spec:
+      restartPolicy: Never           # REQUIRED when podFailurePolicy is used
+      containers:
+      - name: main
+        image: busybox:1.36
+        command: ["sh", "-c", "echo 'simulating a fatal bug'; exit 42"]
+---
+# 2) Per-index retries: a failing index does not stop the other indexes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: per-index-job
+spec:
+  completionMode: Indexed            # backoffLimitPerIndex requires Indexed
+  completions: 4
+  parallelism: 4
+  backoffLimitPerIndex: 1            # each index may be retried once (2 attempts total)
+  maxFailedIndexes: 2                # more than 2 failed indexes -> the whole Job fails early
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: main
+        image: busybox:1.36
+        command: ["sh", "-c", "if [ \"$JOB_COMPLETION_INDEX\" = 2 ]; then echo 'index 2 fails'; exit 1; fi; echo \"index $JOB_COMPLETION_INDEX ok\""]

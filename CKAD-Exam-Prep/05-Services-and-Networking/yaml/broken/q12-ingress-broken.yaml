@@ -1,0 +1,62 @@
+# Practice Q12 setup -- INTENTIONALLY BROKEN Ingress (the Deployment and Service are correct).
+# Apply it, then solve the task without reading further.
+# kubectl apply -f q12-ingress-broken.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q12
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: sn-q12
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: catalog
+        image: busybox:1.36
+        command: ["sh", "-c", "mkdir -p /www/catalog && echo catalog-ok > /www/catalog/index.html && echo items-ok > /www/catalog/items && httpd -f -p 8080 -h /www"]
+        ports:
+        - name: http
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+  namespace: sn-q12
+spec:
+  selector:
+    app: catalog
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: catalog
+  namespace: sn-q12
+spec:
+  rules:
+  - host: catalog.example.com
+    http:
+      paths:
+      - path: /catalog
+        pathType: Exact
+        backend:
+          service:
+            name: catalogue
+            port:
+              number: 8080

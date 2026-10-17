@@ -1,0 +1,32 @@
+# BROKEN ON PURPOSE - CrashLoopBackOff
+# Bug:  the app exits with code 1 because the required environment variable DB_HOST is missing.
+# See:  kubectl get pod crashloop-demo              -> STATUS Error / CrashLoopBackOff, RESTARTS climbing
+#       kubectl logs crashloop-demo --previous      -> "FATAL: DB_HOST is not set"
+#       kubectl describe pod crashloop-demo         -> Last State: Terminated, Reason: Error, Exit Code: 1
+# Fix:  add the variable. env is immutable on a running Pod, so edit this file and recreate it:
+#         env:
+#         - name: DB_HOST
+#           value: db.example.internal
+#       kubectl replace --force -f crashloop-pod.yaml
+#       (for a Deployment: kubectl set env deploy/<name> DB_HOST=db.example.internal)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop-demo
+  labels:
+    app: crashloop-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command:
+    - sh
+    - -c
+    - |
+      echo "starting app..."
+      if [ -z "$DB_HOST" ]; then
+        echo "FATAL: DB_HOST is not set" >&2
+        exit 1
+      fi
+      echo "connected to $DB_HOST"
+      sleep 3600

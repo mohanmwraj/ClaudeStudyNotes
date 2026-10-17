@@ -1,0 +1,26 @@
+# Example user values file for the sample chart (and the same idea for any chart).
+# Precedence: chart values.yaml < this file (-f, later files win) < --set flags.
+# Use:     helm install web sample-chart/webapp -n helm-lab --create-namespace -f values-override.yaml
+#          helm upgrade web sample-chart/webapp -n helm-lab -f values-override.yaml --set replicaCount=4
+# Check:   helm get values web -n helm-lab          (only the user-supplied values)
+#          helm get values web -n helm-lab --all    (merged result incl. chart defaults)
+replicaCount: 3
+
+image:
+  tag: "1.27-alpine"               # quote tags so YAML never turns them into numbers (e.g. 1.20 -> 1.2)
+
+message: "Hello from values-override.yaml"
+
+service:
+  type: NodePort
+  nodePort: 30080
+
+env:
+  LOG_LEVEL: debug
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 96Mi
+  limits:
+    memory: 192Mi

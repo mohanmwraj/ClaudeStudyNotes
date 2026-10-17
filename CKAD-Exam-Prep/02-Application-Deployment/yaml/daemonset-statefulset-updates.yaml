@@ -1,0 +1,85 @@
+# Update strategies of the OTHER rollout-capable workloads (brief reference).
+# DaemonSet and StatefulSet use spec.updateStrategy (a Deployment uses spec.strategy).
+# Apply:    kubectl apply -f daemonset-statefulset-updates.yaml
+# Rollout:  kubectl rollout status ds/node-agent        | kubectl rollout status sts/db
+#           kubectl rollout history ds/node-agent       | kubectl rollout undo sts/db --to-revision=1
+#           kubectl rollout restart ds/node-agent       (pause/resume work for Deployments only)
+# Partition demo: kubectl set image sts/db db=nginx:1.27-alpine
+#   -> only db-2 (ordinal >= partition) is updated; lower the partition to continue:
+#      kubectl patch sts db -p '{"spec":{"updateStrategy":{"rollingUpdate":{"partition":0}}}}'
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  labels:
+    app: node-agent
+spec:
+  selector:
+    matchLabels:
+      app: node-agent
+  updateStrategy:
+    type: RollingUpdate            # default; the other value is OnDelete (new Pods only when you delete old ones)
+    rollingUpdate:
+      maxUnavailable: 1            # default 1
+      maxSurge: 0                  # default 0; maxSurge and maxUnavailable must not BOTH be 0
+  minReadySeconds: 0
+  revisionHistoryLimit: 10         # history is stored in ControllerRevision objects
+  template:
+    metadata:
+      labels:
+        app: node-agent
+    spec:
+      containers:
+      - name: agent
+        image: busybox:1.36
+        command: ["sh", "-c", "while true; do echo agent on $(hostname); sleep 30; done"]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db                         # headless Service that gives the StatefulSet Pods stable DNS names
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+spec:
+  serviceName: db
+  replicas: 3
+  selector:
+    matchLabels:
+      app: db
+  updateStrategy:
+    type: RollingUpdate            # default; Pods are updated one at a time from the HIGHEST ordinal down (db-2, db-1, db-0)
+    rollingUpdate:
+      partition: 2                 # only Pods with ordinal >= 2 get the new template (staged / canary-style update)
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: db
+        image: nginx:1.27          # stand-in image; a real StatefulSet would run a database
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi

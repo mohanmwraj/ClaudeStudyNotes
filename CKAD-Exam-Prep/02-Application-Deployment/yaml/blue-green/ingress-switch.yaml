@@ -1,0 +1,51 @@
+# Blue/green variant: switch at the Ingress instead of the Service selector.
+# One Service per colour (always pointing at its own Pods) + one Ingress whose backend you flip.
+# Needs an Ingress controller (ingressClassName "nginx" in most labs).
+# Apply:      kubectl apply -f blue-deployment.yaml -f green-deployment.yaml -f ingress-switch.yaml
+# Switch:     kubectl patch ingress shop --type=json \
+#               -p '[{"op":"replace","path":"/spec/rules/0/http/paths/0/backend/service/name","value":"shop-green"}]'
+# Roll back:  same command with "value":"shop-blue"
+# Test:       curl -s -H 'Host: shop.example.com' http://<ingress-controller-address>/
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-blue
+spec:
+  selector:
+    app: shop
+    version: blue
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-green
+spec:
+  selector:
+    app: shop
+    version: green
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: shop.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: shop-blue        # <- flip to shop-green to switch all traffic
+            port:
+              number: 80

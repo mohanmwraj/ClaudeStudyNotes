@@ -1,0 +1,33 @@
+# BROKEN ON PURPOSE - CreateContainerConfigError
+# Bug:  the env var references key "db_url" in ConfigMap "app-config", but the ConfigMap only has "database_url".
+# See:  kubectl get pod configerror-demo       -> CreateContainerConfigError
+#       kubectl describe pod configerror-demo  -> Error: couldn't find key db_url in ConfigMap <ns>/app-config
+# Fix (either):
+#   a) point the Pod at the existing key (configMapKeyRef.key: database_url) and recreate it, or
+#   b) add the missing key - the kubelet keeps retrying, so the Pod starts WITHOUT being recreated:
+#      kubectl patch configmap app-config -p '{"data":{"db_url":"postgres://db:5432/app"}}'
+# Related: a missing ConfigMap/Secret used as a VOLUME shows ContainerCreating + FailedMount events instead.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  database_url: postgres://db:5432/app
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configerror-demo
+  labels:
+    app: configerror-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "echo DB_URL=$DB_URL; sleep 3600"]
+    env:
+    - name: DB_URL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: db_url            # BUG: this key does not exist

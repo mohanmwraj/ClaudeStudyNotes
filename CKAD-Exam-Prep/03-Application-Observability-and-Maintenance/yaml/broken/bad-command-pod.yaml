@@ -1,0 +1,20 @@
+# BROKEN ON PURPOSE - RunContainerError / StartError (exit code 128) -> CrashLoopBackOff
+# Bug:  `command` points to a binary that does not exist in the image, so the runtime cannot start the process.
+# See:  kubectl get pod bad-command-demo        -> RunContainerError, then CrashLoopBackOff
+#       kubectl describe pod bad-command-demo   -> Last State: Terminated, Reason: StartError, Exit Code: 128
+#           Message: ... exec: "/app/server": stat /app/server: no such file or directory   (wording varies by runtime)
+#       kubectl logs bad-command-demo           -> empty: the process never started
+# Fix:  use a command that exists in the image, e.g. command: ["sh", "-c", "echo started; sleep 3600"],
+#       then kubectl replace --force -f bad-command-pod.yaml
+# Compare: the same typo run through `sh -c` exits 127 ("not found") and shows Reason: Error instead.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-command-demo
+  labels:
+    app: bad-command-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["/app/server", "--port=8080"]   # BUG: no such file in busybox

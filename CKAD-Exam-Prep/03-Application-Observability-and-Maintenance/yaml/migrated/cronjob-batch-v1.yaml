@@ -1,0 +1,24 @@
+# FIXED - batch/v1 CronJob migrated from ../deprecated/cronjob-v1beta1.yaml
+# Change: apiVersion only. batch/v1 also offers spec.timeZone (stable since v1.27).
+# Apply:  kubectl apply -f cronjob-batch-v1.yaml
+# Test:   kubectl create job report-now --from=cronjob/report && kubectl logs job/report-now
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: report
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: "Etc/UTC"                 # optional, batch/v1 only
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure    # Job pods: Never or OnFailure only
+          containers:
+          - name: report
+            image: busybox:1.36
+            command: ["sh", "-c", "date; echo generating report"]

@@ -1,0 +1,49 @@
+# volumeMounts options:
+#   subPath      mount ONE file / sub-directory of a volume without hiding the rest of the target directory
+#   subPathExpr  like subPath, built from env vars with $(VAR) (e.g. one directory per pod)
+#   readOnly     this container cannot write through this mount
+# kubectl apply -f pod-subpath.yaml
+# kubectl exec subpath-demo -c web -- ls /usr/share/nginx/html   # index.html (ConfigMap) AND 50x.html (image)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subpath-demo-html
+data:
+  index.html: |
+    served from a ConfigMap key mounted with subPath
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: subpath-demo
+  labels:
+    app: subpath-demo
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/html/index.html   # a FILE path
+      subPath: index.html            # NOTE: subPath mounts never receive ConfigMap/Secret updates
+      readOnly: true
+  - name: logger
+    image: busybox:1.36
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    command: ["sh", "-c", "while true; do date >> /logs/app.log; sleep 10; done"]
+    volumeMounts:
+    - name: node-logs
+      mountPath: /logs
+      subPathExpr: $(POD_NAME)       # -> /tmp/ckad-pod-logs/subpath-demo on the node (round brackets!)
+  volumes:
+  - name: html
+    configMap:
+      name: subpath-demo-html
+  - name: node-logs
+    hostPath:
+      path: /tmp/ckad-pod-logs
+      type: DirectoryOrCreate

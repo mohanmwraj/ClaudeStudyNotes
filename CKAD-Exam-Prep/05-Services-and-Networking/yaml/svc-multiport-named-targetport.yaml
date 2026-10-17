@@ -1,0 +1,51 @@
+# Multi-port Service + named targetPorts.
+# - EVERY port of a multi-port Service needs a unique name (lowercase alphanumerics and '-', start/end alphanumeric).
+# - "targetPort: <name>" points at a containerPort NAME in the Pod, so the container port number can change
+#   without editing the Service (and different Pods may even use different numbers for the same name).
+# Apply: kubectl apply -f svc-multiport-named-targetport.yaml
+# Test:  kubectl run tmp --rm -it --image=busybox:1.36 --restart=Never -- wget -qO- --timeout=2 http://shop:9090/metrics
+# Imperative (numbers only, auto-named ports "80-80" and "9090-9090"):
+#   kubectl create service clusterip shop --tcp=80:80,9090:9090
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shop
+  template:
+    metadata:
+      labels:
+        app: shop
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - name: http-web          # containerPort names: max 15 chars, lowercase, unique within the Pod
+          containerPort: 80
+      - name: metrics             # a tiny second server: busybox httpd serving /www/metrics on 9090
+        image: busybox:1.36
+        command: ["sh", "-c", "mkdir -p /www && echo 'metrics_ok 1' > /www/metrics && httpd -f -p 9090 -h /www"]
+        ports:
+        - name: metrics
+          containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop
+spec:
+  selector:
+    app: shop
+  ports:
+  - name: http                    # required: this Service has 2 ports
+    protocol: TCP
+    port: 80
+    targetPort: http-web          # resolved per Pod -> 80
+  - name: metrics
+    protocol: TCP
+    port: 9090
+    targetPort: metrics           # resolved per Pod -> 9090

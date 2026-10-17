@@ -1,0 +1,36 @@
+# PodDisruptionBudget with a percentage maxUnavailable and unhealthyPodEvictionPolicy (GA since v1.31).
+# Apply:      kubectl apply -f pdb-max-unavailable.yaml
+# Verify:     kubectl get pdb pdb-cache    -> MAX UNAVAILABLE 25%, ALLOWED DISRUPTIONS 1 (25 % of 4 = 1)
+#             kubectl scale deploy pdb-cache --replicas=5 ; kubectl get pdb pdb-cache   -> 25 % of 5 = 1.25, rounded UP = 2
+# Imperative: kubectl create pdb pdb-cache --selector=app=pdb-cache --max-unavailable=25%
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdb-cache
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: pdb-cache
+  template:
+    metadata:
+      labels:
+        app: pdb-cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2
+        ports:
+        - containerPort: 6379
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-cache
+spec:
+  maxUnavailable: "25%"                     # percentage = string; maxUnavailable needs a controller-managed workload
+  unhealthyPodEvictionPolicy: AlwaysAllow   # Running-but-not-Ready pods (e.g. CrashLoopBackOff) may always be evicted,
+                                            # so a broken app cannot block node drains (default: IfHealthyBudget)
+  selector:
+    matchLabels:
+      app: pdb-cache

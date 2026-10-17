@@ -1,0 +1,30 @@
+# Controller-specific annotations (ingress-nginx): strip a path prefix before forwarding.
+# Other controllers (Traefik, HAProxy, cloud LBs) use different annotations -- they are NOT portable.
+#   apps.example.com/legacy          -> app-svc receives "/"
+#   apps.example.com/legacy/orders/7 -> app-svc receives "/orders/7"
+# A plain "rewrite-target: /" on a Prefix path would send EVERY sub-path to "/"; keep the rest of the path
+# with a regex capture group as below.
+# Prereqs: ingress-nginx with IngressClass "nginx"; backends from ingress-backends.yaml.
+# Apply: kubectl apply -f ingress-nginx-rewrite.yaml
+# Test:  curl -H "Host: apps.example.com" http://<controller-address>/legacy/orders/7   -> "app-... /orders/7"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rewrite
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"       # annotation values are strings: quote them
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"   # $2 = second capture group of the path regex
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"   # no HTTP -> HTTPS redirect for this Ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: apps.example.com
+    http:
+      paths:
+      - path: "/legacy(/|$)(.*)"
+        pathType: ImplementationSpecific   # regex paths are controller-specific
+        backend:
+          service:
+            name: app-svc
+            port:
+              number: 80

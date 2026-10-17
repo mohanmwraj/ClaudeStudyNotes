@@ -1,0 +1,34 @@
+# Demonstrates: ConfigMap anatomy - env-style keys, file-style keys, binaryData, and an
+# immutable ConfigMap.
+# Apply:   kubectl apply -f configmap.yaml
+# Imperative equivalents:
+#   kubectl create configmap app-config --from-literal=APP_MODE=production --from-literal=LOG_LEVEL=info
+#   kubectl create configmap app-config --from-file=app.properties          # key = file name
+#   kubectl create configmap app-config --from-env-file=app.env             # one key per KEY=VALUE line
+# Verify:  kubectl describe configmap app-config
+#          kubectl get configmap app-config -o jsonpath='{.data.APP_MODE}{"\n"}'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:                                    # UTF-8 strings only
+  APP_MODE: production                   # env-var style key
+  LOG_LEVEL: info
+  MAX_CONNECTIONS: "100"                 # values MUST be strings - quote numbers and booleans
+  FEATURE_X_ENABLED: "true"
+  app.properties: |                      # file style key: becomes a file when mounted as a volume
+    server.port=8080
+    cache.ttl.seconds=300
+    greeting=Hello from a ConfigMap
+binaryData:                              # base64-encoded bytes (keys must not repeat keys in data)
+  sample.bin: AAECAw==                   # bytes 00 01 02 03
+# Total size of data + binaryData is limited to 1 MiB.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config-v1                    # versioned name: immutable maps are replaced, not edited
+data:
+  APP_MODE: production
+immutable: true                          # data can never change; delete + recreate to update.
+                                         # Protects against bad edits and reduces kubelet watch load.

@@ -1,0 +1,94 @@
+# Workloads with clearly different CPU / memory usage for practising `kubectl top` (needs metrics-server).
+# Apply:  kubectl apply -f top-demo-workloads.yaml     (metrics appear after ~1 minute)
+# Try:    kubectl top pod -n obs-top --sort-by=cpu
+#         kubectl top pod -n obs-top --sort-by=memory --containers
+#         kubectl top pod -n obs-top -l tier=batch
+# Expect: cpu-burner* uses the most CPU (~200m, its limit); mem-holder* uses the most memory (~50Mi).
+# Clean:  kubectl delete namespace obs-top
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: obs-top
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-burner
+  namespace: obs-top
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpu-burner
+  template:
+    metadata:
+      labels:
+        app: cpu-burner
+        tier: batch
+    spec:
+      containers:
+      - name: burn
+        image: busybox:1.36
+        command: ["sh", "-c", "while true; do :; done"]   # busy loop, throttled by the CPU limit
+        resources:
+          requests:
+            cpu: 50m
+            memory: 16Mi
+          limits:
+            cpu: 200m
+            memory: 32Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mem-holder
+  namespace: obs-top
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mem-holder
+  template:
+    metadata:
+      labels:
+        app: mem-holder
+        tier: cache
+    spec:
+      containers:
+      - name: hold
+        image: busybox:1.36
+        # dd fills a 50 MiB buffer, then blocks writing to a pipe that sleep never reads -> memory stays in use
+        command: ["sh", "-c", "dd if=/dev/zero bs=52428800 count=1 | sleep 86400"]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idle
+  namespace: obs-top
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: idle
+  template:
+    metadata:
+      labels:
+        app: idle
+        tier: web
+    spec:
+      containers:
+      - name: idle
+        image: busybox:1.36
+        command: ["sleep", "86400"]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi

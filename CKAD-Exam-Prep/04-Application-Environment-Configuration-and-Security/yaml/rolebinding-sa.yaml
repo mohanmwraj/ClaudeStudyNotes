@@ -1,0 +1,30 @@
+# Demonstrates: a RoleBinding that grants the Role "pod-reader" (role-pod-reader.yaml) to a
+# ServiceAccount, plus examples of User and Group subjects.
+# Prereq:  kubectl create namespace dev
+#          kubectl create serviceaccount app-sa -n dev
+#          kubectl apply -f role-pod-reader.yaml
+# Apply:   kubectl apply -f rolebinding-sa.yaml
+# Imperative equivalent:
+#   kubectl create rolebinding pod-reader-binding -n dev --role=pod-reader \
+#     --serviceaccount=dev:app-sa --user=jane --group=dev-team
+# Verify:  kubectl auth can-i list pods -n dev --as=system:serviceaccount:dev:app-sa   # yes
+#          kubectl auth can-i delete pods -n dev --as=system:serviceaccount:dev:app-sa # no
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-binding
+  namespace: dev                         # permissions apply in THIS namespace
+subjects:
+- kind: ServiceAccount                   # ServiceAccount subjects have NO apiGroup ...
+  name: app-sa
+  namespace: dev                         # ... but always need a namespace
+- kind: User                             # users are not API objects - any name from authn
+  name: jane
+  apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: dev-team                         # e.g. the O= field of a client cert, or an OIDC groups claim
+  apiGroup: rbac.authorization.k8s.io
+roleRef:                                 # IMMUTABLE - delete and recreate the binding to change it
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role                             # a RoleBinding may reference a Role (same ns) or a ClusterRole
+  name: pod-reader

@@ -1,0 +1,63 @@
+# Demonstrates: Downward API as files - whole labels/annotations maps (volume only), single
+# fields, and container resources (containerName is REQUIRED in volumes).
+# Apply:   kubectl apply -f pod-downward-api-volume.yaml
+# Verify:  kubectl exec downward-volume-demo -- cat /etc/podinfo/labels
+#            # app="downward-demo"
+#            # tier="frontend"
+#          kubectl label pod downward-volume-demo version=v2
+#          kubectl logs downward-volume-demo --tail=5       # labels file refreshes (~1 min)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: downward-volume-demo
+  labels:
+    app: downward-demo
+    tier: frontend
+  annotations:
+    owner: team-a
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do cat /etc/podinfo/labels; echo; sleep 10; done"]
+    resources:
+      requests:
+        cpu: 100m
+        memory: 32Mi
+      limits:
+        cpu: 250m
+        memory: 64Mi
+    volumeMounts:
+    - name: podinfo
+      mountPath: /etc/podinfo
+      readOnly: true
+  volumes:
+  - name: podinfo
+    downwardAPI:
+      items:
+      - path: labels                     # all labels, one key="value" per line (volume only)
+        fieldRef:
+          fieldPath: metadata.labels
+      - path: annotations                # all annotations (volume only)
+        fieldRef:
+          fieldPath: metadata.annotations
+      - path: tier                       # a single label
+        fieldRef:
+          fieldPath: metadata.labels['tier']
+      - path: name
+        fieldRef:
+          fieldPath: metadata.name
+      - path: namespace
+        fieldRef:
+          fieldPath: metadata.namespace
+      - path: cpu_limit_millicores
+        resourceFieldRef:
+          containerName: app             # required here
+          resource: limits.cpu
+          divisor: 1m                    # -> 250
+      - path: mem_request_mib
+        resourceFieldRef:
+          containerName: app
+          resource: requests.memory
+          divisor: 1Mi                   # -> 32
+# Not available in volumes: spec.nodeName, spec.serviceAccountName, status.podIP(s), status.hostIP(s)

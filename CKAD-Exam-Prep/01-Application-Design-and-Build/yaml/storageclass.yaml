@@ -1,0 +1,23 @@
+# StorageClasses (cluster-scoped): a dynamic-provisioning profile plus binding behaviour.
+# The provisioner must actually run in the cluster:
+#   kind -> rancher.io/local-path   minikube -> k8s.io/minikube-hostpath   clouds -> their CSI driver (e.g. ebs.csi.aws.com)
+# kubectl apply -f storageclass.yaml && kubectl get sc
+# Make a class the default:
+#   kubectl patch sc fast-retain -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-retain
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"   # "true" = used by PVCs that omit storageClassName
+provisioner: rancher.io/local-path   # immutable, like parameters, reclaimPolicy and volumeBindingMode
+reclaimPolicy: Retain                # default Delete; copied to every PV this class provisions
+volumeBindingMode: WaitForFirstConsumer   # default Immediate; WFFC = bind/provision once a pod using the PVC is scheduled
+allowVolumeExpansion: true           # lets PVCs grow (the provisioner must support it; shrinking is never allowed)
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner   # no dynamic provisioning: an admin pre-creates "local" PVs
+volumeBindingMode: WaitForFirstConsumer     # needed for local PVs so binding respects the pod's node

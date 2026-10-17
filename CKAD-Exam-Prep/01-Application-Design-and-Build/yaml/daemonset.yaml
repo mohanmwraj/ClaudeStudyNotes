@@ -1,0 +1,56 @@
+# DaemonSet: one pod per eligible node - node agents, log shippers, monitoring exporters, CNI/CSI plugins.
+# Includes the toleration needed to ALSO run on control-plane nodes (they carry a NoSchedule taint).
+# No "kubectl create daemonset": generate a Deployment, change kind, delete replicas + strategy (see 05-*.md).
+# kubectl apply -f daemonset.yaml
+# kubectl get ds node-agent ; kubectl get pods -l app=node-agent -o wide ; kubectl rollout status ds/node-agent
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  labels:
+    app: node-agent
+spec:
+  selector:                          # immutable, must match template labels
+    matchLabels:
+      app: node-agent
+  updateStrategy:
+    type: RollingUpdate              # default; OnDelete = new pods only when you delete old ones
+    rollingUpdate:
+      maxUnavailable: 1              # default 1
+      maxSurge: 0                    # default 0; >0 starts the new pod before the old one goes (both cannot be 0)
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: node-agent
+    spec:
+      tolerations:                   # remove this block to skip control-plane nodes
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      # nodeSelector:                # or restrict to a subset of nodes
+      #   disktype: ssd
+      containers:
+      - name: agent
+        image: busybox:1.36
+        command: ["sh", "-c", "while true; do echo \"agent alive on $NODE_NAME\"; sleep 30; done"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /host/var/log
+          readOnly: true
+      volumes:
+      - name: varlog
+        hostPath:                    # typical for node agents; rejected by Pod Security "baseline"/"restricted"
+          path: /var/log
+          type: Directory

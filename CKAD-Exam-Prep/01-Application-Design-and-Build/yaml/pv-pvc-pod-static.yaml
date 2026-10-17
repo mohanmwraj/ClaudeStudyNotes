@@ -1,0 +1,57 @@
+# Static provisioning: an admin creates a PV, a user claims it with a PVC, a pod mounts the PVC.
+# hostPath PVs are for single-node labs only (the data lives on whichever node runs the pod).
+# kubectl apply -f pv-pvc-pod-static.yaml
+# kubectl get pv pv-static-demo ; kubectl get pvc pvc-static-demo     # both STATUS Bound
+# kubectl exec pvc-static-pod -- cat /data/hello.txt
+apiVersion: v1
+kind: PersistentVolume               # cluster-scoped: never put a namespace on it
+metadata:
+  name: pv-static-demo
+  labels:
+    type: local
+spec:
+  storageClassName: manual           # only a matching label here - no StorageClass object needed
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain   # default for manually created PVs; after PVC deletion -> Released
+  volumeMode: Filesystem             # default (Block = raw device)
+  hostPath:
+    path: /tmp/ckad-pv-static
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim          # namespaced
+metadata:
+  name: pvc-static-demo
+spec:
+  storageClassName: manual           # must equal the PV's class ("" would mean: only PVs without a class)
+  accessModes:
+  - ReadWriteOnce                    # the PV must offer every requested mode
+  resources:
+    requests:
+      storage: 500Mi                 # PV capacity must be >= request (the whole 1Gi PV gets bound)
+  selector:                          # optional: only PVs carrying these labels
+    matchLabels:
+      type: local
+  # volumeName: pv-static-demo       # optional: pre-bind to exactly this PV
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-static-pod
+  labels:
+    app: pvc-static-pod
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "echo \"written at $(date)\" >> /data/hello.txt; sleep 3600"]
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pvc-static-demo     # PVC must be in the pod's namespace

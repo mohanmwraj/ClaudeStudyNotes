@@ -1,0 +1,37 @@
+# FIXED - networking.k8s.io/v1 Ingress migrated from ../deprecated/ingress-v1beta1.yaml
+# Changes: apiVersion; spec.ingressClassName replaces the annotation; spec.backend -> spec.defaultBackend;
+#          serviceName/servicePort -> service.name + service.port.number|name; pathType is REQUIRED.
+# Apply:   kubectl apply -f ingress-v1.yaml   (needs an ingress controller + IngressClass "nginx" to route)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: default-http
+      port:
+        number: 80
+  tls:
+  - hosts:
+    - shop.example.com
+    secretName: shop-tls
+  rules:
+  - host: shop.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix              # Prefix | Exact | ImplementationSpecific (= old undefined behaviour)
+        backend:
+          service:
+            name: api-svc
+            port:
+              number: 8080            # numeric servicePort
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-svc
+            port:
+              name: http              # string servicePort

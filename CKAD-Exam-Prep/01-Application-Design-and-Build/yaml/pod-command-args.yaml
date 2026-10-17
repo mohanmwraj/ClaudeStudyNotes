@@ -1,0 +1,86 @@
+# command/args vs the image's ENTRYPOINT/CMD.
+#   command -> replaces ENTRYPOINT (and the image CMD is then ignored)
+#   args    -> replaces CMD (ENTRYPOINT is kept)
+# busybox:1.36 has no ENTRYPOINT and CMD ["sh"]; nginx:1.27 has ENTRYPOINT ["/docker-entrypoint.sh"],
+# CMD ["nginx", "-g", "daemon off;"].
+# kubectl apply -f pod-command-args.yaml
+# kubectl get pod -l demo=command-args -o custom-columns=NAME:.metadata.name,COMMAND:.spec.containers[0].command,ARGS:.spec.containers[0].args
+# kubectl logs env-expansion
+apiVersion: v1
+kind: Pod
+metadata:
+  name: args-only
+  labels:
+    demo: command-args
+spec:
+  containers:
+  - name: main
+    image: busybox:1.36
+    # no ENTRYPOINT in busybox, so args becomes the whole command line
+    args: ["sh", "-c", "echo 'args replaced CMD'; sleep 3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: command-only
+  labels:
+    demo: command-args
+spec:
+  containers:
+  - name: main
+    image: busybox:1.36
+    command: ["sh", "-c", "echo 'command replaced ENTRYPOINT and CMD'; sleep 3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: command-and-args
+  labels:
+    demo: command-args
+spec:
+  containers:
+  - name: main
+    image: busybox:1.36
+    env:
+    - name: GREETING
+      value: "hello"
+    command: ["sh", "-c"]
+    # $GREETING is expanded by the SHELL (needs sh -c); the script is a single argument
+    args: ["echo \"$GREETING from a shell\"; sleep 3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-expansion
+  labels:
+    demo: command-args
+spec:
+  restartPolicy: Never
+  containers:
+  - name: main
+    image: busybox:1.36
+    env:
+    - name: GREETING
+      value: "hello"
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    # $(VAR) is expanded by KUBERNETES (no shell needed); unknown $(names) are left as-is; $$(X) escapes
+    command: ["echo"]
+    args: ["$(GREETING) from $(POD_NAME)"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-args
+  labels:
+    demo: command-args
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    # ENTRYPOINT /docker-entrypoint.sh is kept and receives these args instead of the image CMD
+    args: ["nginx-debug", "-g", "daemon off;"]
+    ports:
+    - containerPort: 80

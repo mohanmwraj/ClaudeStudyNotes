@@ -1,0 +1,70 @@
+# projected volume: several sources (configMap, secret, downwardAPI, serviceAccountToken) in ONE directory.
+# ConfigMaps, Secrets and ServiceAccounts in depth: chapter 04.
+# kubectl apply -f projected-volume.yaml && kubectl logs projected-demo
+# kubectl exec projected-demo -- cat /etc/app/pod/labels /etc/app/pod/cpu-limit-millicores
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: projected-demo-config
+data:
+  app.properties: |
+    mode=production
+    cache=true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: projected-demo-secret
+type: Opaque
+stringData:                          # plain text in, stored base64-encoded
+  db-password: "demo-only-not-a-real-secret"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-demo
+  labels:
+    app: projected-demo
+    tier: backend
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "ls -lR /etc/app; sleep 3600"]
+    resources:
+      limits:
+        cpu: 200m
+        memory: 64Mi
+    volumeMounts:
+    - name: all-in-one
+      mountPath: /etc/app
+      readOnly: true
+  volumes:
+  - name: all-in-one
+    projected:
+      defaultMode: 0440              # octal file mode for all projected files
+      sources:
+      - configMap:
+          name: projected-demo-config
+          items:                     # optional: pick keys and rename them
+          - key: app.properties
+            path: config/app.properties
+      - secret:
+          name: projected-demo-secret
+          items:
+          - key: db-password
+            path: secrets/db-password
+      - downwardAPI:
+          items:
+          - path: pod/labels
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: pod/cpu-limit-millicores
+            resourceFieldRef:
+              containerName: app
+              resource: limits.cpu
+              divisor: 1m
+      - serviceAccountToken:         # bound, auto-rotated token with a custom audience
+          path: token/sa-token
+          audience: my-api
+          expirationSeconds: 3600    # minimum 600

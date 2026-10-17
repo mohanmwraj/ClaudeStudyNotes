@@ -1,0 +1,32 @@
+# Strategic-merge patch for the dev overlay: run 1 replica.
+# Wired in overlays/dev/kustomization.yaml ->  patches: - path: patch-replicas.yaml
+# Kustomize finds the target by apiVersion + kind + metadata.name. Use the BASE name "web", not "dev-web".
+#
+# The only real change is spec.replicas. The minimal patch you would type in the exam is just:
+#   apiVersion: apps/v1
+#   kind: Deployment
+#   metadata:
+#     name: web
+#   spec:
+#     replicas: 1
+# The selector/template lines below repeat the base values unchanged. Equal values are no-ops in a
+# strategic merge (the containers list merges by "name"), so the rendered output is identical.
+# They are kept only so this file also passes strict manifest linters, which treat any
+# "kind: Deployment" file as a complete object.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27

@@ -1,0 +1,29 @@
+# Practice Q13 setup: a StatefulSet whose governing headless Service does not exist yet.
+# kubectl apply -f q13-statefulset-no-service.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sn-q13
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: sn-q13
+spec:
+  serviceName: db-hl          # the headless Service you will create in the task
+  replicas: 2
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2
+        ports:
+        - name: redis
+          containerPort: 6379

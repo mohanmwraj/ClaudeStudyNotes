@@ -1,0 +1,58 @@
+# Lock down a tier in both directions:
+#   1) api Pods may only open connections to db Pods on TCP 6379 (+ DNS). All other egress from api is blocked.
+#   2) db Pods only accept connections from api Pods on TCP 6379.
+# A connection needs BOTH: egress allowed on the source (if isolated) AND ingress allowed on the destination
+# (if isolated). Replies are allowed automatically.
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-egress-to-db-only.yaml
+# Test: kubectl -n netpol-demo exec deploy/api -- nc -zv -w 2 db 6379              -> open
+#       kubectl -n netpol-demo exec deploy/api -- wget -qO- --timeout=2 http://web   -> times out (egress blocked)
+#       kubectl -n netpol-demo exec frontend   -- nc -zv -w 2 db 6379                -> times out (ingress blocked)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-egress-db-only
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Egress                        # egress-only policy: ingress to api is not touched
+  egress:
+  - to:                           # rule 1: the database
+    - podSelector:
+        matchLabels:
+          app: db
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:                           # rule 2: DNS (CoreDNS Pods in any namespace; usually kube-system)
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-ingress-from-api
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 6379

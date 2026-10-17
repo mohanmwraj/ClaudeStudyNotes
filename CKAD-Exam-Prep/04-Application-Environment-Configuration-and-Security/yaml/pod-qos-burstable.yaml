@@ -1,0 +1,24 @@
+# Demonstrates: QoS class Burstable - at least one request or limit, but not Guaranteed.
+# Apply:   kubectl apply -f pod-qos-burstable.yaml
+# Verify:  kubectl get pod qos-burstable -o jsonpath='{.status.qosClass}{"\n"}'   # Burstable
+# Behaviour: may use CPU above its request (throttled at the limit); OOMKilled if it exceeds
+# the memory limit; evicted before Guaranteed pods when it uses more than its requests under node pressure.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-burstable
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m                        # limit > request -> Burstable
+        memory: 256Mi
+  - name: sidecar
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do date; sleep 30; done"]
+    # no resources at all on this container - the pod is still Burstable (not BestEffort)

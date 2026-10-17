@@ -1,0 +1,36 @@
+# hostPath: mounts a file or directory from the NODE's filesystem - data is tied to that one node.
+# Big security risk (host access): rejected by Pod Security "baseline" and "restricted". Prefer PVCs.
+# kubectl apply -f hostpath.yaml
+# kubectl exec hostpath-demo -- sh -c 'cat /host-data/out.txt /host-file.log; head -2 /node/os-release'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-demo
+  labels:
+    app: hostpath-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "echo \"$(date) written from $(hostname)\" >> /host-data/out.txt; echo hello >> /host-file.log; sleep 3600"]
+    volumeMounts:
+    - name: data-dir
+      mountPath: /host-data
+    - name: log-file
+      mountPath: /host-file.log      # mounting a single FILE
+    - name: node-os-release
+      mountPath: /node/os-release
+      readOnly: true
+  volumes:
+  - name: data-dir
+    hostPath:
+      path: /tmp/ckad-hostpath       # path on the node
+      type: DirectoryOrCreate        # created (0755) if missing
+  - name: log-file
+    hostPath:
+      path: /tmp/ckad-hostpath.log
+      type: FileOrCreate             # creates the file - but NOT missing parent directories
+  - name: node-os-release
+    hostPath:
+      path: /etc/os-release
+      type: File                     # must already exist, otherwise the pod is stuck in ContainerCreating (FailedMount)

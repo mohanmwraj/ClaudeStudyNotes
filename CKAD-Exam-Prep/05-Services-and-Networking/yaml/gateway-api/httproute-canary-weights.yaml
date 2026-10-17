@@ -1,0 +1,25 @@
+# Canary / blue-green with weighted backendRefs -- no controller-specific annotations needed.
+#   Canary:     90 -> v1, 10 -> v2 (shown). Weights are relative (default 1) and need not sum to 100.
+#   Blue-green: flip to weight 0 / 100 (weight 0 = no traffic to that backend).
+# Prereqs: gateway.yaml + httproute-basic.yaml (namespace shop); Services checkout-v1:80 and checkout-v2:80 in shop.
+# Apply: kubectl apply -f httproute-canary-weights.yaml
+# Test:  for i in $(seq 1 20); do curl -s -H "Host: checkout.example.com" http://<gateway-address>/; done
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: checkout-canary
+  namespace: shop
+spec:
+  parentRefs:
+  - name: shared-gw
+    namespace: infra
+  hostnames:
+  - checkout.example.com
+  rules:
+  - backendRefs:
+    - name: checkout-v1
+      port: 80
+      weight: 90
+    - name: checkout-v2
+      port: 80
+      weight: 10

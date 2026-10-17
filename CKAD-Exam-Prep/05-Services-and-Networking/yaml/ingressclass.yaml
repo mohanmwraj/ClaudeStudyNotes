@@ -1,0 +1,21 @@
+# IngressClass: ties Ingresses (spec.ingressClassName) to a controller. Cluster-scoped.
+# Normally created by the controller's manifests or Helm chart -- you rarely write one yourself.
+# CAUTION: applying this on a cluster that already has an "nginx" class updates that class
+# (and marks it as the default).
+# Apply: kubectl apply -f ingressclass.yaml
+# Check: kubectl get ingressclass       (the default class is shown as "(default)" in kubectl describe / annotations)
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"   # Ingresses created WITHOUT ingressClassName get this class.
+                                                         # Keep at most ONE default: with two, class-less Ingresses are rejected.
+spec:
+  controller: k8s.io/ingress-nginx      # the controller name this class is implemented by
+  # parameters:                          # optional, controller-specific configuration object
+  #   apiGroup: k8s.example.com
+  #   kind: IngressParameters
+  #   name: external-lb
+  #   scope: Namespace                   # Cluster (default) | Namespace (then namespace: is required)
+  #   namespace: external-configuration

@@ -1,0 +1,18 @@
+# Static Pod manifest: the kubelet runs it directly from a directory on ONE node (no controller, no scheduler).
+#   ssh <node>; sudo cp static-pod.yaml /etc/kubernetes/manifests/static-web.yaml   (kubeadm staticPodPath)
+#   kubectl get pods -A | grep static-web          # read-only "mirror pod" named static-web-<node-name>
+# Delete it by removing the file - "kubectl delete pod static-web-<node>" does not stop the static pod.
+# Find the directory: grep staticPodPath /var/lib/kubelet/config.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web
+  namespace: default
+  labels:
+    app: static-web
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    ports:
+    - containerPort: 80

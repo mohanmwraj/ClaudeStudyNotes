@@ -1,0 +1,43 @@
+# ClusterIP Service (the default type) in front of a Deployment.
+# Several other files in this folder reuse this 'web' Deployment (Pods labelled app=web).
+# Apply:  kubectl apply -f svc-clusterip.yaml
+# Test:   kubectl run tmp --rm -it --image=busybox:1.36 --restart=Never -- wget -qO- --timeout=2 http://web
+# Imperative equivalent:
+#   kubectl create deployment web --image=nginx:1.27 --replicas=2 --port=80
+#   kubectl expose deployment web --port=80 --target-port=80
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web              # the Service selector below must match these Pod labels
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - name: http          # optional name; lets a Service use "targetPort: http"
+          containerPort: 80   # informational only: it neither opens nor restricts the port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: ClusterIP             # default; may be omitted
+  selector:
+    app: web                  # selects Pods (not the Deployment) by label; equality-based only
+  ports:
+  - name: http
+    protocol: TCP             # default TCP (UDP and SCTP also possible)
+    port: 80                  # port on the ClusterIP and DNS name: web:80
+    targetPort: 80            # container port (number or containerPort name); defaults to "port"

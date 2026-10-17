@@ -1,0 +1,28 @@
+# postStart + preStop hooks and the graceful-shutdown budget.
+# kubectl apply -f pod-lifecycle-hooks.yaml
+# kubectl exec hooks-demo -- cat /usr/share/nginx/html/poststart.txt
+# time kubectl delete pod hooks-demo
+#   -> ~5 s preStop sleep, then the stop signal (SIGQUIT = nginx image STOPSIGNAL), well inside the 30 s budget
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hooks-demo
+  labels:
+    app: hooks-demo
+spec:
+  terminationGracePeriodSeconds: 30   # total budget for preStop + graceful stop; SIGKILL when it expires
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    ports:
+    - containerPort: 80
+    lifecycle:
+      postStart:                      # runs concurrently with the ENTRYPOINT (no ordering guarantee);
+        exec:                         # the container is not "Running" until it completes; failure kills the container
+          command: ["sh", "-c", "echo \"postStart at $(date)\" > /usr/share/nginx/html/poststart.txt"]
+      preStop:                        # runs BEFORE the stop signal; its time counts against the grace period
+        sleep:                        # sleep action: beta (on by default) v1.30-v1.33, GA v1.34 - no shell needed
+          seconds: 5                  # gives Services/Ingress time to stop routing to this pod
+        # One handler per hook. Alternative for older clusters / custom drain logic:
+        # exec:
+        #   command: ["sh", "-c", "sleep 5 && nginx -s quit"]

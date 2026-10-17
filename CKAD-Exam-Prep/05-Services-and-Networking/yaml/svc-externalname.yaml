@@ -1,0 +1,16 @@
+# ExternalName Service: a DNS CNAME alias inside the cluster.
+# No selector, no ClusterIP, no EndpointSlices, no proxying -- CoreDNS just answers with a CNAME.
+# Pods call "my-db" (my-db.<ns>.svc.cluster.local) and are redirected to db.example.com.
+# Apply: kubectl apply -f svc-externalname.yaml
+# Test:  kubectl run tmp --rm -it --image=busybox:1.36 --restart=Never -- nslookup my-db.default.svc.cluster.local
+#        (you see "canonical name = db.example.com" even if the target name itself does not resolve)
+# Imperative: kubectl create service externalname my-db --external-name=db.example.com
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-db
+spec:
+  type: ExternalName
+  externalName: db.example.com   # a DNS name. An IP string is treated as a name made of digits and is NOT resolved.
+  # ports are optional and informational for ExternalName. HTTP Host headers and TLS SNI still carry the
+  # name the client used (my-db...), which the external server may reject.

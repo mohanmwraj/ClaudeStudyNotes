@@ -1,0 +1,19 @@
+# Demonstrates: QoS class Guaranteed - EVERY container sets cpu AND memory, requests == limits.
+# Apply:   kubectl apply -f pod-qos-guaranteed.yaml
+# Verify:  kubectl get pod qos-guaranteed -o jsonpath='{.status.qosClass}{"\n"}'   # Guaranteed
+# Tip: setting only limits also yields Guaranteed (requests default to the limits).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-guaranteed
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27
+    resources:
+      requests:
+        cpu: 250m                        # 0.25 core
+        memory: 128Mi                    # Mi = mebibytes (never lowercase "m" for memory)
+      limits:
+        cpu: 250m                        # == request
+        memory: 128Mi                    # == request

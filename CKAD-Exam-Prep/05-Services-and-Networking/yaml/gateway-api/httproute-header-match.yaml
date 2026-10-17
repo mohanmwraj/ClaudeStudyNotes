@@ -1,0 +1,47 @@
+# Header / query-parameter / method matching: send testers to v2, everyone else to v1.
+# Inside ONE match entry all conditions are ANDed; separate match entries in a rule are ORed.
+#   rule 1: (header x-canary: "true")  OR  (query ?version=v2)            -> checkout-v2
+#   rule 2: path prefix /admin AND method POST AND header x-role: admin   -> checkout-admin
+#   rule 3: everything else                                               -> checkout-v1
+# Prereqs: gateway.yaml + httproute-basic.yaml; Services checkout-v1/-v2/-admin:80 in namespace shop.
+# Apply: kubectl apply -f httproute-header-match.yaml
+# Test:  curl -H "Host: checkout.example.com" -H "x-canary: true" http://<gateway-address>/
+#        curl -H "Host: checkout.example.com" "http://<gateway-address>/?version=v2"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: checkout-by-header
+  namespace: shop
+spec:
+  parentRefs:
+  - name: shared-gw
+    namespace: infra
+  hostnames:
+  - checkout.example.com
+  rules:
+  - matches:
+    - headers:
+      - type: Exact               # Exact (default) | RegularExpression
+        name: x-canary            # header names are case-insensitive
+        value: "true"             # values are strings: quote true/false/numbers
+    - queryParams:                # second entry = OR
+      - type: Exact
+        name: version
+        value: v2
+    backendRefs:
+    - name: checkout-v2
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /admin
+      method: POST                # same entry = AND
+      headers:
+      - name: x-role
+        value: admin
+    backendRefs:
+    - name: checkout-admin
+      port: 80
+  - backendRefs:                  # no matches = PathPrefix "/"
+    - name: checkout-v1
+      port: 80

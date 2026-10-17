@@ -1,0 +1,132 @@
+# rbac-namespace-developer.yaml
+# Demonstrates: least-privilege, namespace-scoped RBAC for a product team in namespace "shop":
+#   - Role "developer": manage the team's workloads, Services, config and routes; read pods,
+#     logs and events; port-forward. NO Secrets (any verb), NO pods/exec|attach|ephemeralcontainers,
+#     NO RBAC objects, NO NetworkPolicy/quota writes (platform-owned).
+#   - RoleBinding of that Role to an identity-provider GROUP (never to individual users).
+#   - RoleBinding of the built-in "view" ClusterRole (read-only, excludes Secrets) to a viewer group.
+#   - A CI ServiceAccount bound to the same Role (only if CI applies manifests; with GitOps the
+#     GitOps controller's own identity applies changes instead).
+# Apply (after namespace-baseline.yaml):
+#   kubectl apply -f rbac-namespace-developer.yaml
+# Audit (impersonation needs the "impersonate" permission, e.g. as a cluster admin):
+#   kubectl auth can-i --list -n shop --as=jane --as-group=shop-developers
+#   kubectl auth can-i get secrets -n shop --as=jane --as-group=shop-developers          # no
+#   kubectl auth can-i create pods --subresource=exec -n shop --as=jane --as-group=shop-developers  # no
+#   kubectl auth can-i patch deployments -n shop --as=system:serviceaccount:shop:ci-deployer   # yes
+# Reminder: anyone who can create workloads in a namespace can mount every Secret and run as
+# every ServiceAccount of that namespace. The namespace is the real isolation boundary - keep
+# high-privilege ServiceAccounts and Secrets out of application namespaces.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: shop
+rules:
+# Workloads owned by the team
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments/scale", "statefulsets/scale"]
+  verbs: ["get", "update", "patch"]
+- apiGroups: ["apps"]
+  resources: ["replicasets", "controllerrevisions"]     # rollout history / undo
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Service exposure and configuration
+- apiGroups: [""]
+  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: ["httproutes", "grpcroutes"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Read-only: changes go through the platform team (pull request)
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts", "resourcequotas", "limitranges", "events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["events.k8s.io"]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
+  verbs: ["get", "list", "watch"]
+# Troubleshooting: read pods and logs, delete a stuck pod, port-forward to it
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["pods/portforward"]
+  verbs: ["create"]
+# Deliberately absent (grant via a separate, audited break-glass Role if needed):
+#   secrets (list/watch reveal contents too), pods/exec, pods/attach, pods/ephemeralcontainers,
+#   serviceaccounts/token, roles, rolebindings, and any "*" wildcard.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developers
+  namespace: shop
+subjects:
+- kind: Group
+  name: shop-developers          # group claim issued by your OIDC identity provider
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewers
+  namespace: shop
+subjects:
+- kind: Group
+  name: shop-viewers
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole              # a RoleBinding to a ClusterRole grants it in this namespace only
+  name: view                     # built-in: read most objects, but not Secrets or RBAC objects
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-deployer
+  namespace: shop
+# CI authenticates with short-lived tokens (kubectl create token ci-deployer -n shop --duration=15m)
+# or, better, federated OIDC from the CI system; nothing runs as this SA inside the cluster.
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-deployer
+  namespace: shop
+subjects:
+- kind: ServiceAccount
+  name: ci-deployer
+  namespace: shop
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io

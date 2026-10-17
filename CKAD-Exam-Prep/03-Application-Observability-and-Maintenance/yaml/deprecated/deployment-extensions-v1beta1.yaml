@@ -1,0 +1,26 @@
+# LEGACY - DO NOT APPLY. Deployment in extensions/v1beta1, no longer served since v1.16.
+# On a current cluster `kubectl apply -f deployment-extensions-v1beta1.yaml` fails with:
+#   error: resource mapping not found for name: "legacy-web" namespace: "" from "deployment-extensions-v1beta1.yaml":
+#   no matches for kind "Deployment" in version "extensions/v1beta1"
+#   ensure CRDs are installed first
+# Problems: removed apiVersion; no spec.selector (extensions/v1beta1 defaulted it from the template labels).
+# Fixed version: ../migrated/deployment-apps-v1.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-web
+  labels:
+    app: legacy-web
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: legacy-web
+        tier: frontend
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - containerPort: 80

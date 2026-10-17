@@ -1,0 +1,51 @@
+# ipBlock: allow by CIDR, with optional "except" holes. Meant for cluster-EXTERNAL addresses: Pod IPs are
+# ephemeral, and SNAT/DNAT (LoadBalancers, NodePorts, egress NAT) may change the IP the CNI sees.
+#   1) web: ingress on TCP 80 only from 192.168.0.0/16, except 192.168.100.0/24
+#   2) api: egress only to 10.0.0.0/24 on the TCP port RANGE 32000-32768 (endPort, GA v1.25) + DNS
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-ipblock.yaml
+# Verify: kubectl -n netpol-demo describe netpol web-ingress-office api-egress-batch   (IPBlock / Except / port range)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-ingress-office
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 192.168.0.0/16
+        except:
+        - 192.168.100.0/24        # must lie inside cidr
+    ports:
+    - protocol: TCP
+      port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-egress-batch
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 32000                 # with endPort: both numeric, endPort >= port
+      endPort: 32768
+  - ports:                        # no "to" = any destination, but only DNS ports
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

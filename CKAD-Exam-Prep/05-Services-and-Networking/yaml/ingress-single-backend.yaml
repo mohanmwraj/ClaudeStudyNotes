@@ -1,0 +1,22 @@
+# Simplest Ingress: no host, one Prefix "/" rule -> every request reaches app-svc:80.
+# Prereqs: an Ingress controller whose IngressClass is "nginx"; backends from ingress-backends.yaml.
+# Apply: kubectl apply -f ingress-single-backend.yaml
+# Test:  curl http://<controller-address>/anything      -> "app-<pod> /anything"
+# Imperative: kubectl create ingress single --class=nginx --rule="/*=app-svc:80"
+#   ("/*" -> path "/" with pathType Prefix; "/=app-svc:80" without * would be Exact "/" = root only!)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: single
+spec:
+  ingressClassName: nginx       # which controller handles this Ingress (kubectl get ingressclass)
+  rules:
+  - http:                       # no host: matches every Host header
+      paths:
+      - path: /
+        pathType: Prefix        # required in networking.k8s.io/v1: Exact | Prefix | ImplementationSpecific
+        backend:
+          service:
+            name: app-svc       # Service in the SAME namespace as the Ingress
+            port:
+              number: 80        # the SERVICE port (not the container/targetPort)

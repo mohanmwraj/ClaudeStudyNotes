@@ -1,0 +1,39 @@
+# HTTPRoute (application developer) in its own namespace, attached to the shared Gateway in "infra".
+# The cross-namespace ATTACHMENT is a handshake: the Route names the Gateway (parentRefs) and the Gateway
+# listener allows the Route's namespace (allowedRoutes). No ReferenceGrant is needed for attachment.
+# Prereqs: gateway.yaml; Services web-svc:80 and api-svc:8080 in namespace shop, e.g.
+#   kubectl -n shop create deployment web-svc --image=nginx:1.27 --port=80 && kubectl -n shop expose deployment web-svc --port=80
+#   kubectl -n shop create deployment api-svc --image=httpd:2.4 --port=80 && kubectl -n shop expose deployment api-svc --port=8080 --target-port=80
+# Apply: kubectl apply -f httproute-basic.yaml
+# Check: kubectl -n shop describe httproute shop      (Status.Parents: Accepted=True, ResolvedRefs=True)
+# Test:  curl -H "Host: shop.example.com" http://<gateway-address>/api
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+  labels:
+    gateway-access: "true"        # satisfies the listeners' allowedRoutes selector
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: shop
+  namespace: shop
+spec:
+  parentRefs:
+  - name: shared-gw
+    namespace: infra              # the Gateway lives in another namespace
+    sectionName: http             # optional: attach to this listener only
+  hostnames:
+  - shop.example.com              # matched against the Host header
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix          # PathPrefix | Exact | RegularExpression (implementation-specific)
+        value: /api
+    backendRefs:
+    - name: api-svc               # a Service in the Route's namespace (kind Service is the default)
+      port: 8080                  # Service port; required for Service backends
+  - backendRefs:                  # rule without matches = PathPrefix "/" -> catch-all (like an Ingress defaultBackend)
+    - name: web-svc
+      port: 80

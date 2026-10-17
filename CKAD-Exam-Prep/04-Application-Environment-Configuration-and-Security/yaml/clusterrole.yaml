@@ -1,0 +1,35 @@
+# Demonstrates: ClusterRoles - cluster-scoped resources, a non-resource URL, and an aggregated
+# rule that extends the built-in "view" ClusterRole with a custom resource.
+# Apply:   kubectl apply -f clusterrole.yaml
+# Imperative equivalents:
+#   kubectl create clusterrole cluster-inspector --verb=get,list,watch \
+#     --resource=nodes,namespaces,persistentvolumes,storageclasses.storage.k8s.io
+#   kubectl create clusterrole healthz-reader --verb=get --non-resource-url=/healthz --non-resource-url=/version
+# Verify:  kubectl describe clusterrole cluster-inspector
+#          kubectl get clusterrole view -o yaml | grep -A3 crontabs   # aggregated rule shows up in "view"
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-inspector                # ClusterRoles have no namespace
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "persistentvolumes"]   # cluster-scoped -> need a ClusterRole
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/healthz", "/healthz/*", "/version"]  # only valid in ClusterRoles
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crontab-viewer
+  labels:
+    # The controller merges this ClusterRole's rules into the built-in "view" ClusterRole,
+    # so everyone bound to "view" can also read CronTabs (see crd-crontab.yaml).
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+- apiGroups: ["stable.example.com"]
+  resources: ["crontabs"]
+  verbs: ["get", "list", "watch"]

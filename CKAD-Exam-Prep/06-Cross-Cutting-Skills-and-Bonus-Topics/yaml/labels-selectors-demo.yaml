@@ -1,0 +1,156 @@
+# Label/selector lab: 7 bare Pods with different label sets, a Deployment with a set-based selector
+# (matchLabels + matchExpressions In/NotIn/Exists/DoesNotExist) and an equality-only Service.
+# Apply:   kubectl apply -f labels-selectors-demo.yaml
+# Then:    run the queries in ../03-labels-selectors-annotations-namespaces.md ("Selector lab") - expected results are listed there.
+#          kubectl get pods -n selectors-lab -L app,env,tier,track
+# Cleanup: kubectl delete ns selectors-lab
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: selectors-lab
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-dev
+  namespace: selectors-lab
+  labels:
+    app: web
+    env: dev
+    tier: frontend
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10     # tiny image that just sleeps - perfect for label labs
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-qa
+  namespace: selectors-lab
+  labels:
+    app: web
+    env: qa
+    tier: frontend
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-prod
+  namespace: selectors-lab
+  labels:
+    app: web
+    env: prod
+    tier: frontend
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-dev
+  namespace: selectors-lab
+  labels:
+    app: api
+    env: dev
+    tier: backend
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-prod
+  namespace: selectors-lab
+  labels:
+    app: api
+    env: prod
+    tier: backend
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cache
+  namespace: selectors-lab
+  labels:
+    app: cache
+    tier: backend                         # note: NO env label
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy
+  namespace: selectors-lab
+  labels:
+    app: legacy
+    legacy: "true"                        # label values are strings: quote true/false/yes/no/numbers
+spec:
+  containers:
+  - name: pause
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+  namespace: selectors-lab
+  labels:                                 # recommended labels on the workload object itself
+    app.kubernetes.io/name: shop
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: storefront
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  replicas: 2
+  selector:                               # immutable after creation
+    matchLabels:
+      app: shop
+    matchExpressions:                     # every requirement is ANDed with matchLabels
+    - key: tier
+      operator: In
+      values: ["frontend", "web"]
+    - key: track
+      operator: NotIn
+      values: ["canary"]
+    - key: version
+      operator: Exists                    # Exists / DoesNotExist take no values
+    - key: legacy
+      operator: DoesNotExist
+  template:
+    metadata:
+      labels:                             # must satisfy the selector, otherwise the API rejects the Deployment
+        app: shop
+        tier: frontend
+        track: stable
+        version: "v1"
+    spec:
+      containers:
+      - name: pause
+        image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: selectors-lab
+spec:
+  selector:                               # Services accept equality-based (plain map) selectors only
+    app: web
+  ports:
+  - port: 80
+    targetPort: 8080

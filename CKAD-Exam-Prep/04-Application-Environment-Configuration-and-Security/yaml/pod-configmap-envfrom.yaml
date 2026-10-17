@@ -1,0 +1,30 @@
+# Demonstrates: importing ALL keys of a ConfigMap as env vars (envFrom), with and without a
+# prefix, and that an explicit `env` entry overrides envFrom.
+# Prereq:  kubectl apply -f configmap.yaml
+# Apply:   kubectl apply -f pod-configmap-envfrom.yaml
+# Imperative alternative on a Deployment (creates one configMapKeyRef per key):
+#   kubectl set env deploy/<name> --from=configmap/app-config [--prefix=CFG_] [--keys=APP_MODE]
+# Verify:  kubectl exec cm-envfrom-demo -- env | sort
+#          kubectl exec cm-envfrom-demo -- printenv LOG_LEVEL      # -> debug (env wins)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-envfrom-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "env | sort; sleep 3600"]
+    envFrom:
+    - configMapRef:
+        name: app-config                 # APP_MODE, LOG_LEVEL, MAX_CONNECTIONS, ... become env vars
+    - prefix: CFG_                       # same keys again, as CFG_APP_MODE, CFG_LOG_LEVEL, ...
+      configMapRef:
+        name: app-config
+        optional: true                   # Pod still starts if this ConfigMap is missing
+    env:
+    - name: LOG_LEVEL                    # explicit env overrides the value imported by envFrom
+      value: debug
+# Key-name note: since v1.32 (GA v1.34) env var names may contain any printable ASCII except "=",
+# so a key like "app.properties" is imported as-is; older clusters skip such keys and record an
+# InvalidEnvironmentVariableNames event.

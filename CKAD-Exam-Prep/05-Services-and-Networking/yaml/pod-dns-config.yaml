@@ -1,0 +1,91 @@
+# Pod DNS knobs: dnsPolicy + dnsConfig, hostNetwork DNS, and hostname/subdomain records.
+# Apply: kubectl apply -f pod-dns-config.yaml
+# Check: kubectl exec dns-tuned -- cat /etc/resolv.conf
+#        kubectl exec dns-custom -- cat /etc/resolv.conf
+#        kubectl exec dns-tuned -- nslookup app-1.app-sub.default.svc.cluster.local
+---
+# 1) Keep cluster DNS (ClusterFirst) but ADD a search domain and lower ndots.
+#    dnsConfig is MERGED into the generated resolv.conf.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-tuned
+spec:
+  dnsPolicy: ClusterFirst         # the default (written out for clarity); "Default" is NOT the default
+  dnsConfig:
+    searches:
+    - corp.example.com            # appended after <ns>.svc.cluster.local svc.cluster.local cluster.local
+    options:
+    - name: ndots
+      value: "2"                  # value is a STRING: quote it
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: main
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+# 2) dnsPolicy None: resolv.conf is built ONLY from dnsConfig (at least one nameserver required).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-custom
+spec:
+  dnsPolicy: "None"
+  dnsConfig:
+    nameservers:
+    - 192.0.2.53                  # max 3 nameservers (192.0.2.0/24 is a documentation range)
+    searches:
+    - corp.example.com            # max 32 search domains, 2048 characters in total
+    options:
+    - name: ndots
+      value: "1"
+    - name: edns0                 # option without a value
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: main
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+# 3) hostNetwork Pod that still needs cluster DNS. With plain ClusterFirst a hostNetwork Pod
+#    silently falls back to "Default" (the node's resolv.conf) and cannot resolve Services.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-hostnet
+spec:
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: main
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 86400"]
+---
+# 4) hostname + subdomain + a headless Service whose name equals the subdomain
+#    -> app-1.app-sub.<ns>.svc.cluster.local resolves to this Pod (once it is Ready).
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-sub
+spec:
+  clusterIP: None
+  selector:
+    dns-demo: app
+  ports:
+  - name: http
+    port: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-1
+  labels:
+    dns-demo: app
+spec:
+  hostname: app-1                 # defaults to metadata.name when omitted
+  subdomain: app-sub              # must match the headless Service name
+  containers:
+  - name: main
+    image: nginx:1.27-alpine
+    ports:
+    - containerPort: 80

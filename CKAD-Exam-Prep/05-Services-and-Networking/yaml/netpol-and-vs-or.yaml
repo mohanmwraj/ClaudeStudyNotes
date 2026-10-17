@@ -1,0 +1,61 @@
+# AND vs OR -- the single most important NetworkPolicy detail. Two policies on different targets so both
+# can be applied at once and tested independently.
+#
+#   AND (db, 6379): ONE from-element holding namespaceSelector + podSelector
+#       -> only Pods labelled app=prometheus that run in a namespace labelled team=ops
+#   OR  (web, 80):  TWO from-elements (note the second "-")
+#       -> every Pod in team=ops namespaces, OR Pods labelled app=prometheus in netpol-demo itself
+#
+# Expected results (lab: test-pods.yaml; start clean with: kubectl -n netpol-demo delete netpol --all):
+#   client                     db:6379 (AND)   web:80 (OR)
+#   monitoring/prometheus      open            open
+#   monitoring/grafana         timeout         open      (namespace matches; pod label irrelevant in OR)
+#   other/prometheus           timeout         timeout   (podSelector alone = policy namespace only)
+#   netpol-demo/frontend       timeout         timeout
+# Test: kubectl -n monitoring exec grafana -- nc -zv -w 2 db.netpol-demo 6379
+#       kubectl -n monitoring exec grafana -- wget -qO- --timeout=2 http://web.netpol-demo
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-allow-prometheus-and
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:          # one list element ...
+        matchLabels:
+          team: ops
+      podSelector:                # ... same element (no "-"): AND
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-ops-or-prometheus
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:          # element 1
+        matchLabels:
+          team: ops
+    - podSelector:                # element 2 (new "-"): OR
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 80

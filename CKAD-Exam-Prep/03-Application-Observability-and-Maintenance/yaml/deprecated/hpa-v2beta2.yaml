@@ -1,0 +1,44 @@
+# LEGACY - DO NOT APPLY. HorizontalPodAutoscaler in autoscaling/v2beta2 (removed in v1.26) and,
+# for comparison, the older autoscaling/v2beta1 style (removed in v1.25).
+# v2beta2 -> v2: same schema, only the apiVersion changes.
+# v2beta1 -> v2: targetAverageUtilization becomes target: {type: Utilization, averageUtilization: N}.
+# Fixed version: ../migrated/hpa-autoscaling-v2.yaml
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: legacy-web-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: legacy-web
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+---
+# Even older style (autoscaling/v2beta1) - note the flat targetAverageUtilization field
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: legacy-web-hpa-v2beta1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: legacy-web
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 70

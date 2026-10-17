@@ -1,0 +1,149 @@
+# namespace-baseline.yaml
+# Demonstrates: the baseline every application namespace gets before any workload lands in it
+#   (namespace "shop" owned by one team):
+#   1. Namespace with Pod Security Admission labels (enforce "restricted", pinned version)
+#   2. ResourceQuota (compute + object counts; no per-app cloud load balancers)
+#   3. LimitRange (default requests, memory limit = request, min/max guard rails)
+#   4. "default" ServiceAccount without an API token (workloads get their own SA)
+#   5. Default-deny NetworkPolicy (ingress AND egress) + allow DNS egress
+# Apply first, before any other file in this folder:
+#   kubectl apply -f namespace-baseline.yaml
+# Verify:
+#   kubectl get ns shop --show-labels
+#   kubectl describe resourcequota,limitrange -n shop
+#   kubectl get networkpolicy -n shop
+#   kubectl get sa default -n shop -o jsonpath='{.automountServiceAccountToken}'   # false
+# Notes:
+#   - NetworkPolicies are only enforced by a CNI that supports them (Calico, Cilium, ...).
+#   - Everything that should talk to/from pods in "shop" now needs an explicit allow
+#     policy (see networkpolicy-three-tier.yaml).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+  labels:
+    # Pod Security Admission: reject pods that violate the "restricted" profile.
+    pod-security.kubernetes.io/enforce: restricted
+    # Pin enforcement to a known policy version; bump it deliberately after a cluster upgrade.
+    pod-security.kubernetes.io/enforce-version: v1.33
+    # Warn (kubectl output) and audit (audit log) against the newest policy version,
+    # so you see what a future bump of enforce-version would break.
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    # Ownership and cost-allocation labels (adapt to your conventions).
+    team: shop
+    cost-center: cc-1234
+    # Opt-in label that lets HTTPRoutes in this namespace attach to the shared
+    # Gateway (see gateway-api-canary.yaml, allowedRoutes.namespaces.selector).
+    gateway-access: prod
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-and-objects
+  namespace: shop
+spec:
+  hard:
+    # Requests drive scheduling and therefore cost: cap them per team.
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    # Memory limits are capped; CPU limits deliberately are not (see 03-resource-management).
+    # A quota on limits.cpu would force every container to declare a CPU limit.
+    limits.memory: 40Gi
+    pods: "100"
+    # Force use of the shared Gateway instead of one cloud load balancer per Service.
+    services.loadbalancers: "0"
+    services.nodeports: "0"
+    persistentvolumeclaims: "20"
+    requests.storage: 500Gi
+    count/jobs.batch: "50"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: container-defaults
+  namespace: shop
+spec:
+  limits:
+  - type: Container
+    # Applied when a container declares no request (keeps the quota satisfiable).
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    # Applied as the LIMIT when a container declares no limit: memory only.
+    # Caveat: a container that requests more than 256Mi memory but sets no limit gets
+    # this default limit, ends up with request > limit and is rejected -> set both.
+    default:
+      memory: 256Mi
+    # Guard rails against typos such as "64" (cores) or "100Gi".
+    max:
+      cpu: "4"
+      memory: 8Gi
+    min:
+      cpu: 10m
+      memory: 32Mi
+  - type: PersistentVolumeClaim
+    max:
+      storage: 100Gi
+    min:
+      storage: 1Gi
+---
+# Re-declares the auto-created "default" ServiceAccount so that pods which forget
+# serviceAccountName do not receive an API token. kubectl apply updates the existing object.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: shop
+automountServiceAccountToken: false
+---
+# Default deny: selects every pod in the namespace for both directions and allows nothing.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: shop
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# With egress denied, name resolution breaks unless DNS is allowed explicitly.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: shop
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    # namespaceSelector + podSelector in ONE element = AND (CoreDNS pods in kube-system).
+    # Check the label on your cluster: kubectl get pods -n kube-system --show-labels | grep dns
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # With NodeLocal DNSCache, pods query a link-local IP on their node instead of CoreDNS.
+  # Whether that path is subject to NetworkPolicy is CNI-specific; if it is, add e.g.:
+  # - to:
+  #   - ipBlock:
+  #       cidr: 169.254.20.10/32
+  #   ports:
+  #   - protocol: UDP
+  #     port: 53
+  #   - protocol: TCP
+  #     port: 53

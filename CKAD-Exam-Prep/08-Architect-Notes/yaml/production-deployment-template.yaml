@@ -1,0 +1,266 @@
+# production-deployment-template.yaml
+# Demonstrates: a hardened, highly available stateless service "api" in namespace "shop":
+#   ServiceAccount (no API token) + ConfigMap + Deployment + Service + PodDisruptionBudget + HPA.
+#   Deployment covers: startup/readiness/liveness probes, requests/limits, pod+container
+#   securityContext (passes PSA "restricted"), zone topology spread, host anti-affinity,
+#   graceful shutdown (preStop sleep + terminationGracePeriodSeconds), safe rolling update.
+# The container is nginx:1.27-alpine configured as a stand-in "app" so the file runs as-is on
+# a lab cluster: non-root (uid 101), read-only root filesystem, port 8080, /healthz + /readyz.
+# For a real service replace: image (pin by digest), ports, probe paths, resources, ConfigMap.
+# Apply (after namespace-baseline.yaml):
+#   kubectl apply -f production-deployment-template.yaml
+# Verify:
+#   kubectl -n shop rollout status deploy/api
+#   kubectl -n shop get pods -l app.kubernetes.io/name=api -o wide     # spread over nodes/zones
+#   kubectl -n shop get pdb,hpa                                        # HPA needs metrics-server
+#   kubectl -n shop port-forward svc/api 8080:80 &  then  curl -s localhost:8080/readyz
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: shop
+# This app never calls the Kubernetes API: no token is mounted.
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # In production generate this with Kustomize configMapGenerator: the name gets a content
+  # hash suffix, so every config change rolls the pods and is rollback-able (see 06).
+  name: api-nginx
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: api
+data:
+  # Complete nginx config for a non-root, read-only-root-filesystem container:
+  # pid file and temp paths live in the writable /tmp emptyDir.
+  nginx.conf: |
+    worker_processes auto;
+    error_log /dev/stderr notice;
+    pid /tmp/nginx.pid;
+    events { worker_connections 1024; }
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      access_log /dev/stdout;
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+      server {
+        listen 8080;
+        server_name _;
+        # Liveness: "the process can serve at all" - cheap, local, no dependency checks.
+        location = /healthz { access_log off; default_type text/plain; return 200 "ok\n"; }
+        # Readiness: "send me traffic" - a real app also fails this while warming up/draining.
+        location = /readyz  { access_log off; default_type text/plain; return 200 "ready\n"; }
+        location / {
+          root  /usr/share/nginx/html;
+          index index.html;
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: shop
+    app.kubernetes.io/version: "1.27"
+  annotations:
+    kubernetes.io/change-cause: "baseline production template"
+spec:
+  # spec.replicas is omitted on purpose: the HPA below owns the replica count. If Git also
+  # declared replicas, every apply/sync would fight the autoscaler.
+  revisionHistoryLimit: 5
+  minReadySeconds: 10            # a new pod must stay Ready 10s before it counts as available
+  progressDeadlineSeconds: 300   # report ProgressDeadlineExceeded after 5 min (no auto-rollback)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%              # add new pods first ...
+      maxUnavailable: 0          # ... never go below the desired replica count during a rollout
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: shop
+        tier: api                # used by networkpolicy-three-tier.yaml
+    spec:
+      serviceAccountName: api
+      automountServiceAccountToken: false
+      enableServiceLinks: false            # skip legacy <SVC>_SERVICE_HOST env vars
+      terminationGracePeriodSeconds: 40    # >= preStop sleep (10s) + longest request drain (30s)
+      # priorityClassName: business-critical   # create the PriorityClass first (see 02)
+      securityContext:                     # pod level: applies to all containers
+        runAsNonRoot: true
+        runAsUser: 101                     # "nginx" user in the official image
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        # Soft constraint: losing a zone must not leave replacement pods Pending.
+        # Use DoNotSchedule (+ minDomains) only when capacity per zone is guaranteed.
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: api
+        matchLabelKeys:
+        - pod-template-hash                # spread each rollout revision on its own (beta, on by default)
+      affinity:
+        podAntiAffinity:
+          # Prefer one replica per node; "required" would block scale-out on small clusters.
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: api
+      containers:
+      - name: app
+        image: nginx:1.27-alpine           # production: registry.example.com/shop/api@sha256:<digest>
+        imagePullPolicy: IfNotPresent
+        # Use the mounted config (directory mount, no subPath, so ConfigMap updates still land).
+        args: ["nginx", "-c", "/etc/nginx/app/nginx.conf", "-g", "daemon off;"]
+        ports:
+        - name: http
+          containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m                      # size from measured P95 usage, not guesses (see 03)
+            memory: 128Mi
+          limits:
+            memory: 128Mi                  # memory limit == request: no surprise OOM under node pressure
+            # no CPU limit on purpose (avoids CFS throttling); add one for Guaranteed QoS
+        securityContext:                   # container level: these fields exist only here
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        startupProbe:                      # protects slow boots; liveness starts after success
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+          failureThreshold: 30             # up to 60s to start
+        readinessProbe:                    # gates traffic (Service endpoints)
+          httpGet:
+            path: /readyz
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:                     # restarts only a truly stuck process
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3              # ~30s of consecutive failure before a restart
+        lifecycle:
+          preStop:
+            # Keep serving while EndpointSlices, kube-proxy and load balancers stop sending
+            # traffic to this pod; SIGTERM (nginx image: SIGQUIT = graceful) comes after.
+            # Native sleep action: GA v1.34 (beta, on by default since v1.30); no shell needed.
+            sleep:
+              seconds: 10
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/app
+          readOnly: true
+        - name: tmp                        # writable scratch for a read-only root filesystem
+          mountPath: /tmp
+        - name: cache                      # nginx's compiled-in cache/temp location
+          mountPath: /var/cache/nginx
+      volumes:
+      - name: config
+        configMap:
+          name: api-nginx
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+      - name: cache
+        emptyDir:
+          sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: api
+spec:
+  type: ClusterIP                          # internal by default; expose via the shared Gateway
+  selector:
+    app.kubernetes.io/name: api
+  ports:
+  - name: http
+    port: 80
+    targetPort: http                       # named port: survives container port changes
+  # trafficDistribution: PreferSameZone    # GA v1.35 (v1.33/v1.34: PreferClose); see 05
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api
+  namespace: shop
+spec:
+  maxUnavailable: 1                        # scales with the HPA; minAvailable N can block drains
+  unhealthyPodEvictionPolicy: AlwaysAllow  # crash-looping pods never block node drains (GA v1.31)
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+  namespace: shop
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 3                           # one per zone; keeps the PDB satisfiable during drains
+  maxReplicas: 12                          # bounded by quota, downstream capacity and budget
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70             # percent of the CPU *request*
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0        # react immediately to load
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 4
+        periodSeconds: 30
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300      # wait 5 min of lower load before removing pods
+      policies:
+      - type: Percent
+        value: 20                          # then remove at most 20% per minute
+        periodSeconds: 60
+      selectPolicy: Max

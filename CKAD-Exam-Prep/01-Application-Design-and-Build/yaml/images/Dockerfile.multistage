@@ -1,0 +1,39 @@
+# Multi-stage build: compile a Go binary in a full toolchain image, ship ONLY the binary in an empty image.
+#
+# Build (from this directory - the context must contain app/):
+#   podman build -f Dockerfile.multistage --build-arg VERSION=1.2.0 -t hello:1.2.0 .
+#   docker build -f Dockerfile.multistage --build-arg VERSION=1.2.0 -t hello:1.2.0 .
+# Build only the first stage (debugging the build):
+#   podman build -f Dockerfile.multistage --target build -t hello:builder .
+# Compare sizes:  podman images | grep hello      (builder: hundreds of MB, final: a few MB)
+# Run:
+#   podman run -d --name hello -p 8082:8080 -e APP_MESSAGE="hi CKAD" hello:1.2.0 && curl -s localhost:8082
+
+# ---------- stage 1: build ----------
+FROM golang:1.24-alpine AS build
+WORKDIR /src
+
+# Copy the dependency manifest first: this layer (and "go mod download") stays cached when only code changes
+COPY app/go.mod ./
+RUN go mod download
+
+COPY app/ ./
+ARG VERSION=dev
+# CGO_ENABLED=0 -> static binary that needs no libc, so it runs in "scratch"
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/hello .
+
+# ---------- stage 2: runtime ----------
+FROM scratch
+# ARGs do not cross stages - declare again to use it here
+ARG VERSION=dev
+LABEL org.opencontainers.image.title="hello" \
+      org.opencontainers.image.version="${VERSION}"
+
+COPY --from=build /out/hello /hello
+
+# scratch has no /etc/passwd: use a numeric UID:GID (65532 = conventional "nonroot")
+USER 65532:65532
+EXPOSE 8080
+
+ENTRYPOINT ["/hello"]
+CMD ["-port=8080"]

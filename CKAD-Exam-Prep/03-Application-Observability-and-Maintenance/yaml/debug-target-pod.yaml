@@ -1,0 +1,36 @@
+# Targets for `kubectl debug` practice.
+#   debug-distroless: pause image = no shell, no tools -> `kubectl exec` fails, use an ephemeral container
+#   debug-web:        nginx; inspect its processes and files from a debug container
+# Apply:  kubectl apply -f debug-target-pod.yaml
+# Try:
+#   kubectl exec -it debug-distroless -- sh                          # fails: "sh": executable file not found
+#   kubectl debug -it debug-distroless --image=busybox:1.36 --target=app -- sh
+#       / # ps                                                        # shows /pause = the target's PID 1
+#   kubectl debug -it debug-web --image=busybox:1.36 --target=web -- sh
+#       / # ps; wget -qO- localhost; cat /proc/1/root/etc/nginx/conf.d/default.conf
+#       (if /proc/1/root gives "Permission denied", repeat with --profile=general, which adds SYS_PTRACE)
+#   kubectl debug debug-web -it --copy-to=debug-web-copy --image=busybox:1.36 --share-processes -- sh
+#   kubectl delete pod debug-web-copy
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-distroless
+  labels:
+    app: debug-distroless
+spec:
+  containers:
+  - name: app
+    image: registry.k8s.io/pause:3.10
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-web
+  labels:
+    app: debug-web
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    ports:
+    - containerPort: 80

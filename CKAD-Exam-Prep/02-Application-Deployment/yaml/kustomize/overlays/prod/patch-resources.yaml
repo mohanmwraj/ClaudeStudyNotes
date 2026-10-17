@@ -1,0 +1,41 @@
+# Strategic-merge patch for the prod overlay: bigger requests/limits for container "web".
+# Wired in overlays/prod/kustomization.yaml ->  patches: - path: patch-resources.yaml
+# Containers are merged by "name", so only "resources" of container web changes. Other fields are kept.
+#
+# The minimal patch you would type in the exam is:
+#   apiVersion: apps/v1
+#   kind: Deployment
+#   metadata:
+#     name: web
+#   spec:
+#     template:
+#       spec:
+#         containers:
+#         - name: web
+#           resources: {...}
+# The selector, template labels and image below repeat the base values unchanged (no-ops in a strategic
+# merge). They are kept only so the file also passes strict manifest linters. The final image still comes
+# from "images:" in kustomization.yaml, which runs AFTER patches.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi

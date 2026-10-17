@@ -1,0 +1,14 @@
+# Default-deny EGRESS for every Pod in the namespace. Ingress is not affected.
+# WARNING: this also blocks DNS (UDP/TCP 53), so even allowed destinations fail by NAME.
+# Pair it with netpol-allow-dns-egress.yaml.
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-default-deny-egress.yaml
+# Test: kubectl -n netpol-demo exec frontend -- nslookup api.netpol-demo.svc.cluster.local   -> fails (DNS blocked)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: netpol-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress                        # must be explicit: without it an empty policy would only default to Ingress

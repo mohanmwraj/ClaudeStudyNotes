@@ -1,0 +1,45 @@
+# Path-based fan-out: one host, several paths -> different Services. Shows Prefix vs Exact and longest match.
+# Prereqs: controller with IngressClass "nginx"; backends from ingress-backends.yaml.
+# Apply: kubectl apply -f ingress-path-fanout.yaml
+# Test (H = controller address):
+#   curl -H "Host: shop.example.com" http://$H/              -> app-...      (Prefix /)
+#   curl -H "Host: shop.example.com" http://$H/api/orders    -> api-...      (Prefix /api, longest match)
+#   curl -H "Host: shop.example.com" http://$H/apix          -> app-...      (Prefix matches whole path elements only)
+#   curl -H "Host: shop.example.com" http://$H/api/health    -> fallback-... (Exact, longer than /api)
+#   curl -H "Host: shop.example.com" http://$H/api/health/x  -> api-...      (Exact does not match sub-paths)
+# Imperative:
+#   kubectl create ingress fanout --class=nginx \
+#     --rule="shop.example.com/*=app-svc:80" \
+#     --rule="shop.example.com/api*=api-svc:http" \
+#     --rule="shop.example.com/api/health=fallback-svc:80"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fanout
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: shop.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix          # catch-all for this host
+        backend:
+          service:
+            name: app-svc
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix          # /api, /api/, /api/orders -- NOT /apix
+        backend:
+          service:
+            name: api-svc
+            port:
+              name: http          # Service port referenced by NAME (api-svc port "http" = 8080)
+      - path: /api/health
+        pathType: Exact           # only /api/health (not /api/health/ or /api/health/x)
+        backend:
+          service:
+            name: fallback-svc
+            port:
+              number: 80

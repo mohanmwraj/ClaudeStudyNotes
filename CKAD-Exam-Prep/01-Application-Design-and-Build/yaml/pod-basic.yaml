@@ -1,0 +1,51 @@
+# Anatomy of a Pod: labels/annotations, one container, named port, env (literal + downward API),
+# resources, restartPolicy and terminationGracePeriodSeconds.
+# kubectl apply -f pod-basic.yaml
+# kubectl get pod web -o wide --show-labels ; kubectl exec web -- env | grep -E 'APP_MODE|POD_|NODE_|MEMORY'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:                            # identifying + selectable (Services, controllers, kubectl -l)
+    app: web
+    tier: frontend
+  annotations:                       # non-identifying metadata, not selectable
+    description: "Pod anatomy demo for CKAD"
+spec:
+  restartPolicy: Always              # Always (default) | OnFailure | Never - applies to every container
+  terminationGracePeriodSeconds: 30  # default 30: preStop hook + graceful stop must fit, then SIGKILL
+  containers:
+  - name: nginx                      # DNS-1123 label, unique inside the pod (used by -c in logs/exec)
+    image: nginx:1.27                # always pin a tag (or digest)
+    imagePullPolicy: IfNotPresent    # default for any tag other than :latest
+    ports:
+    - name: http                     # named port: Services/probes may reference "http"
+      containerPort: 80              # informational, but declare it
+      protocol: TCP
+    env:
+    - name: APP_MODE
+      value: "production"            # env values are strings - quote numbers and booleans
+    - name: POD_NAME                 # downward API (env form)
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: MEMORY_LIMIT             # in bytes (divisor defaults to 1)
+      valueFrom:
+        resourceFieldRef:
+          containerName: nginx
+          resource: limits.memory
+    resources:                       # requests/limits/QoS: chapter 04
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 250m
+        memory: 128Mi

@@ -1,0 +1,73 @@
+# StatefulSet + its governing headless Service:
+#   stable pod names     web-0, web-1, web-2 (created in order, deleted in reverse order)
+#   stable DNS           web-0.nginx-sts.<namespace>.svc.cluster.local
+#   one PVC per pod      www-web-0, www-web-1, www-web-2 (<claim-template>-<statefulset>-<ordinal>), kept on delete
+# Needs a default StorageClass (kind/minikube ship one) - or set storageClassName in the claim template.
+# kubectl apply -f statefulset-with-headless-svc.yaml
+# kubectl get sts web ; kubectl get pods,pvc -l app=nginx-sts
+# kubectl run dns-test --rm -it --image=busybox:1.36 --restart=Never -- nslookup web-0.nginx-sts.default.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-sts
+  labels:
+    app: nginx-sts
+spec:
+  clusterIP: None                    # headless: no virtual IP; DNS returns pod IPs + per-pod A records
+  selector:
+    app: nginx-sts
+  ports:
+  - name: web
+    port: 80
+    targetPort: web
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  serviceName: nginx-sts             # the headless Service above -> per-pod DNS names (immutable)
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-sts
+  podManagementPolicy: OrderedReady  # default: start 0,1,2 one by one (each Running+Ready); Parallel = all at once
+  updateStrategy:
+    type: RollingUpdate              # default; replaces pods in reverse ordinal order (2,1,0), one at a time
+    rollingUpdate:
+      partition: 0                   # only ordinals >= partition get the new template (canary: set 2)
+  persistentVolumeClaimRetentionPolicy:   # GA v1.32; both default to Retain
+    whenDeleted: Retain              # Delete = remove PVCs when the StatefulSet is deleted
+    whenScaled: Retain               # Delete = remove PVCs of pods removed by a scale-down
+  template:
+    metadata:
+      labels:
+        app: nginx-sts
+    spec:
+      terminationGracePeriodSeconds: 10
+      initContainers:
+      - name: seed
+        image: busybox:1.36
+        # writes the page only once - it lives on the PVC, so it survives pod deletion/rescheduling
+        command: ["sh", "-c", "[ -f /data/index.html ] || echo \"$(hostname) first started $(date)\" > /data/index.html"]
+        volumeMounts:
+        - name: www
+          mountPath: /data
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - name: web
+          containerPort: 80
+        volumeMounts:
+        - name: www                  # must match a volumeClaimTemplates name
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:              # immutable after creation
+  - metadata:
+      name: www
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      # storageClassName: standard   # omit = default StorageClass
+      resources:
+        requests:
+          storage: 100Mi

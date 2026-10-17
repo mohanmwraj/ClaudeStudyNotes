@@ -1,0 +1,26 @@
+# BROKEN ON PURPOSE - Pending (FailedScheduling: Insufficient cpu / memory)
+# Bug:  the requests are larger than any node can offer (64 CPUs, 256Gi).
+# See:  kubectl get pod pending-demo -o wide        -> Pending, NODE <none>
+#       kubectl describe pod pending-demo           -> Warning FailedScheduling ... 0/N nodes are available:
+#                                                      N Insufficient cpu, N Insufficient memory. preemption: ...
+#       kubectl describe node <node> | grep -A8 "Allocated resources"   -> what is already requested
+# Fix:  request what the app really needs, then recreate the Pod (for a Deployment, fix the template):
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 64Mi
+#       kubectl replace --force -f pending-resources-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-demo
+  labels:
+    app: pending-demo
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27
+    resources:
+      requests:
+        cpu: "64"
+        memory: 256Gi

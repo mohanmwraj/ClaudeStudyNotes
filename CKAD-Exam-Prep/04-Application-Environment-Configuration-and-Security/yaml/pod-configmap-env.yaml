@@ -1,0 +1,34 @@
+# Demonstrates: single environment variables from ConfigMap keys (configMapKeyRef), renaming
+# a key, and an optional reference.
+# Prereq:  kubectl apply -f configmap.yaml
+# Apply:   kubectl apply -f pod-configmap-env.yaml
+# Verify:  kubectl logs cm-env-demo
+#          kubectl exec cm-env-demo -- printenv MODE LOG_LEVEL
+# Env vars are read ONCE at container start: after changing the ConfigMap you must restart
+# (Deployment: kubectl rollout restart deploy/<name>).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-env-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "echo mode=$MODE level=$LOG_LEVEL optional=${OPTIONAL_SETTING:-unset}; sleep 3600"]
+    env:
+    - name: MODE                         # env var name may differ from the key name
+      valueFrom:
+        configMapKeyRef:
+          name: app-config               # ConfigMap must be in the same namespace as the Pod
+          key: APP_MODE
+    - name: LOG_LEVEL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: LOG_LEVEL
+    - name: OPTIONAL_SETTING
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: does-not-exist
+          optional: true                 # without this the container fails with CreateContainerConfigError

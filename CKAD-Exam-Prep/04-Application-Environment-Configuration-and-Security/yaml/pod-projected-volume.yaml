@@ -1,0 +1,55 @@
+# Demonstrates: a projected volume - Secret + ConfigMap + Downward API + a custom
+# ServiceAccount token (own audience/expiry) combined into ONE directory.
+# Prereq:  kubectl apply -f configmap.yaml -f secret-opaque.yaml
+# Apply:   kubectl apply -f pod-projected-volume.yaml
+# Verify:  kubectl exec projected-demo -- ls -la /etc/bundle
+#          kubectl exec projected-demo -- cat /etc/bundle/labels
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-demo
+  labels:
+    app: projected-demo
+    tier: backend
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    resources:
+      limits:
+        cpu: 250m
+        memory: 64Mi
+    volumeMounts:
+    - name: bundle
+      mountPath: /etc/bundle
+      readOnly: true
+  volumes:
+  - name: bundle
+    projected:
+      defaultMode: 0440
+      sources:
+      - secret:
+          name: db-credentials           # projected sources use "name" (not secretName)
+          items:
+          - key: password
+            path: db/password
+      - configMap:
+          name: app-config
+          items:
+          - key: app.properties
+            path: app.properties
+      - downwardAPI:
+          items:
+          - path: labels                 # all labels, one key="value" per line
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: cpu-limit-millicores
+            resourceFieldRef:
+              containerName: app         # required for resourceFieldRef in volumes
+              resource: limits.cpu
+              divisor: 1m                # -> 250
+      - serviceAccountToken:
+          path: vault-token
+          audience: vault                # token only valid for this audience
+          expirationSeconds: 3600        # minimum 600; kubelet rotates it before expiry

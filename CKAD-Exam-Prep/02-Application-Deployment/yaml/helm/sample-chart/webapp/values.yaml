@@ -1,0 +1,44 @@
+# Default values of the webapp chart (lowest precedence).
+# Override with: -f my-values.yaml (later files win) and --set key=value (wins over -f).
+# Show them:     helm show values sample-chart/webapp
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: ""                          # empty -> .Chart.AppVersion ("1.27") -> nginx:1.27
+  pullPolicy: IfNotPresent
+
+nameOverride: ""                   # replaces the chart name inside generated names
+fullnameOverride: ""               # replaces the whole generated name (<release>-webapp)
+
+message: "Hello from the webapp chart"   # rendered into the index.html page (ConfigMap)
+
+containerPort: 80
+
+service:
+  type: ClusterIP                  # ClusterIP | NodePort | LoadBalancer
+  port: 80
+  nodePort: null                   # only used when type=NodePort (30000-32767); null = auto-assign
+
+strategy:                          # copied verbatim into the Deployment spec.strategy
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+
+env: {}                            # extra env vars as a map, e.g. --set env.LOG_LEVEL=debug
+
+podAnnotations: {}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  periodSeconds: 5

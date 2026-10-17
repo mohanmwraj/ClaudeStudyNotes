@@ -1,0 +1,33 @@
+# Generic ephemeral volume (GA v1.23): a PVC created FOR the pod from an inline template and
+# garbage-collected WITH the pod (the pod owns the PVC). Use it for provisioned scratch space
+# (size, StorageClass, snapshots...) that must not outlive the pod.
+# kubectl apply -f generic-ephemeral-volume.yaml
+# kubectl get pvc                    # ephemeral-demo-scratch  = <pod-name>-<volume-name>
+# kubectl delete pod ephemeral-demo && kubectl get pvc     # the PVC is gone too
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ephemeral-demo
+  labels:
+    app: ephemeral-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "df -h /scratch; sleep 3600"]
+    volumeMounts:
+    - name: scratch
+      mountPath: /scratch
+  volumes:
+  - name: scratch
+    ephemeral:
+      volumeClaimTemplate:
+        metadata:
+          labels:
+            app: ephemeral-demo
+        spec:                        # a normal PVC spec
+          accessModes: ["ReadWriteOnce"]
+          # storageClassName: standard   # omit = default StorageClass
+          resources:
+            requests:
+              storage: 100Mi

@@ -1,0 +1,52 @@
+# Gateway API (bonus, not in the CKAD curriculum text): GatewayClass (infrastructure provider) +
+# Gateway (cluster operator) in a shared "infra" namespace.
+# Prereqs: Gateway API CRDs + an implementation (see ../../05-gateway-api.md). Implementations usually create
+# their GatewayClass for you -- list them with: kubectl get gatewayclass   and put that NAME in gatewayClassName.
+# Apply: kubectl apply -f gateway.yaml
+# Check: kubectl get gateway -n infra          (PROGRAMMED=True and an ADDRESS once the implementation accepts it)
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: example-gc                # cluster-scoped, like IngressClass
+spec:
+  controllerName: example.com/gateway-controller   # implementation-specific string
+                                                   # (e.g. Envoy Gateway: gateway.envoyproxy.io/gatewayclass-controller)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gw
+  namespace: infra
+spec:
+  gatewayClassName: example-gc    # exactly one GatewayClass per Gateway
+  listeners:
+  - name: http                    # Routes can target one listener via parentRefs[].sectionName
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector            # Same (default) | All | Selector
+        selector:
+          matchLabels:
+            gateway-access: "true"   # only Routes from namespaces with this label may attach
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: "*.example.com"     # Routes must share at least one hostname with the listener
+    tls:
+      mode: Terminate             # Terminate (default) | Passthrough (used with TLSRoute)
+      certificateRefs:
+      - kind: Secret
+        name: wildcard-example-tls   # kubectl -n infra create secret tls wildcard-example-tls --cert=tls.crt --key=tls.key
+                                     # (a Secret in ANOTHER namespace would need a ReferenceGrant there)
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: "true"

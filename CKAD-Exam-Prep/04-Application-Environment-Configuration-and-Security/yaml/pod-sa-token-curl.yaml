@@ -1,0 +1,58 @@
+# Demonstrates: calling the Kubernetes API from inside a Pod with its mounted ServiceAccount
+# token - a self-contained ServiceAccount + Role + RoleBinding + Pod.
+# Prereq:  kubectl create namespace dev
+# Apply:   kubectl apply -f pod-sa-token-curl.yaml
+# Verify:  kubectl logs -n dev api-client          # PodList JSON every 10s (HTTP 200)
+#          kubectl delete rolebinding api-reader-binding -n dev
+#          kubectl logs -n dev api-client --tail=8  # now "pods is forbidden: User
+#                                                   #  \"system:serviceaccount:dev:api-reader\" cannot list ..."
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-reader
+  namespace: dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-lister
+  namespace: dev
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-reader-binding
+  namespace: dev
+subjects:
+- kind: ServiceAccount
+  name: api-reader
+  namespace: dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-lister
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-client
+  namespace: dev
+spec:
+  serviceAccountName: api-reader
+  containers:
+  - name: curl
+    image: curlimages/curl:8.10.1
+    command: ["sh", "-c"]                 # overrides the image ENTRYPOINT so we can run a loop
+    args:
+    - |
+      SA=/var/run/secrets/kubernetes.io/serviceaccount   # token, ca.crt, namespace live here
+      while true; do
+        curl -s --cacert "$SA/ca.crt" \
+          -H "Authorization: Bearer $(cat $SA/token)" \
+          "https://kubernetes.default.svc/api/v1/namespaces/$(cat $SA/namespace)/pods?limit=1"
+        echo; sleep 10
+      done

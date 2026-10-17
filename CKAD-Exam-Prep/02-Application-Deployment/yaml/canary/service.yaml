@@ -1,0 +1,18 @@
+# Canary, part 3: ONE Service that selects only the shared label (no "track"),
+# so it load-balances across stable AND canary Pods. Traffic share ~= replica share.
+# Apply:   kubectl apply -f service.yaml
+# Verify:  kubectl get endpointslices -l kubernetes.io/service-name=web -o wide   (5 endpoints: 4 stable + 1 canary)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  type: ClusterIP
+  selector:
+    app: web                       # deliberately WITHOUT track
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80

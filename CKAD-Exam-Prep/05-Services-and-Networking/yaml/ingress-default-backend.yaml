@@ -1,0 +1,33 @@
+# spec.defaultBackend: receives requests that match no rule of this Ingress
+# (and ALL traffic when an Ingress has no rules at all -- then defaultBackend is mandatory).
+# Without it, unmatched requests are handled by the controller's own default (ingress-nginx: 404).
+# Prereqs: controller with IngressClass "nginx"; backends from ingress-backends.yaml.
+# Apply: kubectl apply -f ingress-default-backend.yaml
+# Test (H = controller address):
+#   curl -H "Host: shop.example.com" http://$H/api/x   -> api-...
+#   curl -H "Host: shop.example.com" http://$H/other   -> fallback-...
+# Imperative:
+#   kubectl create ingress with-default --class=nginx --default-backend=fallback-svc:80 \
+#     --rule="shop.example.com/api*=api-svc:8080"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: with-default
+spec:
+  ingressClassName: nginx
+  defaultBackend:                 # same shape as a path backend
+    service:
+      name: fallback-svc
+      port:
+        number: 80
+  rules:
+  - host: shop.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-svc
+            port:
+              number: 8080

@@ -1,0 +1,21 @@
+# BROKEN ON PURPOSE - Init:Error -> Init:CrashLoopBackOff (exit code 127)
+# Bug:  typo in the init container command ("slep" instead of "sleep"); the shell prints "not found", exits 127.
+#       The app container never starts because init containers must succeed first.
+# See:  kubectl get pod init-crash-demo                   -> Init:Error / Init:CrashLoopBackOff, READY 0/1
+#       kubectl logs init-crash-demo -c wait-for-config   -> sh: slep: not found
+#       kubectl describe pod init-crash-demo              -> Init Containers: ... Exit Code: 127
+# Fix:  correct the command (slep -> sleep) and recreate: kubectl replace --force -f init-crash-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-crash-demo
+  labels:
+    app: init-crash-demo
+spec:
+  initContainers:
+  - name: wait-for-config
+    image: busybox:1.36
+    command: ["sh", "-c", "echo preparing && slep 5 && echo done"]   # BUG: slep
+  containers:
+  - name: app
+    image: nginx:1.27

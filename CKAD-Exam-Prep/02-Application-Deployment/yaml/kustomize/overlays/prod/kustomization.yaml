@@ -1,0 +1,59 @@
+# PROD overlay: base + namespace/prefix/labels + annotations + image tag + replicas
+#               + strategic-merge patch (resources) + inline JSON6902 patch + generator merge + secretGenerator.
+# Render:  kubectl kustomize overlays/prod
+# Diff:    kubectl diff -k overlays/prod
+# Apply:   kubectl apply -k overlays/prod
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+- namespace.yaml
+namespace: prod
+namePrefix: prod-
+labels:
+- pairs:
+    env: prod
+  includeSelectors: true
+commonAnnotations:
+  team: web-platform               # also lands in the Pod template: changing it later triggers a rollout
+images:
+- name: nginx                      # matches every container image named "nginx" (any tag)
+  newName: docker.io/library/nginx # explicit registry path (same image as "nginx")
+  newTag: "1.27-alpine"            # quote tags; use "digest: sha256:..." instead to pin by digest
+replicas:
+- name: web                        # base name; the replicas transformer also matches the prefixed name
+  count: 4
+patches:
+- path: patch-resources.yaml       # strategic merge (file)
+- target:                          # JSON6902 (RFC 6902) patch, inline. A target is mandatory for JSON6902
+    group: apps
+    version: v1
+    kind: Deployment
+    name: web
+  patch: |-
+    - op: replace
+      path: /spec/strategy/rollingUpdate/maxUnavailable
+      value: 0
+    - op: add
+      path: /spec/minReadySeconds
+      value: 10
+    - op: add
+      path: /spec/template/spec/containers/0/env/-
+      value:
+        name: ENVIRONMENT
+        value: production
+    - op: add
+      path: /spec/template/spec/containers/0/envFrom/-
+      value:
+        secretRef:
+          name: web-secret
+configMapGenerator:
+- name: web-config
+  behavior: merge
+  literals:
+  - LOG_LEVEL=warn
+secretGenerator:
+- name: web-secret                 # -> prod-web-secret-<hash>; the secretRef added above is rewritten to it
+  type: Opaque
+  literals:
+  - API_TOKEN=change-me

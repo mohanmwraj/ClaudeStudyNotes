@@ -1,0 +1,26 @@
+# Run an image you built locally (never pushed to a registry) in a lab cluster.
+# 1) Make the image visible to the node's container runtime:
+#      kind + docker:   kind load docker-image ckad-web:v1                 -> image: ckad-web:v1
+#      kind + podman:   podman save -o ckad-web.tar ckad-web:v1 && kind load image-archive ckad-web.tar
+#                                                                         -> image: localhost/ckad-web:v1
+#      minikube:        minikube image load ckad-web:v1
+#      kubeadm/containerd node:  sudo ctr -n k8s.io images import ckad-web.tar && sudo crictl images | grep ckad
+# 2) kubectl apply -f pod-local-image.yaml && kubectl port-forward pod/ckad-web 8080:8080
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad-web
+  labels:
+    app: ckad-web
+spec:
+  containers:
+  - name: web
+    # podman names local builds localhost/<name>:<tag>; docker uses docker.io/library/<name>:<tag>
+    image: localhost/ckad-web:v1
+    imagePullPolicy: IfNotPresent    # "Always" would try a registry and fail with ErrImagePull; "Never" also works
+    ports:
+    - name: http
+      containerPort: 8080
+    securityContext:
+      runAsNonRoot: true             # passes because the Dockerfile sets a NUMERIC user (USER 10001:10001)
+      allowPrivilegeEscalation: false

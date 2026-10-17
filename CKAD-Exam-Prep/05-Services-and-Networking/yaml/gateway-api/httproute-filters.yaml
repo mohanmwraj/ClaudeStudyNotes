@@ -1,0 +1,62 @@
+# HTTPRoute filters = the portable replacement for controller-specific Ingress annotations.
+#   rule 1: /old/...      -> 301 redirect to https://shop.example.com/new/...         (RequestRedirect)
+#   rule 2: /legacy/...   -> forwarded to web-svc as /...                            (URLRewrite, prefix strip)
+#   rule 3: everything    -> add/set/remove request headers, then web-svc            (RequestHeaderModifier)
+# RequestRedirect and URLRewrite cannot be combined in the same rule.
+# Rule 3 is a catch-all for the same host as httproute-basic.yaml; if both Routes are applied, equal matches
+# are won by the OLDER Route (then alphabetical namespace/name) -- one more reason to keep one Route per host.
+# Prereqs: gateway.yaml + httproute-basic.yaml (namespace shop, Service web-svc:80).
+# Apply: kubectl apply -f httproute-filters.yaml
+# Test:  curl -si -H "Host: shop.example.com" http://<gateway-address>/old/page | head -n 5   (301 + Location)
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: shop-filters
+  namespace: shop
+spec:
+  parentRefs:
+  - name: shared-gw
+    namespace: infra
+    sectionName: http
+  hostnames:
+  - shop.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /old
+    filters:
+    - type: RequestRedirect       # answered by the Gateway itself: no backendRefs
+      requestRedirect:
+        scheme: https
+        statusCode: 301           # 301 | 302 (implementations may support more)
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /new
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /legacy
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch   # or ReplaceFullPath + replaceFullPath
+          replacePrefixMatch: /
+    backendRefs:
+    - name: web-svc
+      port: 80
+  - filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        set:
+        - name: x-env
+          value: prod
+        add:
+        - name: x-request-source
+          value: gateway
+        remove:
+        - x-debug
+    backendRefs:
+    - name: web-svc
+      port: 80

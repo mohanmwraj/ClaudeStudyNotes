@@ -1,0 +1,46 @@
+# Demonstrates (bonus): ValidatingAdmissionPolicy - in-process CEL validation, no webhook.
+# admissionregistration.k8s.io/v1, GA since v1.30. A policy does nothing until a Binding exists.
+# Apply:   kubectl apply -f validating-admission-policy.yaml
+# Test:    kubectl create deployment big -n vap-test --image=nginx:1.27 --replicas=6
+#            # error: ... ValidatingAdmissionPolicy 'max-replicas.example.com' with binding
+#            #  'max-replicas-binding.example.com' denied request: ... at most 5 replicas
+#          kubectl create deployment ok -n vap-test --image=nginx:1.27 --replicas=2   # allowed
+# Caveat: `kubectl scale` / HPA use the deployments/scale SUBRESOURCE, which resources: ["deployments"]
+# does not match. To validate scaling too, use a separate policy for "deployments/scale" with only the
+# replicas rule - the object there is an autoscaling/v1 Scale (it has spec.replicas, no spec.template).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vap-test
+  labels:
+    environment: test                    # the binding below selects namespaces by this label
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: max-replicas.example.com
+spec:
+  failurePolicy: Fail                    # Fail | Ignore - what happens if the expression errors
+  matchConstraints:                      # which requests the policy looks at
+    resourceRules:
+    - apiGroups: ["apps"]
+      apiVersions: ["v1"]
+      operations: ["CREATE", "UPDATE"]
+      resources: ["deployments"]
+  validations:                           # every expression must evaluate to true
+  - expression: "object.spec.replicas <= 5"
+    message: "deployments in this namespace may have at most 5 replicas"
+  - expression: "object.spec.template.spec.containers.all(c, !c.image.endsWith(':latest'))"
+    message: "container images must not use the :latest tag"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: max-replicas-binding.example.com
+spec:
+  policyName: max-replicas.example.com
+  validationActions: [Deny]              # Deny | Warn | Audit  (Deny and Warn cannot be combined)
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        environment: test

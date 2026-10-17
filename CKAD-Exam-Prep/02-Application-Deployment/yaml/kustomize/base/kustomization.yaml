@@ -1,0 +1,17 @@
+# Kustomize BASE: plain manifests plus a generated ConfigMap. The overlays in ../overlays/* reuse it.
+# Render:  kubectl kustomize base          Apply: kubectl apply -k base   (into the current namespace)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+labels:
+- pairs:
+    app.kubernetes.io/part-of: shop
+  includeSelectors: false          # default: never touch selectors (Deployment selectors are immutable)
+  includeTemplates: true           # also add the label to Pod templates (metadata.labels always get it)
+configMapGenerator:
+- name: web-config                 # output name: web-config-<content-hash>; references are rewritten to it
+  literals:
+  - LOG_LEVEL=info
+  - GREETING=hello

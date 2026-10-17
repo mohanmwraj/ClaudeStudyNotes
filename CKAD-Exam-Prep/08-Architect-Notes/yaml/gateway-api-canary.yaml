@@ -1,0 +1,152 @@
+# gateway-api-canary.yaml
+# Demonstrates: Gateway API role separation + weighted canary + header-based override.
+#   Platform team (namespace infra-gateway): shared Gateway with HTTP + HTTPS listeners,
+#     HTTP -> HTTPS redirect, and an allow-list of namespaces that may attach routes.
+#   App team (namespace shop): stable + canary Services and an HTTPRoute that splits 90/10;
+#     requests with header "x-canary: always" go 100% to the canary (testers, synthetic checks).
+# REQUIRES (not part of core Kubernetes):
+#   1. Gateway API CRDs (standard channel). Current release v1.6.3 (Oct 2026); see
+#      https://gateway-api.sigs.k8s.io/guides/getting-started/introduction/ for newer ones:
+#      kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml
+#   2. A Gateway implementation (controller), e.g. Envoy Gateway, Istio, Cilium, NGINX Gateway
+#      Fabric, Traefik, Kong, or your cloud provider's. Set gatewayClassName to the class it
+#      installs:  kubectl get gatewayclass
+#   3. A TLS Secret "wildcard-example-com-tls" in infra-gateway. Either cert-manager creates it
+#      (annotation below; needs cert-manager's Gateway API support enabled and, for a wildcard
+#      name, a DNS-01 solver) or create it yourself:
+#      kubectl -n infra-gateway create secret tls wildcard-example-com-tls --cert=tls.crt --key=tls.key
+#   4. Namespace "shop" with label gateway-access=prod (namespace-baseline.yaml) and Deployments
+#      whose pods carry app.kubernetes.io/name=web plus track=stable|canary.
+# Apply:
+#   kubectl apply -f gateway-api-canary.yaml
+# Verify:
+#   kubectl get gateway -n infra-gateway prod-gateway            # PROGRAMMED=True and an ADDRESS
+#   kubectl get httproute -n shop web -o yaml                    # status.parents[].conditions: Accepted, ResolvedRefs
+#   curl -sk --resolve shop.example.com:443:<gateway-address> https://shop.example.com/
+#   curl -sk -H 'x-canary: always' --resolve shop.example.com:443:<gateway-address> https://shop.example.com/
+# Promote by editing the weights (90/10 -> 50/50 -> 0/100) or let Argo Rollouts / Flagger
+# drive the weights from metrics (see 06-configuration-and-delivery-gitops.md).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra-gateway
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+    team: platform
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: prod-gateway
+  namespace: infra-gateway
+  annotations:
+    # Optional: cert-manager issues the listener certificate from this ClusterIssuer.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  gatewayClassName: example-gateway-class   # replace with your implementation's GatewayClass
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same                          # only the platform's redirect route uses plain HTTP
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: "*.example.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wildcard-example-com-tls
+    allowedRoutes:
+      namespaces:
+        from: Selector                      # app namespaces opt in via a label the platform controls
+        selector:
+          matchLabels:
+            gateway-access: prod
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-to-https
+  namespace: infra-gateway
+spec:
+  parentRefs:
+  - name: prod-gateway
+    sectionName: http                       # attach to the HTTP listener only
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-stable
+  namespace: shop
+spec:
+  selector:
+    app.kubernetes.io/name: web
+    track: stable
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-canary
+  namespace: shop
+spec:
+  selector:
+    app.kubernetes.io/name: web
+    track: canary
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web
+  namespace: shop                           # owned by the app team
+spec:
+  parentRefs:
+  - name: prod-gateway
+    namespace: infra-gateway                # cross-namespace attach, allowed by allowedRoutes
+    sectionName: https
+  hostnames:
+  - shop.example.com
+  rules:
+  # Rule 1 - more specific (has a header match), therefore wins over rule 2 for these requests.
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+      headers:
+      - name: x-canary
+        value: always
+    backendRefs:
+    - name: web-canary
+      port: 80
+  # Rule 2 - everyone else: weights are relative (90:10), not required to sum to 100.
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: web-stable
+      port: 80
+      weight: 90
+    - name: web-canary
+      port: 80
+      weight: 10
+# Backends in ANOTHER namespace would additionally need a ReferenceGrant in that namespace.

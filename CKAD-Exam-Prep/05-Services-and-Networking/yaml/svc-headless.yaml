@@ -1,0 +1,44 @@
+# Headless Service (clusterIP: None) + StatefulSet: DNS returns Pod IPs and every Pod gets a stable name.
+#   web-hl.default.svc.cluster.local                -> A records: one per READY Pod (no virtual IP)
+#   web-sts-0.web-hl.default.svc.cluster.local      -> the IP of Pod web-sts-0 (StatefulSet Pod record)
+#   _http._tcp.web-hl.default.svc.cluster.local     -> SRV records for the named port, one per Pod
+# Apply: kubectl apply -f svc-headless.yaml
+# Test:  kubectl run dns --rm -it --image=busybox:1.36 --restart=Never -- nslookup web-hl.default.svc.cluster.local
+#        kubectl run dns --rm -it --image=busybox:1.36 --restart=Never -- nslookup web-sts-0.web-hl.default.svc.cluster.local
+# Imperative headless Service: kubectl create service clusterip web-hl --clusterip=None --tcp=80:80
+#   (then fix the generated selector app=web-hl -> app=web-sts)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-hl
+spec:
+  clusterIP: None             # headless: no ClusterIP, no kube-proxy load balancing. Immutable after creation.
+  selector:
+    app: web-sts
+  # publishNotReadyAddresses: true   # also publish DNS for not-ready Pods (peer discovery during bootstrap)
+  ports:
+  - name: http                # the port name is what the SRV record _http._tcp... is built from
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web-sts
+spec:
+  serviceName: web-hl         # the governing headless Service -> per-Pod DNS names (immutable)
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-sts
+  template:
+    metadata:
+      labels:
+        app: web-sts
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - name: http
+          containerPort: 80

@@ -1,0 +1,35 @@
+# Demonstrates: Linux capabilities - runtime defaults vs drop ALL vs drop ALL + add one.
+# Capability names have NO "CAP_" prefix in YAML (NET_ADMIN, SYS_TIME, NET_BIND_SERVICE, ...).
+# All three containers share the Pod's network namespace.
+# Apply:   kubectl apply -f pod-capabilities.yaml
+# Verify:  kubectl exec capabilities-demo -c default-caps -- grep Cap /proc/1/status
+#            # CapEff typically 00000000a80425fb (the containerd/Docker default set)
+#          kubectl exec capabilities-demo -c net-admin -- grep CapEff /proc/1/status  # 0000000000001000
+#          kubectl exec capabilities-demo -c no-caps   -- grep CapEff /proc/1/status  # 0000000000000000
+#          kubectl exec capabilities-demo -c net-admin -- ip addr add 10.200.0.1/32 dev lo   # works
+#          kubectl exec capabilities-demo -c no-caps   -- ip addr add 10.200.0.2/32 dev lo
+#            # ip: RTNETLINK answers: Operation not permitted
+# Added capabilities are effective for root (UID 0) processes; a non-root process does not get
+# them in its effective set (Kubernetes does not set ambient capabilities).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: capabilities-demo
+spec:
+  containers:
+  - name: default-caps                   # no securityContext: container runtime default capabilities
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+  - name: net-admin
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    securityContext:
+      capabilities:
+        drop: ["ALL"]                    # start from nothing ...
+        add: ["NET_ADMIN"]               # ... and add only what is needed (network config)
+  - name: no-caps
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    securityContext:
+      capabilities:
+        drop: ["ALL"]

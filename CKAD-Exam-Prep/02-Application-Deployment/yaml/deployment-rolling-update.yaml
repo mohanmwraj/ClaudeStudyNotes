@@ -1,0 +1,51 @@
+# Deployment with an explicit RollingUpdate strategy and every rollout-related field annotated.
+# Apply:    kubectl apply -f deployment-rolling-update.yaml
+# Update:   kubectl set image deployment/web-rolling web=nginx:1.27-alpine
+#           kubectl annotate deployment/web-rolling kubernetes.io/change-cause="nginx 1.27 -> 1.27-alpine" --overwrite
+# Watch:    kubectl rollout status deployment/web-rolling
+# History:  kubectl rollout history deployment/web-rolling
+# Undo:     kubectl rollout undo deployment/web-rolling [--to-revision=1]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-rolling
+  labels:
+    app: web-rolling
+  annotations:
+    # Copied to the ReplicaSet of the current revision; shown in the CHANGE-CAUSE column of `rollout history`.
+    kubernetes.io/change-cause: "initial release nginx:1.27"
+spec:
+  replicas: 4                      # default 1. Changing it scales; it does NOT create a revision
+  revisionHistoryLimit: 10         # old ReplicaSets kept for rollback (default 10; 0 = rollback impossible)
+  minReadySeconds: 5               # a new Pod must stay Ready 5s before it counts as Available (default 0)
+  progressDeadlineSeconds: 120     # no progress for 120s -> Progressing=False, reason ProgressDeadlineExceeded (default 600; must be > minReadySeconds)
+  paused: false                    # true = template changes are recorded but not rolled out (default false)
+  selector:                        # required in apps/v1, IMMUTABLE after creation, must match the template labels
+    matchLabels:
+      app: web-rolling
+  strategy:
+    type: RollingUpdate            # default strategy
+    rollingUpdate:
+      maxSurge: 1                  # at most replicas+1 = 5 Pods exist during the update (default 25%, rounds UP)
+      maxUnavailable: 0            # never fewer than 4 available Pods (default 25%, rounds DOWN)
+  template:                        # ONLY changes in here create a new ReplicaSet / revision
+    metadata:
+      labels:
+        app: web-rolling           # the controller adds pod-template-hash=<hash> to these Pods automatically
+    spec:
+      containers:
+      - name: web                  # container name used by: kubectl set image deployment/web-rolling web=<image>
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        readinessProbe:            # the rollout only advances when new Pods become Ready (+ minReadySeconds)
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

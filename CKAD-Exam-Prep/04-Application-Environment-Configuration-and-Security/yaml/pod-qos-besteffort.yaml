@@ -1,0 +1,15 @@
+# Demonstrates: QoS class BestEffort - no container sets any cpu/memory request or limit.
+# Apply:   kubectl apply -f pod-qos-besteffort.yaml
+# Verify:  kubectl get pod qos-besteffort -o jsonpath='{.status.qosClass}{"\n"}'  # BestEffort
+# Caveat: in a namespace with a LimitRange that sets defaults, this pod receives requests/limits
+# at admission and becomes Burstable; in a namespace with a compute ResourceQuota it is rejected.
+# BestEffort pods are the first to be evicted under node memory pressure.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-besteffort
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]

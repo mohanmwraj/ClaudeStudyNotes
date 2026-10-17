@@ -1,0 +1,13 @@
+# LEGACY - DO NOT APPLY. PodDisruptionBudget in policy/v1beta1, no longer served since v1.25.
+# Problem: removed apiVersion. Semantics change to know: in policy/v1 an EMPTY selector ({}) selects
+#          every Pod in the namespace (in v1beta1 it selected none). An unset selector selects none in both.
+# Fixed version: ../migrated/pdb-policy-v1.yaml
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: legacy-web-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: legacy-web

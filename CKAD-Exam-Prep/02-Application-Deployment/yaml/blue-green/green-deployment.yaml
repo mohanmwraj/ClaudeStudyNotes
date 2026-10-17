@@ -1,0 +1,43 @@
+# Blue/green, part 2: the NEW version ("green"), deployed side by side at full size but receiving NO traffic yet.
+# Apply:  kubectl apply -f green-deployment.yaml
+# Wait:   kubectl rollout status deployment/shop-green      (switch only when every green Pod is Ready)
+# Switch: kubectl patch service shop -p '{"spec":{"selector":{"app":"shop","version":"green"}}}'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-green
+  labels:
+    app: shop
+    version: green
+spec:
+  replicas: 3                      # same capacity as blue: the switch moves 100% of traffic at once
+  selector:
+    matchLabels:
+      app: shop
+      version: green
+  template:
+    metadata:
+      labels:
+        app: shop
+        version: green
+    spec:
+      containers:
+      - name: shop
+        image: nginx:1.27-alpine   # the "new release"
+        ports:
+        - containerPort: 80
+        lifecycle:
+          postStart:
+            exec:
+              command: ["sh", "-c", "echo 'shop GREEN v2' > /usr/share/nginx/html/index.html"]
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

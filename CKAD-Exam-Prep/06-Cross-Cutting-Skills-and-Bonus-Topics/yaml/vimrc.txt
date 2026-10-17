@@ -1,0 +1,21 @@
+" ~/.vimrc for the CKAD exam - YAML-friendly editing.
+" Exam: settings live per host, so type this one line on each task host where you edit YAML (~10 seconds):
+"   echo 'set expandtab tabstop=2 shiftwidth=2 softtabstop=2 autoindent number' >> ~/.vimrc
+" Practice machine: copy the whole file to ~/.vimrc.
+" Note: once a ~/.vimrc exists, Vim no longer loads its defaults.vim, so add `syntax on` if you want colours.
+
+set expandtab          " the Tab key inserts spaces - YAML forbids tab characters for indentation
+set tabstop=2          " a literal tab character is displayed 2 columns wide
+set shiftwidth=2       " >>, <<, > and < in visual mode, and auto-indent move by 2 spaces
+set softtabstop=2      " Backspace deletes 2 spaces of indentation at once
+set autoindent         " a new line keeps the indentation of the previous line
+set number             " line numbers - kubectl YAML errors quote line numbers
+set ruler              " show line,column in the status line
+syntax on              " colours make indentation mistakes easier to spot
+
+" Optional helpers (uncomment if you want them):
+" set cursorcolumn     " vertical guide for checking that list items line up
+" set list listchars=tab:>-,trail:.   " make tabs and trailing spaces visible
+
+" Pasting from the docs page: if pasted YAML 'staircases' to the right, run :set paste before
+" pressing i and pasting, then :set nopaste afterwards.

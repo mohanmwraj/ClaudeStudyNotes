@@ -1,0 +1,39 @@
+# Demonstrates: a LimitRange with Container defaults/min/max/ratio, a Pod-level max, and PVC
+# size bounds. There is NO `kubectl create limitrange` - YAML only (copy from the docs).
+# Prereq:  kubectl create namespace dev
+# Apply:   kubectl apply -f limitrange.yaml
+# Verify:  kubectl describe limitrange dev-limits -n dev
+#          kubectl run lr-test -n dev --image=nginx:1.27
+#          kubectl get pod lr-test -n dev -o jsonpath='{.spec.containers[0].resources}{"\n"}'
+# Applied by the LimitRanger admission plugin at Pod CREATION - existing Pods are never changed.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: dev-limits
+  namespace: dev
+spec:
+  limits:
+  - type: Container
+    default:                             # default LIMITS for containers that set none
+      cpu: 500m
+      memory: 256Mi
+    defaultRequest:                      # default REQUESTS for containers that set none
+      cpu: 250m                          # (if omitted, defaultRequest = default)
+      memory: 128Mi                      # defaults must satisfy min/max/ratio: 500m/250m = 2 <= 4
+    min:                                 # reject containers asking for less than this
+      cpu: 50m
+      memory: 32Mi
+    max:                                 # reject containers asking for more than this
+      cpu: "1"
+      memory: 1Gi
+    maxLimitRequestRatio:                # limit may be at most 4x the request
+      cpu: "4"
+  - type: Pod                            # Pod type supports min/max/maxLimitRequestRatio (no defaults)
+    max:
+      cpu: "2"                           # sum over all containers of the pod
+      memory: 2Gi
+  - type: PersistentVolumeClaim
+    min:
+      storage: 1Gi
+    max:
+      storage: 10Gi

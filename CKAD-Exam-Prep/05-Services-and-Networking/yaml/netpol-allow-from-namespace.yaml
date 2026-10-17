@@ -1,0 +1,25 @@
+# Allow ingress to the web Pods from ANY Pod in namespace "monitoring", selected by the label that
+# Kubernetes sets automatically (and immutably) on every namespace: kubernetes.io/metadata.name=<name>.
+# Lab: test-pods.yaml.  Apply: kubectl apply -f netpol-allow-from-namespace.yaml
+# Test: kubectl -n monitoring exec grafana    -- wget -qO- --timeout=2 http://web.netpol-demo   -> nginx page
+#       kubectl -n other      exec prometheus -- wget -qO- --timeout=2 http://web.netpol-demo   -> times out
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-monitoring-ns
+  namespace: netpol-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:          # namespaceSelector ALONE = every Pod in the matching namespaces
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+    # - namespaceSelector: {}     # (alternative) every Pod in EVERY namespace
+    ports:
+    - protocol: TCP
+      port: 80

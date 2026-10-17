@@ -1,0 +1,44 @@
+# Canary, part 2: the CANARY track. 1 of 5 Pods -> ~20% of Service traffic (canary / (stable + canary)).
+# Apply:     kubectl apply -f canary-deployment.yaml
+# Promote:   kubectl set image deployment/web-stable web=nginx:1.27-alpine && kubectl rollout status deployment/web-stable
+#            kubectl delete deployment web-canary
+# Roll back: kubectl scale deployment web-canary --replicas=0    (or delete it)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-canary
+  labels:
+    app: web
+    track: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: web                   # shared label -> the Service sends this Pod a share of the traffic
+        track: canary
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.27-alpine   # the new version under test
+        ports:
+        - containerPort: 80
+        lifecycle:
+          postStart:
+            exec:
+              command: ["sh", "-c", "echo 'web CANARY v2' > /usr/share/nginx/html/index.html"]
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

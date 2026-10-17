@@ -1,0 +1,27 @@
+# gRPC probes (stable since v1.27) against a server that implements the gRPC Health Checking
+# Protocol (grpc.health.v1). Image and command come from the official Kubernetes docs example.
+# Apply:  kubectl apply -f probe-grpc.yaml
+# Verify: kubectl describe pod grpc-probe | grep -E 'Liveness|Readiness'
+# Rules:  grpc.port is a NUMBER (no named ports), there is no host field, success = status SERVING.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: grpc-probe
+  labels:
+    app: grpc-probe
+spec:
+  containers:
+  - name: etcd
+    image: registry.k8s.io/etcd:3.5.1-0
+    command: ["/usr/local/bin/etcd", "--data-dir", "/var/lib/etcd", "--listen-client-urls", "http://0.0.0.0:2379", "--advertise-client-urls", "http://127.0.0.1:2379", "--log-level", "debug"]
+    ports:
+    - containerPort: 2379
+    livenessProbe:
+      grpc:
+        port: 2379              # required; number only
+      initialDelaySeconds: 10
+    readinessProbe:
+      grpc:
+        port: 2379
+        # service: readiness    # optional: name sent in the HealthCheckRequest (unset = whole server)
+      periodSeconds: 5

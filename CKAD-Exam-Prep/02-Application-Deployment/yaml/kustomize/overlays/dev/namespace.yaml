@@ -1,0 +1,6 @@
+# Namespace for the dev overlay, so `kubectl apply -k overlays/dev` works on an empty cluster.
+# Kustomize emits Namespaces first, and namePrefix is never applied to Namespace objects.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev

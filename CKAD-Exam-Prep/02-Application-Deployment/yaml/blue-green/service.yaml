@@ -1,0 +1,20 @@
+# Blue/green, part 3: the stable entry point. Clients always call "shop"; the selector decides the colour.
+# Apply:      kubectl apply -f service.yaml
+# Switch:     kubectl patch service shop -p '{"spec":{"selector":{"app":"shop","version":"green"}}}'
+# Roll back:  kubectl patch service shop -p '{"spec":{"selector":{"app":"shop","version":"blue"}}}'
+# Verify:     kubectl get endpointslices -l kubernetes.io/service-name=shop -o wide
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop
+  labels:
+    app: shop
+spec:
+  type: ClusterIP
+  selector:
+    app: shop
+    version: blue                  # <- the ONLY thing that changes during a blue/green switch
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80

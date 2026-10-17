@@ -1,0 +1,39 @@
+# Readiness probe with an exec handler, plus a Service so you can watch endpoints follow readiness.
+# Apply:   kubectl apply -f probe-readiness-exec.yaml
+# Watch:   kubectl get pod readiness-exec -w                     (READY 0/1 -> 1/1 after ~15-20s)
+#          kubectl get endpointslices -l kubernetes.io/service-name=readiness-exec-svc \
+#            -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]} ready={.conditions.ready}{"\n"}{end}'
+# Toggle:  kubectl exec readiness-exec -- rm /tmp/ready       -> NotReady, ready=false in the EndpointSlice
+#          kubectl exec readiness-exec -- touch /tmp/ready    -> Ready again; the container never restarts
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readiness-exec
+  labels:
+    app: readiness-exec
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    # simulate a warm-up: /tmp/ready appears 15s after start while nginx already runs
+    command: ["sh", "-c", "(sleep 15; touch /tmp/ready) & exec nginx -g 'daemon off;'"]
+    ports:
+    - containerPort: 80
+    readinessProbe:
+      exec:
+        command: ["cat", "/tmp/ready"]   # exit code 0 = ready; NOT run in a shell
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      successThreshold: 1                # may be > 1 for readiness probes only
+      failureThreshold: 2                # marked unready after 2 consecutive failures (~10s)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readiness-exec-svc
+spec:
+  selector:
+    app: readiness-exec
+  ports:
+  - port: 80
+    targetPort: 80

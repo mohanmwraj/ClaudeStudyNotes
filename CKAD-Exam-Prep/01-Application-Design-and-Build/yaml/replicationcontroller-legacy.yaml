@@ -1,0 +1,22 @@
+# LEGACY: ReplicationController (core v1), the predecessor of ReplicaSet. Recognise it - do not choose it.
+# Differences: equality-based selector only (a plain map - no matchLabels/matchExpressions) and no rollout
+# support ("kubectl rolling-update" was removed). Use a Deployment instead.
+# kubectl apply -f replicationcontroller-legacy.yaml && kubectl get rc legacy-rc
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: legacy-rc
+spec:
+  replicas: 2
+  selector:                          # plain map; defaults to the template labels when omitted
+    app: legacy
+  template:
+    metadata:
+      labels:
+        app: legacy
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - containerPort: 80

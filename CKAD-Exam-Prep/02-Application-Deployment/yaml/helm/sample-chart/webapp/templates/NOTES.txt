@@ -1,0 +1,16 @@
+Release "{{ .Release.Name }}" (revision {{ .Release.Revision }}) of chart {{ include "webapp.chart" . }} is deployed in namespace "{{ .Release.Namespace }}".
+
+  Image:    {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+  Replicas: {{ .Values.replicaCount }}
+  Service:  {{ include "webapp.fullname" . }} ({{ .Values.service.type }}, port {{ .Values.service.port }})
+
+Check the objects:
+  kubectl get deploy,svc,cm,pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Call the page from inside the cluster:
+  kubectl run tmp --rm -it --image=curlimages/curl:8.10.1 --restart=Never -n {{ .Release.Namespace }} -- curl -s http://{{ include "webapp.fullname" . }}:{{ .Values.service.port }}
+{{- if eq .Values.service.type "NodePort" }}
+
+NodePort:
+  kubectl get svc {{ include "webapp.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.ports[0].nodePort}'
+{{- end }}

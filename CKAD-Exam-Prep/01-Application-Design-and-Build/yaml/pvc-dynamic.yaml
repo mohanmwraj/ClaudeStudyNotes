@@ -1,0 +1,35 @@
+# Dynamic provisioning: a PVC that omits storageClassName gets the DEFAULT StorageClass, whose
+# provisioner creates a matching PV automatically (kind/minikube ship a default class).
+# kubectl apply -f pvc-dynamic.yaml
+# kubectl get pvc pvc-dynamic-demo   # Pending + "waiting for first consumer" is NORMAL for WaitForFirstConsumer
+#                                    # classes until the pod is scheduled; then Bound with a generated pvc-<uid> PV
+# kubectl get pv
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-dynamic-demo
+spec:
+  # storageClassName omitted -> default class.   storageClassName: "" -> NO dynamic provisioning at all.
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-dynamic-pod
+  labels:
+    app: pvc-dynamic-pod
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27
+    volumeMounts:
+    - name: data
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pvc-dynamic-demo

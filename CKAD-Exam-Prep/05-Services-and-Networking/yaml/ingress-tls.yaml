@@ -1,0 +1,36 @@
+# TLS termination at the Ingress (traffic from the controller to the Pods stays plain HTTP).
+# Prereqs: controller with IngressClass "nginx"; backends from ingress-backends.yaml.
+# 1) Self-signed certificate (lab only -- openssl is not guaranteed on exam hosts, where the cert/key files
+#    are normally provided; the SAN extension needs OpenSSL 1.1.1+):
+#      openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt \
+#        -subj "/CN=secure.example.com" -addext "subjectAltName=DNS:secure.example.com"
+# 2) TLS Secret in the SAME namespace as the Ingress (type kubernetes.io/tls, keys tls.crt + tls.key):
+#      kubectl create secret tls secure-tls --cert=tls.crt --key=tls.key
+# 3) kubectl apply -f ingress-tls.yaml
+# Test: curl -k --resolve secure.example.com:443:<controller-IP> https://secure.example.com/
+#       (-H "Host: ..." is not enough for HTTPS: the certificate is chosen by SNI = the URL host)
+# Imperative: kubectl create ingress secure --class=nginx --rule="secure.example.com/*=app-svc:80,tls=secure-tls"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: secure
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"   # ingress-nginx: HTTP -> HTTPS redirect (already its default
+                                                       # when tls is set; use "false" to also serve plain HTTP)
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - secure.example.com          # must match a rules[].host (TLS does not apply to host-less rules)
+    secretName: secure-tls        # wrong/missing Secret -> the controller serves its default (fake) certificate
+  rules:
+  - host: secure.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app-svc
+            port:
+              number: 80

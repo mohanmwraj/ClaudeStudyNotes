@@ -1,0 +1,36 @@
+# Deployment using the Recreate strategy: ALL old Pods are terminated before ANY new Pod is created.
+# Expect downtime during every update. Use it when two versions must never run side by side
+# (e.g. a ReadWriteOnce volume, a singleton consumer, an incompatible schema change).
+# Apply:    kubectl apply -f deployment-recreate.yaml
+# Update:   kubectl set image deployment/web-recreate web=nginx:1.27-alpine
+# Observe:  kubectl get pods -l app=web-recreate -w      (all old Pods Terminating -> then new Pods)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-recreate
+  labels:
+    app: web-recreate
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-recreate
+  strategy:
+    type: Recreate                 # NO rollingUpdate block allowed with Recreate (the API rejects it)
+  template:
+    metadata:
+      labels:
+        app: web-recreate
+    spec:
+      terminationGracePeriodSeconds: 10   # shorter downtime window: old Pods get 10s to stop (default 30)
+      containers:
+      - name: web
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

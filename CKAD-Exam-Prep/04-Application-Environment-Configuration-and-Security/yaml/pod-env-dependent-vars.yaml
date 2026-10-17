@@ -1,0 +1,46 @@
+# Demonstrates: environment variable composition with $(VAR), the $$ escape, order dependence,
+# and $(VAR) expansion in command/args (done by Kubernetes, not by the shell).
+# Apply:   kubectl apply -f pod-env-dependent-vars.yaml
+# Verify:  kubectl logs env-dependent-demo
+#            from-k8s=https://api.example.com:8443/v1
+#            from-shell=https://api.example.com:8443/v1
+#            FORWARD_REF=$(DEFINED_LATER)      <- referenced before it was defined: left as-is
+#            LITERAL=$(PROTOCOL)               <- $$ escapes the reference
+#            LOG_PATH=/var/log/env-dependent-demo.log
+#            SERVICE_URL=https://api.example.com:8443/v1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-dependent-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c"]
+    args:
+    - |
+      echo "from-k8s=$(SERVICE_URL)"
+      echo "from-shell=$SERVICE_URL"
+      env | grep -E '^(SERVICE_URL|LITERAL|FORWARD_REF|LOG_PATH)=' | sort
+      sleep 3600
+    env:
+    - name: PROTOCOL
+      value: https
+    - name: HOST
+      value: api.example.com
+    - name: PORT
+      value: "8443"                      # env values must be strings - quote numbers
+    - name: SERVICE_URL
+      value: "$(PROTOCOL)://$(HOST):$(PORT)/v1"   # uses variables defined EARLIER in the list
+    - name: LITERAL
+      value: "$$(PROTOCOL)"              # $$ -> literal "$(PROTOCOL)"
+    - name: FORWARD_REF
+      value: "$(DEFINED_LATER)"          # not defined yet at this point -> stays unexpanded
+    - name: DEFINED_LATER
+      value: too-late
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: LOG_PATH
+      value: "/var/log/$(POD_NAME).log"  # Downward API values can be composed too

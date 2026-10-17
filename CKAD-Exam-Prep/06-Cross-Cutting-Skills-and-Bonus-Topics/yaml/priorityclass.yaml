@@ -1,0 +1,38 @@
+# PriorityClass (cluster-scoped, scheduling.k8s.io/v1) - a preempting and a non-preempting class - plus a Pod using one.
+# Apply:   kubectl apply -f priorityclass.yaml
+# Verify:  kubectl get priorityclass                 (short name: pc; also shows the built-in system-* classes)
+#          kubectl get pod critical-api -o jsonpath='{.spec.priorityClassName}{" "}{.spec.priority}{"\n"}'
+# Imperative: kubectl create priorityclass high-priority --value=1000000 --description="Business-critical services"
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000000                          # higher = more important; user-defined classes must be <= 1000000000
+globalDefault: false                    # at most ONE class in the cluster may be the global default
+preemptionPolicy: PreemptLowerPriority  # default: may evict lower-priority Pods to make room
+description: "Business-critical services; may preempt lower-priority Pods."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: batch-low-nonpreempting
+value: 1000
+globalDefault: false
+preemptionPolicy: Never                 # sorted ahead of lower priorities in the queue, but never evicts anyone
+description: "Batch work; never preempts other Pods."
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: critical-api
+  labels:
+    app: critical-api
+spec:
+  priorityClassName: high-priority      # the Priority admission plugin copies the class value into spec.priority
+  containers:
+  - name: nginx
+    image: nginx:1.27
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi

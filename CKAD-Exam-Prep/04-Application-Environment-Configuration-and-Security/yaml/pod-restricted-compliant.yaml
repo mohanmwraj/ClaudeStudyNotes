@@ -1,0 +1,41 @@
+# Demonstrates: a Pod that passes the Pod Security Standard "restricted" profile - use it as a
+# copy-paste template for namespaces labelled pod-security.kubernetes.io/enforce=restricted.
+# Apply:   kubectl apply -f namespace-pod-security-labels.yaml
+#          kubectl apply -n secure-apps -f pod-restricted-compliant.yaml       # admitted, no warnings
+# Verify:  kubectl exec -n secure-apps restricted-demo -- id                  # uid=1000 gid=1000 ...
+#          kubectl exec -n secure-apps restricted-demo -- grep -E 'Seccomp|NoNewPrivs|CapEff' /proc/1/status
+#            # Seccomp: 2 (filter), NoNewPrivs: 1, CapEff: 0000000000000000
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restricted-demo
+spec:
+  securityContext:
+    runAsNonRoot: true                   # restricted: required (pod or every container)
+    runAsUser: 1000                      # restricted: must not be 0; numeric so kubelet can verify non-root
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault               # restricted: RuntimeDefault or Localhost, must be explicit
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "id; sleep 3600"]
+    securityContext:
+      allowPrivilegeEscalation: false    # restricted: required
+      capabilities:
+        drop: ["ALL"]                    # restricted: required (only NET_BIND_SERVICE may be added back)
+      readOnlyRootFilesystem: true       # not required by restricted, but good practice
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+      limits:
+        cpu: 200m
+        memory: 64Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:                               # restricted allows: configMap, csi, downwardAPI, emptyDir,
+  - name: tmp                            #   ephemeral, persistentVolumeClaim, projected, secret
+    emptyDir: {}

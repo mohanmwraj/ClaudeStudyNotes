@@ -1,0 +1,26 @@
+# Demonstrates: a namespaced Role - core API group, subresources (pods/log, pods/exec),
+# resourceNames, and a non-core API group (apps) with the deployments/scale subresource.
+# Prereq:  kubectl create namespace dev
+# Apply:   kubectl apply -f role-pod-reader.yaml
+# Imperative equivalent of the first rule:
+#   kubectl create role pod-reader -n dev --verb=get,list,watch --resource=pods,pods/log
+# Verify:  kubectl describe role pod-reader -n dev
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: dev                         # a Role only grants access inside its own namespace
+rules:
+- apiGroups: [""]                        # "" = core group (pods, services, configmaps, secrets, ...)
+  resources: ["pods", "pods/log"]        # plural, lowercase; subresource = <resource>/<sub>
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/exec"]               # kubectl exec needs "create" on pods/exec (+ "get" on pods)
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["app-config"]          # only this object; cannot restrict create/deletecollection
+  verbs: ["get"]
+- apiGroups: ["apps"]                    # Deployments live in the "apps" group
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "patch", "update"]

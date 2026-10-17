@@ -1,0 +1,74 @@
+# HPA v2 with two metrics (CPU Utilization + memory AverageValue) and tuned scale-up/scale-down behavior.
+# Apply:   kubectl apply -f hpa-behavior.yaml
+# Inspect: kubectl describe hpa api          (Metrics, Conditions AbleToScale/ScalingActive/ScalingLimited, Events)
+#          kubectl get hpa api -o yaml       (status.currentMetrics, status.desiredReplicas)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:                              # several metrics: replicas are computed per metric, the HIGHEST wins
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70          # 70 % of the 100m request = 70m per pod on average
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: AverageValue
+        averageValue: 200Mi             # absolute per-pod average; does not depend on requests
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0     # react immediately (the default for scale-up)
+      selectPolicy: Max                 # pick the policy that allows the BIGGEST change (default)
+      policies:
+      - type: Percent
+        value: 100                      # at most double the replicas ...
+        periodSeconds: 15               # ... per 15 s
+      - type: Pods
+        value: 4                        # or add up to 4 pods per 15 s, whichever is more
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300   # act on the highest recommendation of the last 5 min (default)
+      selectPolicy: Min                 # pick the policy that allows the SMALLEST change
+      policies:
+      - type: Pods
+        value: 1                        # remove at most 1 pod ...
+        periodSeconds: 60               # ... per minute
+      - type: Percent
+        value: 10
+        periodSeconds: 60

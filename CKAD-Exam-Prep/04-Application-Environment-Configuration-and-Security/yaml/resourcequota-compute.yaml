@@ -1,0 +1,51 @@
+# Demonstrates: compute ResourceQuotas - aggregate requests/limits per namespace, plus scoped
+# quotas (BestEffort pods, and pods of a given PriorityClass via scopeSelector).
+# Prereq:  kubectl create namespace dev
+# Apply:   kubectl apply -f resourcequota-compute.yaml
+# Imperative equivalent of the first quota:
+#   kubectl create quota compute-quota -n dev \
+#     --hard=requests.cpu=2,requests.memory=2Gi,limits.cpu=4,limits.memory=4Gi,pods=10
+# Verify:  kubectl describe quota -n dev            # Used vs Hard per resource
+# NOTE: once requests.cpu/limits.cpu (or memory) are limited, EVERY new pod in the namespace
+#       must declare them (or get them from a LimitRange) - otherwise "failed quota: ... must specify ...".
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-quota
+  namespace: dev
+spec:
+  hard:
+    requests.cpu: "2"                    # sum of all pod CPU requests (alias: "cpu")
+    requests.memory: 2Gi                 # sum of all pod memory requests (alias: "memory")
+    limits.cpu: "4"                      # sum of all pod CPU limits
+    limits.memory: 4Gi                   # sum of all pod memory limits
+    pods: "10"                           # non-terminal pods
+---
+# Scoped quotas below are illustrative. In the same namespace as compute-quota a BestEffort pod
+# is rejected anyway ("must specify requests.cpu ..."), so in practice put them in a namespace
+# without an unscoped compute quota.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: besteffort-pods
+  namespace: dev
+spec:
+  hard:
+    pods: "3"                            # at most 3 BestEffort pods (BestEffort scope tracks pods only)
+  scopes: ["BestEffort"]                 # also: NotBestEffort, Terminating, NotTerminating
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: high-priority-compute
+  namespace: dev
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    pods: "2"
+  scopeSelector:                         # only pods with priorityClassName "high" count here
+    matchExpressions:
+    - scopeName: PriorityClass
+      operator: In
+      values: ["high"]

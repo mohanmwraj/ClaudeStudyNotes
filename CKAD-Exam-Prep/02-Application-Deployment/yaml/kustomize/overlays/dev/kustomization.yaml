@@ -1,0 +1,21 @@
+# DEV overlay: base + namespace "dev" + prefix "dev-" + env=dev label + 1 replica + debug logging.
+# Render:  kubectl kustomize overlays/dev
+# Apply:   kubectl apply -k overlays/dev        Delete: kubectl delete -k overlays/dev
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base                       # a directory containing a kustomization.yaml (old field "bases" is deprecated)
+- namespace.yaml
+namespace: dev                     # sets metadata.namespace on every namespaced object
+namePrefix: dev-                   # web -> dev-web (references such as configMapRef are updated too)
+labels:
+- pairs:
+    env: dev
+  includeSelectors: true           # also added to Deployment/Service selectors and Pod templates
+patches:
+- path: patch-replicas.yaml        # strategic-merge patch, target taken from its apiVersion/kind/metadata.name
+configMapGenerator:
+- name: web-config                 # same name as in the base ...
+  behavior: merge                  # ... so merge into it (create = default, replace = swap all data)
+  literals:
+  - LOG_LEVEL=debug                # overrides info; GREETING=hello is kept

@@ -1,0 +1,73 @@
+# Ambassador pattern: the app only talks to localhost; the ambassador container proxies to the real
+# (remote / environment-specific) backend. Change the proxy config per environment - not the app.
+# Contents: proxy ConfigMap, a "remote" backend (Deployment + Service), and the two-container client Pod.
+# kubectl apply -f ambassador.yaml
+# kubectl logs ambassador-demo -c app -f       # prints the backend's "It works!" page every 5 s
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ambassador-proxy-conf
+data:
+  default.conf: |
+    server {
+      listen 8081;
+      location / {
+        proxy_pass http://ambassador-backend:80;   # the real endpoint: another namespace, external host, ...
+        proxy_connect_timeout 2s;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ambassador-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ambassador-backend
+  template:
+    metadata:
+      labels:
+        app: ambassador-backend
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ambassador-backend
+spec:
+  selector:
+    app: ambassador-backend
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ambassador-demo
+  labels:
+    app: ambassador-demo
+spec:
+  containers:
+  - name: app                        # knows only "localhost:8081" (containers share the network namespace)
+    image: curlimages/curl:8.10.1
+    command: ["sh", "-c", "while true; do curl -s -m 3 http://localhost:8081/ || echo 'proxy not ready'; sleep 5; done"]
+  - name: ambassador
+    image: nginx:1.27-alpine
+    ports:
+    - containerPort: 8081
+    volumeMounts:
+    - name: proxy-conf
+      mountPath: /etc/nginx/conf.d   # replaces the image's default.conf (port 80 server) with ours
+      readOnly: true
+  volumes:
+  - name: proxy-conf
+    configMap:
+      name: ambassador-proxy-conf

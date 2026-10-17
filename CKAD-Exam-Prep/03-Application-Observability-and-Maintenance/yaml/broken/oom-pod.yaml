@@ -1,0 +1,32 @@
+# BROKEN ON PURPOSE - OOMKilled (exit code 137) -> CrashLoopBackOff
+# Bug:  the app needs ~80Mi at startup (dd fills an 80 MiB buffer) but its memory limit is 50Mi,
+#       so the kernel OOM killer SIGKILLs it every time.
+# See:  kubectl get pod oom-demo                               -> OOMKilled, then CrashLoopBackOff
+#       kubectl describe pod oom-demo | grep -A4 "Last State"  -> Reason: OOMKilled, Exit Code: 137
+#       kubectl get pod oom-demo -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+# Fix:  give it the memory it needs (requests/limits cannot be changed with a normal edit -> recreate):
+#         resources:
+#           requests:
+#             memory: 96Mi
+#           limits:
+#             memory: 128Mi
+#       kubectl replace --force -f oom-pod.yaml
+#   or, without recreating (in-place resize, stable since v1.35; QoS stays Burstable):
+#       kubectl patch pod oom-demo --subresource resize -p '{"spec":{"containers":[{"name":"app","resources":{"requests":{"memory":"96Mi"},"limits":{"memory":"128Mi"}}}]}}'
+#       (If usage grows without bound it is a leak: raising the limit only delays the next OOMKill.)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-demo
+  labels:
+    app: oom-demo
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "echo 'loading 80Mi cache'; dd if=/dev/zero of=/dev/null bs=83886080 count=1 && echo 'cache loaded' && sleep 3600"]
+    resources:
+      requests:
+        memory: 32Mi
+      limits:
+        memory: 50Mi           # BUG: too small for the 80Mi the app needs

@@ -1,0 +1,46 @@
+# Stateless app: Deployment -> ReplicaSet -> Pods. Rollouts, rollbacks and strategies: chapter 02.
+# Generate:  kubectl create deployment web-deploy --image=nginx:1.27 --replicas=3 --port=80 --dry-run=client -o yaml > deployment.yaml
+# kubectl apply -f deployment.yaml && kubectl rollout status deploy/web-deploy
+# kubectl get deploy,rs,pods -l app=web-deploy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deploy
+  labels:
+    app: web-deploy
+  annotations:
+    kubernetes.io/change-cause: "initial release nginx:1.27"   # shown by kubectl rollout history
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5            # old ReplicaSets kept for rollback (default 10)
+  selector:                          # required in apps/v1, immutable, must match the template labels
+    matchLabels:
+      app: web-deploy
+  strategy:
+    type: RollingUpdate              # default; Recreate = kill all old pods first (downtime)
+    rollingUpdate:
+      maxSurge: 1                    # default 25% (rounded up)
+      maxUnavailable: 0              # default 25% (rounded down)
+  minReadySeconds: 5                 # a new pod must stay Ready this long to count as available
+  template:
+    metadata:
+      labels:
+        app: web-deploy
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - name: http
+          containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            memory: 128Mi

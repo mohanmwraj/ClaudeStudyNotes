@@ -1,0 +1,39 @@
+# BROKEN ON PURPOSE - two more reasons for Pending
+# 1) pending-nodeselector: nodeSelector disktype=ssd matches no node
+#    describe -> 0/N nodes are available: N node(s) didn't match Pod's node affinity/selector
+#    Fix: label a node (kubectl label node <node> disktype=ssd) or fix/remove the nodeSelector (recreate the Pod)
+# 2) pending-pvc: mounts PVC "data-claim", which does not exist
+#    describe -> persistentvolumeclaim "data-claim" not found
+#    Fix: create the PVC (with a StorageClass that can provision it) or fix claimName
+#    (an existing but unbound PVC shows: pod has unbound immediate PersistentVolumeClaims)
+# Also common: "N node(s) had untolerated taint {...}" -> add a toleration or use another node.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-nodeselector
+  labels:
+    app: pending-nodeselector
+spec:
+  nodeSelector:
+    disktype: ssd              # BUG: no node carries this label
+  containers:
+  - name: app
+    image: nginx:1.27
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-pvc
+  labels:
+    app: pending-pvc
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: data-claim    # BUG: no such PVC

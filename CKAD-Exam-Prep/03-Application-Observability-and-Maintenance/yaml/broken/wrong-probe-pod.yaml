@@ -1,0 +1,34 @@
+# BROKEN ON PURPOSE - probes pointing at the wrong port and path
+# Bug 1: livenessProbe uses port 8080 but nginx listens on 80 -> "dial tcp <ip>:8080: connect: connection refused"
+#        -> the container is killed and restarted every ~30s (RESTARTS climbs, may show CrashLoopBackOff)
+# Bug 2: readinessProbe path /healthz does not exist in nginx -> "HTTP probe failed with statuscode: 404"
+#        -> READY 0/1 forever, the Pod never receives Service traffic
+# See:  kubectl describe pod wrong-probe-demo | grep -E "Liveness|Readiness|Unhealthy|Killing"
+#       kubectl get events --field-selector involvedObject.name=wrong-probe-demo,reason=Unhealthy
+# Fix:  livenessProbe.httpGet.port: 80 (or the named port "http"); readinessProbe.httpGet.path: /
+#       Probes are immutable on a Pod: kubectl edit -> save -> kubectl replace --force -f /tmp/kubectl-edit-*.yaml
+#       (In a Deployment just `kubectl edit deploy/<name>`; a new ReplicaSet rolls out.)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wrong-probe-demo
+  labels:
+    app: wrong-probe-demo
+spec:
+  containers:
+  - name: web
+    image: nginx:1.27
+    ports:
+    - name: http
+      containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 8080             # BUG 1: nothing listens on 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /healthz         # BUG 2: nginx returns 404 for /healthz
+        port: http
+      periodSeconds: 5
