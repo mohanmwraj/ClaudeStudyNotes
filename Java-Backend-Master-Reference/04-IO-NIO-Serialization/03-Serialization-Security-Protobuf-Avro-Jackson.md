@@ -318,7 +318,7 @@ int64 -1 as plain varint: 10 bytes; with zigzag (sint64): 1 byte
 
 ### 4.1 Jackson 3 vs 2: what changed (verified defaults)
 
-Jackson 3.0 (2025) moved to `tools.jackson.*` packages (annotations stay in `com.fasterxml.jackson.annotation`), requires Java 17+, makes mappers **immutable and builder-configured**, and uses **unchecked exceptions**. Spring Boot 4 uses Jackson 3 by default (Pillar 6). Real defaults measured with both libraries:
+Jackson 3.0 (2025) moved to `tools.jackson.*` packages (annotations stay in `com.fasterxml.jackson.annotation`), requires Java 17+, makes mappers **immutable and builder-configured**, and uses **unchecked exceptions**. Spring Boot 4 uses Jackson 3 by default ([6.1](../06-Spring-Microservices/01-Spring-Container-Internals-IoC-AOP.md)). Real defaults measured with both libraries:
 
 | Default | Jackson **2.22.4** | Jackson **3.2.4** |
 |---|---|---|

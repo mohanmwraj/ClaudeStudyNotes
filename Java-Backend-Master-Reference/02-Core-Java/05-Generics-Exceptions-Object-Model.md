@@ -374,7 +374,7 @@ Local variable names appear only if the class was compiled with `-g` (debug info
 
 * **Translate at boundaries:** map low-level exceptions (`SQLException`, `IOException`) to domain or infrastructure exceptions *with the cause chained*. Never `throw new X(e.getMessage())`, which loses the trace.
 * **Don't log and rethrow.** That produces duplicate stack traces in logs. Log once, at the boundary that handles it.
-* Map exceptions to HTTP status in one place (Spring `@ControllerAdvice`, Problem Details RFC 9457, Pillar 6).
+* Map exceptions to HTTP status in one place (Spring `@ControllerAdvice`, Problem Details RFC 9457).
 * Don't catch `Throwable`/`Error` except at thread or process top level. Never swallow `InterruptedException` or `OutOfMemoryError`.
 
 ---

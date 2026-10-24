@@ -180,7 +180,7 @@ new Foo()  ─►  [1] TLAB bump-pointer:  top += size; if (top <= end) done    
 * TLABs make allocation **almost as cheap as stack allocation**. The cost of objects in Java is mostly **GC work proportional to survivors** plus **cache misses**, not the `new` itself.
 * JIT-compiled code inlines the TLAB fast path and **zeroes** the object, or elides the zeroing when it can prove every field is written.
 * Flags: `-XX:+UseTLAB` (default), `-XX:+ResizeTLAB` (default), `MinTLABSize=2K`, `TLABWasteTargetPercent=1`. You almost never tune these; you reduce allocation instead.
-* JFR events: `jdk.ObjectAllocationSample` (JDK 16+, throttled and cheap, on by default), `jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` (expensive, off by default). These feed async-profiler/JMC allocation flame graphs (Pillar 8).
+* JFR events: `jdk.ObjectAllocationSample` (JDK 16+, throttled and cheap, on by default), `jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` (expensive, off by default). These feed async-profiler/JMC allocation flame graphs ([8.1](../08-Observability-Security-Testing/01-JVM-Profiling-JFR-async-profiler-Thread-Dumps.md)).
 
 ### 3.3 Aging, tenuring, premature promotion ⚡
 

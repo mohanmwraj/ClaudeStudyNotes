@@ -228,7 +228,7 @@ Order load(long id) throws InterruptedException {
 
 * Limit at **each scarce resource**: DB pools, per-partner HTTP concurrency, file handles, CPU-heavy sections (a small platform pool).
 * Prefer **fail-fast with a timeout** over unbounded waiting: queued VTs are cheap, but queued *latency* isn't.
-* Resilience4j's `Bulkhead` (semaphore type) and `RateLimiter` work with VTs (Pillar 6).
+* Resilience4j's `Bulkhead` (semaphore type) and `RateLimiter` work with VTs ([6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md)).
 
 ---
 
@@ -493,8 +493,8 @@ after scope: unbound → NoSuchElementException
 ## 9. Migration playbook: adopting virtual threads (JDK 25) 🔥
 
 1. **Upgrade to JDK 24+** (ideally 25 LTS) so `synchronized` no longer pins.
-2. Spring Boot 3.2+: `spring.threads.virtual.enabled=true` puts Tomcat/Jetty request handling, `@Async`, scheduling and messaging listeners on VTs (Pillar 6). Plain Java: `Executors.newVirtualThreadPerTaskExecutor()` per request or task.
-3. **Add concurrency limits** at every scarce resource (§5). Re-check DB pool sizing (Pillar 5); a bigger thread count doesn't mean a bigger DB pool.
+2. Spring Boot 3.2+: `spring.threads.virtual.enabled=true` puts Tomcat/Jetty request handling, `@Async`, scheduling and messaging listeners on VTs ([6.2](../06-Spring-Microservices/02-MVC-Virtual-Threads-vs-WebFlux-Backpressure.md)). Plain Java: `Executors.newVirtualThreadPerTaskExecutor()` per request or task.
+3. **Add concurrency limits** at every scarce resource (§5). Re-check DB pool sizing ([5.1](../05-Persistence-JPA-Hibernate/01-JDBC-HikariCP-Connection-Pooling.md)); a bigger thread count doesn't mean a bigger DB pool.
 4. **Audit `ThreadLocal`** usage: per-thread caches (Jackson buffer recyclers, formatters, `Random`s, Kryo instances) multiply by the VT count. Move request context to `ScopedValue` where libraries allow.
 5. **Isolate CPU-heavy work** on a bounded platform pool.
 6. Check native and `<clinit>` pinning in JFR (`jdk.VirtualThreadPinned`) under load tests.

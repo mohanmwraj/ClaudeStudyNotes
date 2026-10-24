@@ -520,7 +520,7 @@ A monitor wait shows `BLOCKED` ("waiting to lock"). A `ReentrantLock` wait shows
 
 <details><summary><b>Q7. 🔥 How do you prevent deadlocks in a money-transfer service?</b></summary>
 
-Acquire account locks in a global order (by account ID), so `transfer(a, b)` and `transfer(b, a)` lock in the same order. Or use `tryLock` with a timeout and randomized back-off. Or avoid in-memory locks entirely by using database transactions with consistent row-lock ordering (`SELECT … FOR UPDATE` ordered by id) or optimistic concurrency (version columns, Pillar 5).
+Acquire account locks in a global order (by account ID), so `transfer(a, b)` and `transfer(b, a)` lock in the same order. Or use `tryLock` with a timeout and randomized back-off. Or avoid in-memory locks entirely by using database transactions with consistent row-lock ordering (`SELECT … FOR UPDATE` ordered by id) or optimistic concurrency (version columns, [5.4](../05-Persistence-JPA-Hibernate/04-Transactions-Isolation-Locking-Spring-Transactional.md)).
 </details>
 
 <details><summary><b>Q8. ⚡ Why is a fair lock so much slower?</b></summary>

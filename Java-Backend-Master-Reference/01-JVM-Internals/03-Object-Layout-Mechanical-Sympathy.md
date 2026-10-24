@@ -2,7 +2,7 @@
 
 > **Tags:** 🔥 must-know · ⚡ important · 🧊 deep cut
 > **Sources:** HotSpot `markWord.hpp`, JEP 374 (biased locking), JEP 450/519/534 (compact object headers), JEP 390 (value-based class warnings), JEP 142 (`@Contended`), JDK-8237767 (field layout), JOL (Java Object Layout), Martin Thompson's mechanical-sympathy work, Ulrich Drepper's "What Every Programmer Should Know About Memory".
-> **Measurements:** Temurin 25.0.4.1, Windows x64, 12 logical CPUs, using JOL 0.17. Timings are single runs on a laptop: indicative ratios, not benchmarks (use JMH for real numbers, see Pillar 8).
+> **Measurements:** Temurin 25.0.4.1, Windows x64, 12 logical CPUs, using JOL 0.17. Timings are single runs on a laptop: indicative ratios, not benchmarks (use JMH for real numbers, see [8.5](../08-Observability-Security-Testing/05-JMH-Benchmarking.md)).
 
 ---
 

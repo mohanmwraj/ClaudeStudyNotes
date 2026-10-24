@@ -1,6 +1,6 @@
 # 00 · Executive Architecture Map — How JDK 21 → 25 (→ 27) Changed Backend Engineering
 
-> **Scope of this run:** Pillars 1–4 (JVM internals, Core Java, Concurrency/Loom, I/O–NIO–Serialization). Pillars 5–8 (persistence, Spring/microservices, AI engineering, observability/security/testing) arrive in run 2, and this map already shows where they plug in.
+> **Scope:** all eight pillars. Run 1 covered Pillars 1–4 (JVM internals, Core Java, Concurrency/Loom, I/O–NIO–Serialization). Run 2 covered Pillars 5–8 ([persistence](05-Persistence-JPA-Hibernate/), [Spring/microservices](06-Spring-Microservices/), [AI engineering](07-AI-Engineering/), [observability/security/testing](08-Observability-Security-Testing/)). This map shows where each one plugs in.
 >
 > **Baseline:** Java 21 LTS and **Java 25 LTS** (GA 2025-09-16). Where a later release changed something you will run into, it is called out: **JDK 26** (GA 2026-03-17) and **JDK 27** (GA 2026-09-15). Every runnable sample was executed on Temurin `25.0.4.1+1-LTS`.
 
@@ -278,12 +278,12 @@ static String render(PaymentResult r) {
    │         Business logic: sealed/records/pattern switch                          [P2]
    │         Fan-out to 2 services: StructuredTaskScope forks 2 VTs                 [P3]
    │                │        VT blocks on socket read → unmounts; carrier freed      [P3/P4: poller]
-   │                │        JDBC call → Hikari ConcurrentBag (Pillar 5)             [P5 next run]
+   │                │        JDBC call → Hikari ConcurrentBag (Pillar 5)             [P5: pool sizing]
    │                ▼
    │         Response objects die young → TLAB bump allocation → eden               [P1: heap/TLAB]
    │         Young GC (G1 evacuation) or ZGC minor cycle reclaims them              [P1: GC]
    └──────── Response bytes → socket write (maybe zero-copy for static files)        [P4: transferTo]
-             Trace/metrics/logs: OpenTelemetry context in ScopedValue/ThreadLocal    [P8 next run]
+             Trace/metrics/logs: OpenTelemetry context in ScopedValue/ThreadLocal    [P8: OTel, Micrometer]
 ```
 
 **Where latency hides on this path:** accept-queue overflow (P4), carrier starvation from CPU-bound VTs or pinning (P3), GC pauses or allocation stalls (P1), JIT warm-up and deoptimization (P1), lock convoys (P3), DB pool waits (P5), serialization allocation (P4).

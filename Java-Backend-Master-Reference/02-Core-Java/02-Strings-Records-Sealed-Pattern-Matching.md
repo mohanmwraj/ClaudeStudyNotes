@@ -341,7 +341,7 @@ Pair[first=k, second=42] components=[java.lang.Object first, java.lang.Object se
 
 (`RecordComponent.toString()` prints the **erased** type. Use `getGenericType()` to see `A`/`B`.)
 
-**Where records fit in a backend:** DTOs and API payloads (Jackson supports them natively), value objects (Money, Email), events and messages, composite map keys, query projections (Spring Data DTO projections, Pillar 5), and pattern-matching ADTs. **Not** JPA entities: those need a no-arg constructor, mutable state for dirty checking, and non-final classes for lazy-loading proxies. **Derived record creation** (`p with { x = 3; }`, JEP 468) has been proposed but is **not** in JDK 27. Write explicit `withX` methods.
+**Where records fit in a backend:** DTOs and API payloads (Jackson supports them natively), value objects (Money, Email), events and messages, composite map keys, query projections (Spring Data DTO projections, [5.3](../05-Persistence-JPA-Hibernate/03-Performance-NPlus1-Cartesian-Projections.md)), and pattern-matching ADTs. **Not** JPA entities: those need a no-arg constructor, mutable state for dirty checking, and non-final classes for lazy-loading proxies. **Derived record creation** (`p with { x = 3; }`, JEP 468) has been proposed but is **not** in JDK 27. Write explicit `withX` methods.
 
 ---
 

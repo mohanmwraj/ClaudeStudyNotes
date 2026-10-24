@@ -2,7 +2,7 @@
 
 > **Tags:** 🔥 must-know · ⚡ important · 🧊 deep cut
 > **Sources:** HotSpot source (`compilationPolicy.cpp`, `escape.cpp`, `bytecodeInfo.cpp`), JEP 197 (segmented code cache), JEP 243 (JVMCI), JEP 410 (removal of experimental AOT/Graal JIT), JEP 483/514/515/516 (Leyden AOT cache), GraalVM Native Image docs, Shipilëv's "JVM Anatomy Quarks", Cliff Click's C2 talks.
-> **Every log and number here was produced on Temurin 25.0.4.1 (Windows x64, 12 CPUs).** Timings are indicative, single-machine runs. Use JMH (Pillar 8) for real benchmarks.
+> **Every log and number here was produced on Temurin 25.0.4.1 (Windows x64, 12 CPUs).** Timings are indicative, single-machine runs. Use JMH ([8.5](../08-Observability-Security-Testing/05-JMH-Benchmarking.md)) for real benchmarks.
 
 ---
 

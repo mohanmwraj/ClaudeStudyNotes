@@ -45,7 +45,7 @@
 
 <details><summary><b>B1. 🔥 Design the outbound HTTP layer for a service calling 12 partners with different SLAs.</b></summary>
 
-One `HttpClient` (or pooled client) per partner configuration, with connect timeouts, per-request timeouts and an overall deadline per user request. Per-partner bulkheads (semaphores sized to the partner's limits), circuit breakers, retries only for idempotent calls with jittered back-off, and pool idle timeouts shorter than the partner's load-balancer idle timeout. Metrics per host (latency histograms, timeouts, pool waits), TLS session reuse, and DNS TTL ≤ 30 s. Run the calls on virtual threads, with structured concurrency for fan-out (Pillar 6 adds Resilience4j specifics).
+One `HttpClient` (or pooled client) per partner configuration, with connect timeouts, per-request timeouts and an overall deadline per user request. Per-partner bulkheads (semaphores sized to the partner's limits), circuit breakers, retries only for idempotent calls with jittered back-off, and pool idle timeouts shorter than the partner's load-balancer idle timeout. Metrics per host (latency histograms, timeouts, pool waits), TLS session reuse, and DNS TTL ≤ 30 s. Run the calls on virtual threads, with structured concurrency for fan-out ([6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md) adds Resilience4j specifics).
 </details>
 
 <details><summary><b>B2. 🔥 How would you migrate a legacy system that exchanges Java-serialized objects over JMS?</b></summary>

@@ -189,9 +189,9 @@ The version came back as `HTTP_1_1` even though the client prefers `HTTP_2`: ove
 | Time to response headers | **None** | `HttpRequest.Builder.timeout` |
 | Body read | Not covered by the request timeout once headers have arrived | Stream the body with your own deadline, or `CompletableFuture.orTimeout` |
 | Pool acquisition / HTTP/2 stream limit | Implicit queueing | Bound concurrency (semaphore, bulkhead) |
-| **Overall request deadline** (including retries) | None | Your code: deadline propagation (structured concurrency scope timeout, Resilience4j `TimeLimiter`), Pillar 6 |
+| **Overall request deadline** (including retries) | None | Your code: deadline propagation (structured concurrency scope timeout, Resilience4j `TimeLimiter`), [6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md) |
 
-**Retry rules:** retry only **idempotent** operations (GET, PUT with full replacement, or POST with idempotency keys, Pillar 6), use exponential back-off with jitter, cap the total time, and never retry inside a tight timeout budget without accounting for it.
+**Retry rules:** retry only **idempotent** operations (GET, PUT with full replacement, or POST with idempotency keys, [6.3](../06-Spring-Microservices/03-Outbox-Saga-Idempotency.md)), use exponential back-off with jitter, cap the total time, and never retry inside a tight timeout budget without accounting for it.
 
 ---
 
@@ -251,7 +251,7 @@ public final class MtlsClientFactory {
 }
 ```
 
-Operational notes: certificates expire, so **reload** key material without a restart (custom `X509ExtendedKeyManager` reading rotated files, or rotate pods). Never disable hostname verification or install "trust-all" `TrustManager`s, even in test code that might ship. In Kubernetes, service meshes (Istio, Linkerd) often handle mTLS at the sidecar; Pillar 8 covers mTLS in Spring.
+Operational notes: certificates expire, so **reload** key material without a restart (custom `X509ExtendedKeyManager` reading rotated files, or rotate pods). Never disable hostname verification or install "trust-all" `TrustManager`s, even in test code that might ship. In Kubernetes, service meshes (Istio, Linkerd) often handle mTLS at the sidecar; [8.3 §3](../08-Observability-Security-Testing/03-Security-Spring-Security-OAuth2-JWT-mTLS-OWASP.md#3-mutual-tls-for-service-to-service-calls-) covers mTLS in Spring.
 
 **Debugging TLS:** `-Djavax.net.debug=ssl:handshake` (very verbose), `openssl s_client -connect host:443 -servername host`, and check `jdk.tls.disabledAlgorithms` when old peers fail.
 

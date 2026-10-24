@@ -411,7 +411,7 @@ proxy class: $ProxyN, isProxyClass=true, named module=false  (non-public interfa
 public java.lang.Runnable proxy: jdk.proxyN.$ProxyN in module jdk.proxyN
 ```
 
-> **The self-invocation trap** (the #1 Spring AOP bug, detailed in Pillar 5): a proxy wraps the object **from the outside**. When the target calls its own method via `this`, the call never passes through the proxy, so `@Transactional`, `@Cacheable`, `@Async` and `@Retryable` on the inner method **silently do nothing**. Fixes: move the method to another bean, inject the proxy into itself (`@Lazy` self-reference), use `TransactionTemplate` programmatically, or use AspectJ load-time or compile-time weaving.
+> **The self-invocation trap** (the #1 Spring AOP bug, detailed in [6.1](../06-Spring-Microservices/01-Spring-Container-Internals-IoC-AOP.md) and, for `@Transactional`, [5.4](../05-Persistence-JPA-Hibernate/04-Transactions-Isolation-Locking-Spring-Transactional.md)): a proxy wraps the object **from the outside**. When the target calls its own method via `this`, the call never passes through the proxy, so `@Transactional`, `@Cacheable`, `@Async` and `@Retryable` on the inner method **silently do nothing**. Fixes: move the method to another bean, inject the proxy into itself (`@Lazy` self-reference), use `TransactionTemplate` programmatically, or use AspectJ load-time or compile-time weaving.
 
 ### 6.3 Subclass proxies: CGLIB and ByteBuddy
 

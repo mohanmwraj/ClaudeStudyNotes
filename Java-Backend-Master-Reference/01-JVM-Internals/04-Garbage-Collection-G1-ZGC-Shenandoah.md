@@ -535,7 +535,7 @@ garbage-first heap   total reserved 262144K, committed 262144K, used 169024K [0x
 1. **Always-on:** `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps -XX:+ExitOnOutOfMemoryError`, plus JFR with `jdk.OldObjectSample` (on in the default profile; add `path-to-gc-roots=true` when dumping for leak chains).
 2. **Before OOM:** compare two class histograms minutes apart. The class whose count grows linearly is the leak suspect.
 3. **Heap dump analysis (Eclipse MAT):** *Leak Suspects* report → **Dominator tree** (sort by retained heap) → *Path to GC Roots* (exclude weak/soft) → find the owning static or ThreadLocal or cache. Use **OQL** for ad-hoc queries.
-4. **Common leak roots:** static collections used as caches without eviction, listener/observer registries never unregistered, `ThreadLocal` on pooled threads, unbounded queues (executor `LinkedBlockingQueue`), per-request `ClassLoader`s or proxies (Metaspace), `String.intern()` on unbounded input, ORM sessions or persistence contexts in long transactions (Pillar 5), Kafka or HTTP client instances created per call.
+4. **Common leak roots:** static collections used as caches without eviction, listener/observer registries never unregistered, `ThreadLocal` on pooled threads, unbounded queues (executor `LinkedBlockingQueue`), per-request `ClassLoader`s or proxies (Metaspace), `String.intern()` on unbounded input, ORM sessions or persistence contexts in long transactions ([5.2](../05-Persistence-JPA-Hibernate/02-JPA-Hibernate-Persistence-Context-Internals.md)), Kafka or HTTP client instances created per call.
 
 ### 10.4 Runnable: catching a leak with in-process class histograms
 

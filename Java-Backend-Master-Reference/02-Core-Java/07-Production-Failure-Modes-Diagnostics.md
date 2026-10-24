@@ -107,7 +107,7 @@
 | SpotBugs `STCAL_STATIC_SIMPLE_DATE_FORMAT_INSTANCE`, `DMI_RANDOM_USED_ONLY_ONCE`, `SIC_INNER_SHOULD_BE_STATIC` | Story 3, Story 12 |
 | SonarQube "BigDecimal(double)", "Regex ReDoS" (S5852), "Parallel streams" | Money, Story 6 |
 | `javac -Xlint:all -Werror` (unchecked, rawtypes, finally, deprecation) | Heap pollution, `return` in `finally` |
-| ArchUnit (Pillar 8): "no `parallelStream()` in `..web..`", "no `java.util.Date`" | Stories 5 and 1 |
+| ArchUnit ([8.4](../08-Observability-Security-Testing/04-Testing-JUnit-Mockito-Testcontainers-ArchUnit.md)): "no `parallelStream()` in `..web..`", "no `java.util.Date`" | Stories 5 and 1 |
 
 ### 2.2 Tests that pay for themselves
 

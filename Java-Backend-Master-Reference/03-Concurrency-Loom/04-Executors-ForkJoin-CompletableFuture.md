@@ -141,7 +141,7 @@ Little's Law (queueing theory):  L = λ × W
 
 ### 2.2 What the formulas don't tell you
 
-* **Downstream limits dominate.** A pool of 200 threads calling a DB with 20 connections means 180 threads waiting on the connection pool. Size thread pools to the **narrowest downstream resource** (Pillar 5: Hikari sizing) and use **bulkheads**: one pool per dependency, so one slow dependency can't exhaust everything (Pillar 6).
+* **Downstream limits dominate.** A pool of 200 threads calling a DB with 20 connections means 180 threads waiting on the connection pool. Size thread pools to the **narrowest downstream resource** ([5.1](../05-Persistence-JPA-Hibernate/01-JDBC-HikariCP-Connection-Pooling.md): Hikari sizing) and use **bulkheads**: one pool per dependency, so one slow dependency can't exhaust everything ([6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md)).
 * **Containers:** `availableProcessors()` honours CPU *limits* (cgroups). Fractional limits (e.g. 1.5 CPUs) round **up**, so set `-XX:ActiveProcessorCount` deliberately.
 * **Virtual threads change the question** for I/O-bound work: instead of sizing a pool, you **limit concurrency** per resource with semaphores or bulkheads, and let threads be "free" ([3.6](06-Virtual-Threads-Structured-Concurrency-Scoped-Values.md)).
 * Measure: queue wait time (enqueue → start), execution time, active count, queue depth, rejection rate.

@@ -61,7 +61,7 @@ When the **set of variants is closed and owned by you**, and **operations are ma
 
 <details><summary><b>B3. ⚡ A teammate wants to use `parallelStream()` to speed up an API endpoint that enriches 50 items via HTTP calls. Your response?</b></summary>
 
-No. It's I/O-bound, the commonPool is shared JVM-wide and sized for CPU work (cores − 1), and blocking it starves every other parallel stream and `CompletableFuture` in the service. It also can't bound concurrency per downstream. Use virtual threads with a concurrency limit: `Gatherers.mapConcurrent(10, this::enrich)`, `StructuredTaskScope` (preview), or an executor plus a `Semaphore`. Add timeouts and a circuit breaker per dependency (Pillar 6).
+No. It's I/O-bound, the commonPool is shared JVM-wide and sized for CPU work (cores − 1), and blocking it starves every other parallel stream and `CompletableFuture` in the service. It also can't bound concurrency per downstream. Use virtual threads with a concurrency limit: `Gatherers.mapConcurrent(10, this::enrich)`, `StructuredTaskScope` (preview), or an executor plus a `Semaphore`. Add timeouts and a circuit breaker per dependency ([6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md)).
 </details>
 
 <details><summary><b>B4. ⚡ How do you design an API to avoid "exception as control flow" while keeping errors explicit?</b></summary>

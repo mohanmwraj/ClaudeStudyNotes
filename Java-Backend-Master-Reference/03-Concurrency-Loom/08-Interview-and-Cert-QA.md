@@ -50,7 +50,7 @@
 
 <details><summary><b>B1. 🔥 You're migrating a Spring MVC service (JDK 25) from a 200-thread Tomcat pool to virtual threads. List what you check and change.</b></summary>
 
-(1) Downstream capacity: add bulkheads or semaphores sized to the DB pool and partner limits, since the thread pool used to be the implicit limit. (2) `ThreadLocal` usage: per-thread caches and context, so move request context to `ScopedValue` where possible and remove expensive per-thread caches. (3) CPU-heavy endpoints: offload them to a bounded platform pool. (4) Pinning: run load tests with JFR (`jdk.VirtualThreadPinned`) for native and `<clinit>` cases. (5) Observability: JSON thread dumps, plus metrics on in-flight requests and semaphore waits instead of pool utilization. (6) Timeouts everywhere (VTs make waiting cheap, but latency still matters). (7) Library versions (JDBC drivers, HTTP clients) and connection-pool sizing (Pillar 5).
+(1) Downstream capacity: add bulkheads or semaphores sized to the DB pool and partner limits, since the thread pool used to be the implicit limit. (2) `ThreadLocal` usage: per-thread caches and context, so move request context to `ScopedValue` where possible and remove expensive per-thread caches. (3) CPU-heavy endpoints: offload them to a bounded platform pool. (4) Pinning: run load tests with JFR (`jdk.VirtualThreadPinned`) for native and `<clinit>` cases. (5) Observability: JSON thread dumps, plus metrics on in-flight requests and semaphore waits instead of pool utilization. (6) Timeouts everywhere (VTs make waiting cheap, but latency still matters). (7) Library versions (JDBC drivers, HTTP clients) and connection-pool sizing ([5.1](../05-Persistence-JPA-Hibernate/01-JDBC-HikariCP-Connection-Pooling.md)).
 </details>
 
 <details><summary><b>B2. 🔥 A p99 latency spike appears every few minutes. Thread dumps during spikes show 150 threads BLOCKED on one monitor in a logging appender. Explain and fix.</b></summary>
@@ -60,7 +60,7 @@ A lock convoy: a synchronous appender holds a monitor while doing I/O (disk or n
 
 <details><summary><b>B3. ⚡ Design a per-tenant rate limiter usable from virtual threads with ~10k tenants.</b></summary>
 
-A `ConcurrentHashMap<TenantId, Bucket>` with a token bucket per tenant (lazy-refilled from `System.nanoTime()` deltas, updated with CAS on a packed `AtomicLong` or a small lock per bucket), with eviction of idle tenants (Caffeine with `expireAfterAccess`). Avoid one global lock, `LongAdder` for limits (it isn't exact), and blocking waits in the limiter (return "retry-after" instead). For cluster-wide limits, use Redis with Lua or a gateway (Pillar 6).
+A `ConcurrentHashMap<TenantId, Bucket>` with a token bucket per tenant (lazy-refilled from `System.nanoTime()` deltas, updated with CAS on a packed `AtomicLong` or a small lock per bucket), with eviction of idle tenants (Caffeine with `expireAfterAccess`). Avoid one global lock, `LongAdder` for limits (it isn't exact), and blocking waits in the limiter (return "retry-after" instead). For cluster-wide limits, use Redis with Lua or a gateway ([6.4](../06-Spring-Microservices/04-Resilience4j-CircuitBreaker-RateLimiter-Bulkhead.md)).
 </details>
 
 <details><summary><b>B4. ⚡ When would you still choose WebFlux/reactive over virtual threads in 2026?</b></summary>

@@ -97,7 +97,7 @@ Found 1 deadlock.
 ### 🧊 Story 13 — "Trace IDs vanish in async code"
 
 * **Root cause:** OpenTelemetry context and MDC are `ThreadLocal`-based. `CompletableFuture.supplyAsync` on the common pool lost them.
-* **Fix:** context-propagating executors (OTel's `Context.taskWrapping(executor)`, Micrometer context-propagation), or structured concurrency with `ScopedValue` (forks inherit). Pillar 8 covers OTel in depth.
+* **Fix:** context-propagating executors (OTel's `Context.taskWrapping(executor)`, Micrometer context-propagation), or structured concurrency with `ScopedValue` (forks inherit). [8.2](../08-Observability-Security-Testing/02-Observability-OpenTelemetry-Micrometer-Logging.md) covers OTel in depth.
 
 ---
 
