@@ -35,3 +35,4 @@ kubeconfig
 *.tfstate.*
 test.yaml
 *.test.yaml
+Prompt.txt
