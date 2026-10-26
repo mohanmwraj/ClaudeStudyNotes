@@ -110,7 +110,7 @@ When all worker threads are busy, requests **queue silently**, and latency rises
 | CPU-bound work | Virtual threads don't add CPU | Keep CPU-heavy work on a bounded platform pool |
 | Pinning | JDK 21–23: blocking inside `synchronized` pinned the carrier. **JDK 24+ (JEP 491) removed that for monitors**; native frames and some class-loading paths still pin | Run JDK 24+ (this playbook: 25). Diagnose with the JFR event `jdk.VirtualThreadPinned` |
 | ThreadLocal-heavy code | Millions of threads × ThreadLocal caches = memory | `ScopedValue` (final in JDK 25), avoid per-thread caches of big objects |
-| Unbounded `@Async` | With virtual threads there's no pool to push back | Limit concurrency where it matters (rate limiters, bulkheads, [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)) |
+| Unbounded `@Async` | With virtual threads there's no pool to push back | Limit concurrency where it matters (rate limiters, bulkheads, [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)) |
 
 ```java
 // Spring Framework 7: bound concurrent calls to a fragile downstream, even with virtual threads

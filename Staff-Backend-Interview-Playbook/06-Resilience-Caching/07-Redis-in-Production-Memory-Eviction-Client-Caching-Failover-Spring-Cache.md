@@ -1,4 +1,4 @@
-# 6.9 Redis in Production: Memory per Key, Eviction Policies, Client-Side Caching, Timeouts, Sentinel Failover, and Spring's Redis Cache (Real Redis 8.10.2)
+# 6.7 Redis in Production: Memory per Key, Eviction Policies, Client-Side Caching, Timeouts, Sentinel Failover, and Spring's Redis Cache (Real Redis 8.10.2)
 
 > **Verified stack:** a real **Redis 8.10.2** server (the msys2 Windows build, x86-64), **Lettuce 7.9.0** for the standalone labs and **Lettuce 7.5.2** (the version Spring Boot 4.1.2 manages) inside **Spring Boot 4.1.2 / Spring Data Redis 4.1.2**, JDK **25**. Every block marked *verified* was produced by the code shown. Timings are *one run* on loopback on a Windows laptop: they show **ratios and mechanisms, not Redis performance**. Linux builds are faster in absolute terms.
 >
@@ -539,4 +539,4 @@ Spring Data Redis 4 writes cache entries asynchronously with Lettuce: the `@Cach
 | Spring cache | Async writes (dup loads), stall → exception, `null` → exception, all fixable | §8 |
 | Blueprints | `redis.conf`, ACLs, sessions, Sentinel, Spring config: started/validated | §9 |
 
-**Next:** [6.10 Production Kafka: multi-broker durability, compaction, topics as code, Strimzi →](10-Production-Kafka-Multi-Broker-Durability-Compaction-Strimzi-Blueprint.md)
+**Next:** [6.5 Bar-raiser drill-downs (Round 2 covers 6.6–6.7) →](05-Bar-Raiser-Drill-Downs.md)

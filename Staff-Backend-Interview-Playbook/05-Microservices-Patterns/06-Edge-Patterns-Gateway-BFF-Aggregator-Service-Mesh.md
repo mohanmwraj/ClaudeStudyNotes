@@ -135,7 +135,7 @@ Rules for aggregators:
 1. **Classify each dependency**: critical (fail the request) vs optional (degrade).
 2. **Per-call timeouts** that fit inside an **overall deadline** (and propagate the remaining budget downstream, e.g. a `deadline` header or gRPC deadlines).
 3. Parallelize independent calls (virtual threads or `CompletableFuture`; JDK structured concurrency is still a preview API in JDK 25).
-4. Add circuit breakers and bulkheads per dependency so a sick service fails fast ([6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
+4. Add circuit breakers and bulkheads per dependency so a sick service fails fast ([6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
 5. If every request needs the same composed data, consider a **CQRS read model** instead ([5.5](05-CQRS-and-Event-Sourcing.md)): one local query beats three remote calls.
 
 ---
@@ -176,7 +176,7 @@ Sidecar (classic Istio, Linkerd):           Sidecarless / ambient (Istio ambient
 
 ### Mesh pitfalls a staff engineer names
 
-* **Double retries.** App retries 3× and the mesh retries 3× → up to 9 attempts per call, multiplying load during an outage ([6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)). Decide *one* layer owns retries per hop.
+* **Double retries.** App retries 3× and the mesh retries 3× → up to 9 attempts per call, multiplying load during an outage ([6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)). Decide *one* layer owns retries per hop.
 * **Timeouts in two places** that disagree: the shorter one wins and the other's metrics lie.
 * **Startup ordering**: the app starts before the sidecar is ready (Kubernetes native sidecars, `initContainers` with `restartPolicy: Always`, fix this; see [7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md)).
 * **Debugging moves into infrastructure**: you need people who can read Envoy stats.

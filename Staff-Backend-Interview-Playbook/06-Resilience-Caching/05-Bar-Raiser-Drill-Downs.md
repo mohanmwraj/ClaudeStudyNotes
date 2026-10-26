@@ -1,8 +1,10 @@
-# 6.7 Bar-Raiser Drill-Downs: Resilience, Caching, Kafka
+# 6.5 Bar-Raiser Drill-Downs: Resilience and Caching
 
-> Evidence: [6.1](01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)–[6.6](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) (Resilience4j 2.4.0, Spring Framework 7.0.10, Caffeine 3.3.1, Lettuce 7.9.0 against jedis-mock, Kafka 4.2.2, spring-kafka 4.1.2, all run). These topics come up in system design *and* in "tell me about an incident" rounds. The bar-raiser keeps asking "and then what happens?" until your design either holds or breaks.
+> Evidence: [6.1](01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)–[6.4](04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) (Resilience4j 2.4.0, Spring Framework 7.0.10, Caffeine 3.3.1, Lettuce 7.9.0 against jedis-mock, all run). These topics come up in system design *and* in "tell me about an incident" rounds. The bar-raiser keeps asking "and then what happens?" until your design either holds or breaks.
 >
 > 🎤 candidate · 🔍 interviewer probe · 🛡️ staff-level defense
+
+---
 
 ---
 
@@ -204,127 +206,170 @@ Put the guard where the write happens. A **fencing token**: a monotonically incr
 
 ---
 
-## Drill 8: "We publish order events with `acks=1` because it's faster" 🔥
+# Round 2: resilience under measured load, Redis in production (Batch 3 deep dive)
 
-🔍 **Probe 1: What can you lose?**
+> Evidence for Round 2 is in [6.6](06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md) (an open-loop chaos lab, Resilience4j 2.4.0), [6.7](07-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md) (Redis 8.10.2 with Sentinel, Lettuce 7.5.2, Spring Data Redis 4.1.2) and the new deep sections of 6.1–6.4. 🎤 candidate · 🔍 probe · 🛡️ staff-level defense.
+
+---
+
+## Drill 8: "Our retries use exponential backoff with jitter, so retry storms can't happen" 🔥
+
+🎤 *"Three attempts, base 100 ms, full jitter. That's the textbook."*
+
+🔍 **Probe 1: The dependency is overloaded, not flaky. What do your retries do?**
 
 <details><summary>🛡️ Defense</summary>
 
-Any record the leader acknowledged but followers hadn't copied when the leader died. `acks=all` waits for the ISR. It only means something with `min.insync.replicas=2` on a replication factor of 3: one broker can die without losing acknowledged data, two make writes unavailable rather than unsafe. Since 3.0 `acks=all` is the default (verified in 4.2.2), so `acks=1` is a deliberate downgrade.
+They multiply the overload. Measured in the chaos lab: open-loop 100 req/s against a dependency that could do 33 req/s in its slow phase. Three attempts with backoff and jitter put **2.72×** the load on it, grew its queue from 284 to **1,024**, and produced 1,733 units of work for clients that had already timed out. The error phase got worse than with no retries at all: 167 successes vs 184, at p50 ≈ 1 s instead of 31 ms. Jitter spreads retries in time but doesn't reduce their number. Retries help with independent transient failures and hurt with overload, and from the client you usually can't tell which one you're in.
 </details>
 
-🔍 **Probe 2: A retry after a lost response. Duplicate? Reordered?**
+🔍 **Probe 2: So no retries?**
 
 <details><summary>🛡️ Defense</summary>
 
-Neither, with idempotence (the default): the broker tracks producer id + per-partition sequence for the last 5 batches, acknowledges the duplicate without appending it, and rejects gaps. That's why `max.in.flight ≤ 5` keeps ordering. But a *restarted* producer has a new id, so re-sends after a crash are new records. Consumers stay idempotent.
+Retries under a **budget**: at most about 10 % extra load, never retrying a breaker or bulkhead rejection, with the retry outside the breaker so each attempt is counted. In the lab that stack (S5) was indistinguishable from the same stack without retries: dependency load 0.07×–0.09×, 0 failures thanks to the fallback. The budget lets retries absorb the occasional transient failure and switches them off precisely when the failure rate is high, which is the overload case.
 </details>
 
-🔍 **Probe 3: You need more throughput. What do you change?**
+🔍 **Probe 3 (L6): Where else in the stack are retries hiding?**
 
 <details><summary>🛡️ Defense</summary>
 
-Batching, not durability. One run on loopback, 100k × 200 B: linger 0 → 183k rec/s; linger 5 (the 4.x default) → 330k; 128 KB batches with linger 20 → 673k with 36 requests instead of 257. lz4 lost there (257k) because loopback has no network to save. With real payloads over a real network I'd expect compression to win, but I'd measure.
-</details>
-
-🔍 **Probe 4 (L6): Throughput still isn't enough, so someone proposes doubling partitions on the topic.**
-
-<details><summary>🛡️ Defense</summary>
-
-On a keyed topic, `murmur2(key) % n` changes, so keys move to new partitions. Records for the same order can be consumed out of order across the change, and any per-partition state in consumers is now wrong. Plan the partition count up front for peak throughput and consumer parallelism, or migrate to a new topic with a cutover.
+Usually at three or four layers at once: the HTTP client, Resilience4j, a service mesh retry policy, the Kafka producer (`retries` defaults to `Integer.MAX_VALUE` within `delivery.timeout.ms`), and the user's browser. They multiply: 3 × 3 × 3 is 27 attempts per click. I'd inventory them, keep one layer with a budget (usually the client closest to the decision), make the mesh retry only connection failures, and propagate a deadline so downstream layers stop working on requests nobody is waiting for. In the lab, timeouts without deadline propagation wasted 430 responses in two phases.
 </details>
 
 ---
 
-## Drill 9: "Our consumer group keeps rebalancing" ⚡
+## Drill 9: "The circuit breaker protects our latency" ⚡
 
-🔍 **Probe 1: First thing you check?**
+🎤 *"When the dependency gets slow, the breaker opens and our p99 stays low."*
+
+🔍 **Probe 1: Your timeout already bounds latency. What does the breaker add?**
 
 <details><summary>🛡️ Defense</summary>
 
-Whether processing per poll exceeds `max.poll.interval.ms`. Reproduced: a 6 s batch with a 3 s limit gave `CommitFailedException`, `onPartitionsLost`, a rejoin, and the same batch delivered again. Fix: fewer records per poll, an honest interval, pause/resume for long work, and idempotent processing.
+Capacity for the dependency. With a 300 ms timeout alone, client p99 was already ≈ 313 ms, so the breaker didn't buy latency. What it bought: dependency load fell to **0.13×** in the slow phase and **0.09×** in the error phase, its queue peaked at 22 instead of 284, and rejected calls failed in 0 ms. The breaker is load shedding on behalf of the downstream service, giving it room to drain its backlog. I'd describe it that way in a design review, because it changes how you set it: it's tuned to the dependency's recovery, not to your SLO.
 </details>
 
-🔍 **Probe 2: Each rebalance pauses all 30 consumers for seconds. Why, and how do you fix it?**
+🔍 **Probe 2: How do you pick the slow-call threshold?**
 
 <details><summary>🛡️ Defense</summary>
 
-The default assignor list starts with the eager `RangeAssignor`, which revokes **everything** from everyone. Verified with one joiner: eager revoked all 6 partitions to move 3; cooperative-sticky and KIP-848 revoked only the 3 that moved, and the old member never stopped consuming the others. I migrate to cooperative (two rolling bounces) or to `group.protocol=consumer` on 4.x brokers.
+Below the client timeout: 250 ms against 300 ms in the lab. Then the breaker opens on "getting slow" before calls turn into timeouts. If the threshold is at or above the timeout, slowness only registers once calls are already failing. Resilience4j's default `slowCallDurationThreshold` is 60 s, which in practice means "never" for an HTTP client with a sane timeout.
 </details>
 
-🔍 **Probe 3: Rolling deploys cause a rebalance per pod. Can you avoid them?**
+🔍 **Probe 3 (L6): What does recovery cost, and who pays?**
 
 <details><summary>🛡️ Defense</summary>
 
-Static membership: `group.instance.id` set to a stable pod identity. A restart within `session.timeout.ms` rejoins as the same member with no rebalance. And graceful shutdown: close the consumer in `preStop` so it leaves promptly instead of the group waiting 45 s.
-</details>
-
----
-
-## Drill 10: "We use Kafka exactly-once, so duplicates are impossible" 🧊
-
-🔍 **Probe 1: Exactly-once for what?**
-
-<details><summary>🛡️ Defense</summary>
-
-Kafka transactions make **output records and input offsets** commit atomically for Kafka-to-Kafka processing, with `read_committed` consumers downstream. Verified building block: after an aborted and a committed transaction, `read_uncommitted` saw 5 records and `read_committed` saw 2. Aborted records are still in the log; they're filtered.
-</details>
-
-🔍 **Probe 2: The consumer writes to Postgres and calls a payment API.**
-
-<details><summary>🛡️ Defense</summary>
-
-Kafka transactions don't cover those. That's at-least-once delivery + idempotent effects: a dedup row in the same DB transaction as the business change ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)), and the provider's idempotency key derived from the event id.
-</details>
-
-🔍 **Probe 3 (L6): Downstream `read_committed` consumers stopped making progress, with no errors. What do you look for?**
-
-<details><summary>🛡️ Defense</summary>
-
-An open transaction. `read_committed` consumers can't read past the **last stable offset**, the start of the oldest open transaction on that partition. A hung producer freezes them until `transaction.timeout.ms` (60 s default) aborts it, or longer if it keeps the transaction alive. Alert on LSO lag. Zombie fencing (same `transactional.id` → epoch bump → `ProducerFencedException` for the old one) handles the restarted-instance case.
+In the lab, 57 of 400 requests in the recovery phase failed while the breaker waited out its 1 s open state and ran 5 half-open trial calls. That's the price of not hammering a recovering service. Across a fleet the trial calls multiply: 40 pods × 5 calls is 200 probes when the dependency comes back, all at roughly the same moment because the breakers opened together. A random jitter on the open duration, or fewer half-open calls per pod, spreads that out. And a fallback, where the product allows one, turns the 57 failures into degraded successes: the S4 stack had 0 failures in all phases.
 </details>
 
 ---
 
-## Drill 11: "A poison message is blocking our consumer" ⚡
+## Drill 10: "Every pod has a bulkhead of 10, so the dependency is protected" ⚡
 
-🔍 **Probe 1: What does Spring Kafka do by default?**
+🎤 *"We sized it from the dependency's 20 workers, with headroom."*
+
+🔍 **Probe 1: How many pods are there?**
 
 <details><summary>🛡️ Defense</summary>
 
-`DefaultErrorHandler` with `FixedBackOff[interval=0, maxAttempts=9]` (read from a fresh 4.1.2 instance): 10 attempts with no delay, then it logs and **skips** the record. That's neither safe nor visible. I configure backoff, a `DeadLetterPublishingRecoverer`, and non-retryable exceptions. If the value can't even be deserialized, `ErrorHandlingDeserializer` turns it into a non-retryable exception that reaches the DLT.
+That's the question that breaks it. The HPA in [7.8](../07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) scales to 40, and 40 × 10 is 400 concurrent calls into a dependency with 20 workers. The bulkhead caps each pod; nothing caps the fleet. In the chaos lab one client with a bulkhead of 10 kept the dependency's queue at 2. Forty such clients would be back at the unprotected case.
 </details>
 
-🔍 **Probe 2: Blocking retries or retry topics?**
+🔍 **Probe 2: So what's the right size?**
 
 <details><summary>🛡️ Defense</summary>
 
-It depends on whether order matters, and I measured both with the same records. Blocking kept order but stalled the partition: `next-1` waited about 3.7 s behind the poison pill. `@RetryableTopic` kept the main topic flowing but `next-1` **overtook** the poison pill at 731 ms. For account balances or state machines I use short blocking retries then the DLT; for independent work, retry topics. In spring-kafka 4 the DLT suffix is `-dlt` and retry topics are suffixed with the delay (`-retry-1000`, `-retry-2000`, `-retry-4000`).
+Dependency concurrency ÷ **maximum** replicas, rounded down. That's 20 ÷ 40 = 0 here, which tells you the static per-pod limit is the wrong tool at this scale. The options: an adaptive concurrency limit per pod (AIMD or gradient, reacting to latency), a shared limiter in front of the dependency, or admission control in the dependency itself, which is the only place that knows its own capacity. Static per-pod numbers work when the replica range is narrow.
 </details>
 
-🔍 **Probe 3 (L6): What happens to the DLT afterwards?**
+🔍 **Probe 3 (L6): Rate limiters and retry budgets: same problem?**
 
 <details><summary>🛡️ Defense</summary>
 
-Alerts on arrival, retention of days, a dashboard with age and count, and a replay tool that republishes to the original topic (the headers carry original topic, partition, offset, consumer group and exception). Replays are duplicates by definition, so consumers must be idempotent first. A DLT nobody reads is just data loss with extra steps.
+Yes. Every per-pod number multiplies with replicas: a 5 req/s Resilience4j limiter on 40 pods is 200 req/s against the partner's quota, and with the fixed-window behaviour I measured (10 permits in 54 ms across a boundary) bursts can briefly double it. Fleet-wide quotas need a shared counter (Redis, the gateway) or a per-pod share recomputed as the fleet scales. Retry budgets are safer because they're relative to each pod's own traffic. That's one reason I prefer budgets to fixed retry counts.
 </details>
 
 ---
 
-## Drill 12: "Consumer lag is growing; let's add pods" ⚡
+## Drill 11: "Redis with Sentinel is highly available, so our locks and sessions are safe" 🔥
 
-🔍 **Probe 1: Will that help?**
+🎤 *"If the primary dies, Sentinel promotes a replica within seconds."*
+
+🔍 **Probe 1: What happens to writes the primary acknowledged just before it died?**
 
 <details><summary>🛡️ Defense</summary>
 
-Only up to the partition count: one partition, one consumer per group. Past that, pods sit idle (KEDA's Kafka scaler caps replicas at the partition count unless told otherwise). Then I check **per-partition** lag: the total hides skew. Verified example: total lag 600 was 0 + 297 + 303.
+Some are gone. Replication is asynchronous: I measured a Sentinel failover that **lost 38 acknowledged writes**. With `WAIT 1 …` after each write, **0 confirmed** writes were lost, at the cost of a round trip to a replica. For a cache, losing 38 entries is a few misses. For a lock it means a lock that was granted no longer exists, and a second client can take it. For a session it means a logged-in user is logged out. HA in Redis means availability of the service, not durability of every acknowledged write.
 </details>
 
-🔍 **Probe 2: One partition has all the lag.**
+🔍 **Probe 2: "Within seconds": how long, measured?**
 
 <details><summary>🛡️ Defense</summary>
 
-A hot key (key skew) or one slow record type. More consumers can't help; that partition has one owner. Options: a better key (more granular ordering domain), parallel processing per key inside the partition (commit only the contiguous completed prefix), or isolating the hot tenant to its own topic.
+1.75 s in one run, **17.5 s** in another. The difference was a failover attempt that timed out and was retried, plus the client's reconnect back-off. So I size everything that depends on Redis for the slow case: the miss bulkhead and the database's headroom for 17 s of correlated misses, client command timeouts at about 200 ms so threads don't wait out Lettuce's 60 s default, and a `CacheErrorHandler` so a stall degrades to a cache miss instead of a failed request.
+</details>
+
+🔍 **Probe 3 (L6): Then where do locks that guard money live?**
+
+<details><summary>🛡️ Defense</summary>
+
+Not only in Redis. A Redis lease prevents duplicate *work* and is fine for "only one pod rebuilds this cache entry". For correctness, I want the guard in the system of record: a unique constraint, a conditional `UPDATE … WHERE version = ?`, or a fencing token that the protected resource checks. Then a lost lease costs some duplicate work, never a double charge. The same goes for idempotency keys: they belong in the database transaction that does the work ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)).
+</details>
+
+---
+
+## Drill 12: "We cache with Spring's `@Cacheable` on Redis; a cache problem can't take us down" 🔥
+
+🎤 *"Worst case it's a cache miss and we hit the database."*
+
+🔍 **Probe 1: Redis stalls instead of failing. What does a request see?**
+
+<details><summary>🛡️ Defense</summary>
+
+Without configuration, a failed request. I measured it: with Redis stalled and no `CacheErrorHandler`, Spring's cache interceptor propagated `QueryTimeoutException` and the request failed. The cache had turned from an optimization into a hard dependency. With Lettuce's default 60 s command timeout, the request would also hold its thread for a minute first. Two settings fix it: a short command timeout (200 ms) and a `CacheErrorHandler` that logs and treats errors as misses.
+</details>
+
+🔍 **Probe 2: A user updates their profile and immediately reloads. Stale?**
+
+<details><summary>🛡️ Defense</summary>
+
+Possibly, and it isn't the database. Spring Data Redis 4 writes cache entries **asynchronously** by default: in my run 21–59 of 200 immediate re-reads after a `put` missed. For read-your-writes paths, configure immediate writes on the cache manager, or evict instead of putting and let the next read fill. It's the kind of default that never shows up in unit tests, only under concurrency.
+</details>
+
+🔍 **Probe 3 (L6): And caching "not found"?**
+
+<details><summary>🛡️ Defense</summary>
+
+Decide it deliberately. A method returning `null` into a cache that disallows null values **throws** (`IllegalArgumentException`, verified), so either allow nulls with a short TTL, which is the penetration defense from [6.4 §2](04-Cache-Stampede-Penetration-Avalanche-Invalidation.md), or return `Optional` and skip caching absence. Either is fine; an accidental exception on the read path isn't.
+</details>
+
+---
+
+## Drill 13: "We set `maxmemory-policy volatile-lru` and a memory limit, so Redis evicts old keys" ⚡
+
+🎤 *"It evicts least-recently-used keys when memory is full."*
+
+🔍 **Probe 1: Do all your keys have a TTL?**
+
+<details><summary>🛡️ Defense</summary>
+
+If not, `volatile-*` can't evict them, and with nothing evictable it behaves exactly like `noeviction`: writes fail. I measured **14,760 failed `SET`s** that way. For a pure cache I use `allkeys-*`, so every key is a candidate, and I still set TTLs for freshness.
+</details>
+
+🔍 **Probe 2: LRU or LFU?**
+
+<details><summary>🛡️ Defense</summary>
+
+LFU for skewed access. On a Zipf workload, `allkeys-lfu` hit **83.1 %**, `allkeys-lru` 81.3 %, `allkeys-random` 78.2 %. Two points of hit rate at 80 % is a 10 % change in database load. That's the same frequency-over-recency argument as Caffeine's W-TinyLFU on the L1 side ([6.3 §1.2](03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)).
+</details>
+
+🔍 **Probe 3 (L6): How much memory do you actually need?**
+
+<details><summary>🛡️ Defense</summary>
+
+More than the values suggest. A 40-byte value cost **110 bytes** as its own key and **44 bytes** inside a small hash (listpack encoding), measured with `MEMORY USAGE`. With millions of small entries, per-key overhead dominates. I'd measure a representative sample, group small related values into hashes where access patterns allow, and size `maxmemory` with headroom for replication buffers and fragmentation, not just the data.
 </details>
 
 ---
@@ -339,8 +384,9 @@ A hot key (key skew) or one slow record type. More consumers can't help; that pa
 | Bulkheads | Thread pool per dependency | Semaphore + virtual threads, Little's-law sizing aligned with connection pools |
 | Caching | Cache-aside with TTL | Stampede/penetration/avalanche defenses, miss bulkhead, invalidation races and leases, staleness budgets per data type |
 | Distributed locks | `SETNX` with expiry | Lease vs correctness, fencing tokens, prefers DB constraints |
-| Kafka producer | `acks=all`, idempotence | ISR math, sequence numbers and the 5-in-flight limit, partition-count changes, transactions and LSO stalls |
-| Kafka consumer | Consumer groups, commit after processing | Rebalance protocols with evidence, `max.poll.interval.ms` failure mode, retry strategy vs ordering, DLT operations, partition-capped scaling |
+| Resilience under load | Adds timeouts, retries and a breaker | Explains with numbers which layer protects whom: timeouts bound latency, breakers shed load for the dependency, retries amplify overload unless budgeted |
+| Fleet limits | Per-pod bulkheads and limiters | Multiplies every per-pod limit by max replicas; reaches for adaptive limits or admission control at scale |
+| Redis in production | Sentinel for HA, `maxmemory` set | Knows what failover loses, how long it takes, which eviction policy fits, what Spring's cache layer does on errors |
 
 ---
 
@@ -353,10 +399,12 @@ A hot key (key skew) or one slow record type. More consumers can't help; that pa
 * "Our rate limiter is a token bucket" (without checking).
 * Cache without TTLs, or "we'll just delete the key after update" as the whole consistency story.
 * A Redis lock as the only guard on money movement.
-* `acks=1` or idempotence disabled "for performance".
-* "Exactly-once" without saying exactly-once *what*.
-* Scaling consumers past partitions; alerting on total lag only.
-* A DLT with no alerting and no replay path.
+* "Backoff with jitter prevents retry storms."
+* A breaker whose slow-call threshold is above the client timeout (or left at 60 s).
+* Per-pod concurrency or rate limits that ignore the HPA maximum.
+* Locks or idempotency keys that live only in Redis.
+* `@Cacheable` on Redis without a `CacheErrorHandler` and a short command timeout.
+* `volatile-*` eviction with keys that have no TTL.
 
 ---
 
@@ -398,22 +446,45 @@ A hot key (key skew) or one slow record type. More consumers can't help; that pa
 
 <details><summary>18. Lease lock vs correctness?</summary>A lease prevents duplicate work, not concurrent writes; correctness needs fencing tokens or DB constraints.</details>
 
-<details><summary>19. Kafka 4.x producer defaults for acks, idempotence, linger?</summary>`all`, `true`, 5 ms.</details>
+<details><summary>19. Retries ×3 with backoff + jitter on an overloaded dependency: measured load?</summary>2.72×, queue 284 → 1,024, and fewer successes than without retries (167 vs 184).</details>
 
-<details><summary>20. Why `max.in.flight ≤ 5` with idempotence?</summary>The broker tracks the last 5 batch sequences per producer and partition.</details>
+<details><summary>20. What made retries safe in the chaos lab?</summary>A 10 % retry budget that never retries breaker or bulkhead rejections: load stayed at 0.07×–0.09×.</details>
 
-<details><summary>21. What does `read_committed` stop at?</summary>The last stable offset (start of the oldest open transaction).</details>
+<details><summary>21. What does a circuit breaker mainly protect?</summary>The dependency: load fell to 0.13× / 0.09× and its queue to 22 (vs 284). Latency was already bounded by the timeout.</details>
 
-<details><summary>22. Consumer default `auto.offset.reset`?</summary>`latest`: new groups skip existing data.</details>
+<details><summary>22. Where should `slowCallDurationThreshold` sit?</summary>Below the client timeout (250 ms vs 300 ms), so slowness counts before calls time out. The default is 60 s.</details>
 
-<details><summary>23. Eager vs cooperative vs KIP-848?</summary>Eager revokes all; cooperative revokes only moving partitions (two rounds); KIP-848 is broker-side, incremental, with no group barrier.</details>
+<details><summary>23. What did breaker recovery cost in the lab?</summary>57 of 400 recovery-phase requests failed during OPEN (1 s) → HALF_OPEN (5 trial calls) → CLOSED.</details>
 
-<details><summary>24. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts, no delay, then log and skip.</details>
+<details><summary>24. Per-pod bulkhead of 10, HPA max 40, dependency of 20 workers?</summary>400 concurrent calls: per-pod limits multiply with replicas. Size from max replicas or use adaptive limits.</details>
 
-<details><summary>25. Spring Kafka 4 DLT suffix?</summary>`-dlt` (older versions used `.DLT`).</details>
+<details><summary>25. What did a Sentinel failover lose?</summary>38 acknowledged writes (asynchronous replication); `WAIT` lost 0 of the writes it confirmed.</details>
 
-<details><summary>26. Blocking vs non-blocking retries?</summary>Blocking keeps order but stalls the partition; non-blocking keeps throughput but breaks per-key order.</details>
+<details><summary>26. How long did Sentinel failover take?</summary>1.75 s in one run, 17.5 s in another (a retried failover plus client back-off).</details>
 
-<details><summary>27. Max useful consumers in a group?</summary>The partition count.</details>
+<details><summary>27. Lettuce's default command timeout?</summary>60 s. Set ~200 ms for a cache.</details>
+
+<details><summary>28. `@Cacheable` on Redis, Redis stalls, no `CacheErrorHandler`?</summary>The request fails (`QueryTimeoutException`). With a handler it degrades to a miss.</details>
+
+<details><summary>29. Spring Data Redis 4 cache writes are…?</summary>Asynchronous by default: 21–59 of 200 immediate re-reads missed. Use immediate writes for read-your-writes.</details>
+
+<details><summary>30. `volatile-lru` with keys that have no TTL?</summary>Behaves like `noeviction`: 14,760 failed `SET`s in the lab.</details>
+
+<details><summary>31. Best eviction policy on a Zipf workload?</summary>`allkeys-lfu` 83.1 % vs `allkeys-lru` 81.3 % vs `allkeys-random` 78.2 %.</details>
+
+<details><summary>32. Memory for a 40-byte value?</summary>110 bytes as its own key, 44 bytes inside a listpack hash.</details>
+
+**Kafka** has its own pillar now: read [10.1 producers](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) through [10.5 Kafka drill-downs](../10-Kafka-Production/05-Bar-Raiser-Drill-Downs.md) before Pillar 7.
+
+**Depth modules:** [6.6 chaos lab](06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md) · [6.7 Redis in production](07-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md)
+
+---
+
+## Summary
+
+| Round | Drills | What it tests |
+|---|---|---|
+| Round 1 (1–7) | Circuit breaker defaults, partner rate limits, retries, bulkheads with virtual threads, Redis caching, Caffeine vs LRU, Redis locks | The mechanics: windows and states, limiter algorithms, retry rules, admission policies, lease vs correctness |
+| Round 2 (8–13) | Retry storms with jitter, what a breaker protects, fleet-wide bulkheads, Sentinel failover, Spring's Redis cache, eviction policies | Measured behaviour: amplification and budgets, load shedding for the dependency, per-pod limits × replicas, what HA loses, framework defaults on errors |
 
 **Next pillar:** [7.1 JVM in containers: cgroups v2, memory, OOMKilled →](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md)

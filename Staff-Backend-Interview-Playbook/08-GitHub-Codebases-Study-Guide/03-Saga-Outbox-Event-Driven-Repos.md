@@ -2,7 +2,7 @@
 
 > **Verified 2026-10-25** via the GitHub API, file trees and raw-file checks; excerpts quoted from the default branches on that date.
 >
-> **Pairs with:** [5.3 sagas](../05-Microservices-Patterns/03-Sagas-Choreography-vs-Orchestration-Compensation-Semantic-Locks.md), [5.4 outbox + idempotent consumer](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md)–[6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) Kafka.
+> **Pairs with:** [5.3 sagas](../05-Microservices-Patterns/03-Sagas-Choreography-vs-Orchestration-Compensation-Semantic-Locks.md), [5.4 outbox + idempotent consumer](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md)–[10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) Kafka.
 
 | Repository | Language | Branch | Stars | Last push | Read it for |
 |---|---|---|---|---|---|
@@ -105,7 +105,7 @@ It's the same design as [5.4](../05-Microservices-Patterns/04-Transactional-Outb
 |---|---|---|
 | `outbox/` | `order-service` writes orders + outbox rows; Debezium's outbox event router publishes them; `shipment-service` consumes (with tracing: `jaeger.png`) | [5.4 §6](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
 | `saga/` | An **orchestrated saga over the outbox + CDC**: `order-service` orchestrates `customer-service` (credit) and `payment-service` | [5.3](../05-Microservices-Patterns/03-Sagas-Choreography-vs-Orchestration-Compensation-Semantic-Locks.md) |
-| `cache-invalidation/` | Debezium invalidating Hibernate's 2nd-level cache after **out-of-band** DB updates | [6.4 §5.3](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| `cache-invalidation/` | Debezium invalidating Hibernate's 2nd-level cache after **out-of-band** DB updates | [6.4 §5.3](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 | `postgres-failover-slots/` | Keeping logical replication slots across a primary failover | [5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) (slot risk) |
 | `postgres-toast/` | Unchanged TOASTed columns arrive in UPDATE events as a placeholder, not the value (the WAL doesn't carry them unless `REPLICA IDENTITY FULL`), and how a sink copes | [2.1](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md) |
 | `auditlog/` | Enriching change events with application metadata | — |
@@ -141,7 +141,7 @@ Kafka is huge. Read it along the path of one record:
 | 9. New consumer | `clients/src/main/java/org/apache/kafka/clients/consumer/internals/AsyncKafkaConsumer.java` | The background-thread consumer used with `group.protocol=consumer` |
 | 10. Fetch | `clients/src/main/java/org/apache/kafka/clients/consumer/internals/Fetcher.java` | Fetch sessions, `isolation.level` handling |
 
-Pair each stop with the experiment in [6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md)/[6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) that exercised it: batching numbers, sticky null keys, read-committed filtering, eager vs cooperative vs KIP-848 revocations.
+Pair each stop with the experiment in [10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md)/[10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) that exercised it: batching numbers, sticky null keys, read-committed filtering, eager vs cooperative vs KIP-848 revocations.
 
 ---
 
@@ -150,7 +150,7 @@ Pair each stop with the experiment in [6.5](../06-Resilience-Caching-Kafka/05-Ka
 | Path | What to look for |
 |---|---|
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/KafkaMessageListenerContainer.java` | The poll loop, ack modes, commits, pause/resume, rebalance listener integration |
-| `spring-kafka/src/main/java/org/springframework/kafka/listener/DefaultErrorHandler.java` | Seek-to-current retries; default `FixedBackOff(0, 9)` (verified in [6.6 §4.1](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
+| `spring-kafka/src/main/java/org/springframework/kafka/listener/DefaultErrorHandler.java` | Seek-to-current retries; default `FixedBackOff(0, 9)` (verified in [10.2 §4.1](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/DeadLetterPublishingRecoverer.java` | DLT naming (`-dlt` in 4.x), header population |
 | `spring-kafka/src/main/java/org/springframework/kafka/retrytopic/RetryTopicConfigurer.java` | How one `@RetryableTopic` becomes several topics and containers |
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/KafkaConsumerBackoffManager.java` | Non-blocking delay = pausing a partition until the record's due time |

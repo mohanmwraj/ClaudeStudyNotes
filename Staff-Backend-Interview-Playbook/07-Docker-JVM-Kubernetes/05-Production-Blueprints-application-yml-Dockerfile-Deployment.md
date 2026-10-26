@@ -10,7 +10,7 @@
 
 | Artifact | Check | Result |
 |---|---|---|
-| `application.yml` | Every key checked against the `spring-configuration-metadata.json` of all Boot 4.1.2 modules used + `resilience4j-spring-boot4` (76 metadata files, 1,798 known properties), flagging unknown **and deprecated** keys | **88 keys, 0 problems** (it caught one: `spring.data.redis.lettuce.cluster.refresh.adaptive` was **removed in Boot 4.1**, "all adaptive triggers are enabled by default") |
+| `application.yml` | Every key checked against the `spring-configuration-metadata.json` of all Boot 4.1.2 modules used + `resilience4j-spring-boot4` (76 metadata files, 1,798 known properties), flagging unknown **and deprecated** keys | **87 keys, 0 problems** (re-run after [10.4 §4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) removed `group.instance.id`) (it caught one: `spring.data.redis.lettuce.cluster.refresh.adaptive` was **removed in Boot 4.1**, "all adaptive triggers are enabled by default") |
 | Map-typed keys inside it | Hibernate keys vs `AvailableSettings` constants; Kafka keys vs `ProducerConfig`/`ConsumerConfig.configNames()`; Resilience4j instance keys vs the `InstanceProperties` setters | **36 keys, 0 problems** |
 | Kubernetes manifests | Structural validation (unknown fields, required fields, types) against the **official OpenAPI v3 schemas of Kubernetes v1.37.1** and the **KEDA v2.21.0 CRD** | **7 documents, 0 problems**. A negative test with 5 injected mistakes (typo'd field, string for an int, missing `name`, a misspelled KEDA field) reported all 5 |
 | Dockerfile | Not built (no Docker here). Each step was run separately: `jarmode=tools extract --layers`, the merged layout started with `java -jar` and served `/actuator/health`, AOT cache training and use ([1.4](../01-Build-Systems/04-Enterprise-Builds-OCI-Images-Annotation-Processors-Enforcer.md), [7.2 §4.3](02-Dockerfiles-Multistage-Distroless-Layers-Buildpacks-Jib.md)); base tags, digest, user and entrypoint read from the registries | Build it once in CI before relying on it |
@@ -106,7 +106,7 @@ spring:
       properties:
         max.poll.interval.ms: 120000
         partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
-        group.instance.id: ${POD_NAME}
+        # no group.instance.id on a Deployment: a new pod name per rollout = a 45 s stall (10.4 §4)
     listener:
       ack-mode: record
       concurrency: 3
@@ -225,15 +225,15 @@ spring:
 
 | Block | Failure it prevents | Where it's explained |
 |---|---|---|
-| Virtual threads + Hikari 20 | Thread exhaustion; and the pool, not threads, as the bulkhead | [4.4](../04-Spring-Boot-Internals/04-Web-Concurrency-Tomcat-Virtual-Threads-WebFlux.md), [6.2 §1.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
+| Virtual threads + Hikari 20 | Thread exhaustion; and the pool, not threads, as the bulkhead | [4.4](../04-Spring-Boot-Internals/04-Web-Concurrency-Tomcat-Virtual-Threads-WebFlux.md), [6.2 §1.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
 | `open-in-view: false`, batch fetch, `fail_on_pagination_over_collection_fetch` | N+1 in views, in-memory pagination | [3.3](../03-JPA-Hibernate-Spring-Data/03-NPlus1-Lazy-Loading-Fetch-Plans-Pagination-Projections.md) |
 | Batch inserts + `pooled-lo` | One round trip per row | [3.4](../03-JPA-Hibernate-Spring-Data/04-Write-Throughput-Batching-Sequences-Hybrid-JDBC-jOOQ.md) |
-| Kafka producer block | Loss, duplicates, small batches, blocked request threads | [6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) |
-| Kafka consumer block | Skipped history, rebalance storms, stop-the-world rebalances | [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
-| Redis timeouts | A slow Redis stalling every request | [6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4 §3.2](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| Kafka producer block | Loss, duplicates, small batches, blocked request threads | [10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) |
+| Kafka consumer block | Skipped history, rebalance storms, stop-the-world rebalances | [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| Redis timeouts | A slow Redis stalling every request | [6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4 §3.2](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 | Probes, graceful shutdown | Restart storms, dropped requests on deploy | [7.3](03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | Tracing, histograms, ECS logs | Blind incident response | [5.7](../05-Microservices-Patterns/07-Observability-Tracing-Correlation-IDs-Contract-Testing.md) |
-| Resilience4j | Cascading failure, retry storms | [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
+| Resilience4j | Cascading failure, retry storms | [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
 
 ---
 
@@ -357,9 +357,10 @@ spec:
               containerPort: 8080
               protocol: TCP
           env:
-            - name: JAVA_TOOL_OPTIONS
+            - name: JDK_JAVA_OPTIONS          # launcher only (7.7 section 4.5); heap pinned + pre-touched (7.7 section 4.2-4.4)
               value: >-
-                -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=70
+                -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=65
+                -XX:MaxHeapFreeRatio=100 -XX:+AlwaysPreTouch
                 -XX:+UseG1GC -XX:ActiveProcessorCount=2
                 -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps
                 -XX:MaxDirectMemorySize=128m
@@ -368,10 +369,6 @@ spec:
               value: "2"
             - name: SPRING_PROFILES_ACTIVE
               value: prod
-            - name: POD_NAME                    # Kafka static membership: group.instance.id (6.6)
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
           envFrom:
             - secretRef:
                 name: order-service-secrets     # DB_URL, DB_USER, DB_PASSWORD, REDIS_URL, KAFKA_BOOTSTRAP_SERVERS
@@ -446,7 +443,7 @@ metadata:
   name: order-service
   namespace: orders
 spec:
-  minAvailable: 75%
+  minAvailable: 75%                 # safe only while the HPA minimum is >= 4: 75 % of 2-3 pods allows 0 evictions (7.8 section 5.2)
   selector:
     matchLabels:
       app.kubernetes.io/name: order-service
@@ -542,14 +539,14 @@ spec:
 |---|---|---|
 | No `replicas` in the Deployment | The HPA owns the count; `kubectl apply` with `replicas` fights it | [7.4 §3](04-CPU-Throttling-GC-Choice-HPA-KEDA.md) |
 | Memory request = limit, no CPU limit, `ActiveProcessorCount=2` | Guaranteed memory; burst CPU without CFS throttling; JVM threads sized deliberately | [7.1 §5](01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md), [7.4 §1.1](04-CPU-Throttling-GC-Choice-HPA-KEDA.md) |
-| 70 % heap of 1 GiB | ~700 MB heap leaves ~300 MB for the ~165 MB+ measured non-heap and growth | [7.1 §3](01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |
+| 65 % heap of 1 GiB, pinned and pre-touched | ~666 MB heap leaves ~358 MB for the 159 MB measured idle non-heap and growth; `InitialRAMPercentage` alone was undone 0.85 s into startup | [7.7 §4](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md) |
 | `ExitOnOutOfMemoryError` + dump to `emptyDir` | A broken JVM restarts; the dump survives the container restart for collection | [7.1 §4](01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |
 | Startup probe, generous liveness, quick readiness on `/livez` `/readyz` | No restart storms, no traffic before warm-up | [7.3 §2](03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | `preStop.sleep` 10 + grace 45 | Endpoint propagation before drain; drain before SIGKILL | [7.3 §3](03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | `maxUnavailable: 0`, `minReadySeconds`, PDB 75 % | Capacity never drops during rollouts and drains | [7.3 §4](03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | Zone spread `DoNotSchedule`, host spread `ScheduleAnyway` | Survive a zone loss without blocking scheduling on small clusters | — |
 | Non-root, read-only FS, drop ALL, seccomp, no SA token | Smallest blast radius on compromise | [7.2 §6](02-Dockerfiles-Multistage-Distroless-Layers-Buildpacks-Jib.md) |
-| `POD_NAME` → `group.instance.id` | Kafka static membership: no rebalance on a quick restart | [6.6 §2.2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| No `group.instance.id` (removed after measuring) | A Deployment pod has no stable identity: static membership stalled partitions 45 s per rollout and per scale-down | [10.4 §4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) |
 | KEDA consumer: lag per replica, capped at partitions, activation 50 | Scale on work, never past partitions, avoid 0↔1 flapping | [7.4 §4](04-CPU-Throttling-GC-Choice-HPA-KEDA.md) |
 
 ---
@@ -566,7 +563,7 @@ kubectl -n orders port-forward deploy/order-service 8080
 curl -s localhost:8080/readyz; curl -s localhost:8080/livez
 # Did the JVM size itself as intended? Ask the app, don't start a second JVM inside a memory-capped pod:
 curl -s localhost:8080/actuator/prometheus | grep -E '^jvm_memory_max_bytes\{area="heap"|^system_cpu_count|^jvm_gc_pause_seconds_count'
-#   heap max ≈ 70 % of 1 GiB, system_cpu_count = 2 (ActiveProcessorCount), gc="G1 Young Generation" / "G1 Concurrent GC"
+#   heap max ≈ 65 % of 1 GiB, system_cpu_count = 2 (ActiveProcessorCount), gc="G1 Young Generation" / "G1 Concurrent GC"
 curl -s localhost:8080/actuator/prometheus | grep -E '^hikaricp_connections|^resilience4j_circuitbreaker_state'
 
 # under load in staging:
@@ -581,8 +578,49 @@ curl -s localhost:8080/actuator/prometheus | grep -E '^hikaricp_connections|^res
 ## 6. Interview soundbites
 
 * "Everything in this blueprint is checked mechanically: config keys against Boot's own metadata, manifests against the cluster version's OpenAPI schema. That's how I caught a Redis property Boot 4.1 removed."
-* "Memory request equals limit, heap at 70 % to leave room for the measured non-heap, no CPU limit but the JVM's processor count pinned, so thread pools match what the pod gets."
+* "Memory request equals limit, heap at 65 %, pinned and pre-touched, to leave room for the measured non-heap, no CPU limit but the JVM's processor count pinned, so thread pools match what the pod gets."
 * "The Deployment has no replica count because the HPA owns it."
 * "Startup, liveness and readiness each answer a different question, and the grace period covers preStop, drain and consumer shutdown."
+
+---
+
+## 7. Deep dive: what changed in this blueprint after measuring (verified) 🔥
+
+Batch 3 measured three of this blueprint's assumptions and found them wrong. They are **corrected in place** above, and both validations were re-run after the edits:
+
+| What the blueprint said | What was measured | Now | Evidence |
+|---|---|---|---|
+| `group.instance.id: ${POD_NAME}`: "no rebalance on a quick restart" | On a Deployment every rollout is a new static id: a **45 s** stall per replaced pod (41 s with the whole group stopped under an eager assignor) and 45 s per scale-down | Removed from `application.yml` and the Deployment | [10.4 §2, §4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) |
+| `InitialRAMPercentage=70` "commits the heap" | G1 gave **674 MB** back 0.85 s into startup; committed pages aren't resident until touched | 65 %, `MaxHeapFreeRatio=100`, `AlwaysPreTouch` | [7.7 §4.2–§4.4](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md) |
+| Flags in `JAVA_TOOL_OPTIONS` | It reaches every JVM in the container, `jcmd` included | `JDK_JAVA_OPTIONS` | 7.7 §4.5 |
+| PDB `minAvailable: 75%` | Rounds **up**: 0 evictions at 2–3 replicas | Kept (the HPA minimum here is 4), with a comment; [7.8](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) uses `maxUnavailable: 25%` | 7.8 §5.2 |
+
+**Re-validation (verified after the edits):** `application.yml` **87 keys, 0 problems** against Boot 4.1.2 metadata (one fewer than before: `group.instance.id`). The Kubernetes manifests: **7 documents, 0 problems** against the v1.37.1 OpenAPI schemas and the KEDA CRD.
+
+**How this file relates to 7.8.** This blueprint is one service in isolation. [7.8](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) is the same service in a shared cluster. It adds:
+
+* Kustomize base and overlays;
+* platform guardrails: Pod Security, quotas, default-deny, an image admission policy;
+* the KEDA consumer done per 10.4;
+* a migration Job with meaningful exit codes, and a CronJob;
+* a Gateway API canary;
+* alerts with promtool tests.
+
+All of it is rendered, validated and audited. Its first draft failed the audit three times, which is the argument for building the audit.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Dependencies | Boot 4.1.2 starters; versions from the BOM | §1 |
+| `application.yml` | Every key checked against configuration metadata: 87 keys, 0 problems (re-run) | §2, §7 |
+| Dockerfile | Multi-stage, layered, AOT-trained in the runtime stage, exec-form entrypoint | §3 |
+| Manifests | Deployment, Service, PDB, HPA, NetworkPolicy, KEDA; validated vs v1.37.1 (re-run: 7 documents, 0 problems) | §4, §7 |
+| Decisions | No `replicas`; memory request = limit, no CPU limit; probes; preStop + grace; spread; non-root | §4.1 |
+| Corrections | Static membership removed; heap pinned + pre-touched via `JDK_JAVA_OPTIONS`; PDB rounding noted | §7 |
+| Day one | Server-side dry run, JVM sizing read from Actuator, load-test checks | §5 |
+| Next level | The platform version: [7.8](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) | §7 |
 
 **Next:** [7.6 Bar-raiser drill-downs →](06-Bar-Raiser-Drill-Downs.md)

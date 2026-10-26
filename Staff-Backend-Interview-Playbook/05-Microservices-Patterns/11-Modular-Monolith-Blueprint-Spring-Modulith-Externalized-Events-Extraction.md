@@ -397,7 +397,7 @@ void on(OrderPlacedV1 e, @Header("kafka_receivedMessageKey") String key) {
 
 The verified record shows the producer side stamps **`__TypeId__=com.acme.shop.order.OrderPlaced`**, the monolith's class name, on every message. A consumer using type headers would try to load that class. Either ignore type headers and bind to your own type (above), or configure a type mapping on both sides (`spring.json.type.mapping=orderPlaced:…`) so the wire carries a **logical name, not a Java FQCN**. This is the most common first bug after an extraction.
 
-**The reverse direction.** If `order` later needs inventory data synchronously, today that is a named-interface call. After extraction it becomes a network call with all of [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)'s failure modes. Prefer a **local replica** in `order`, fed by inventory's events, so `order` stays available when inventory is down.
+**The reverse direction.** If `order` later needs inventory data synchronously, today that is a named-interface call. After extraction it becomes a network call with all of [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)'s failure modes. Prefer a **local replica** in `order`, fed by inventory's events, so `order` stays available when inventory is down.
 
 ---
 

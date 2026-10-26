@@ -33,19 +33,19 @@
 | C1 | Synchronous RPC with deadlines | Communication | Request/response across services | §8.2 (compiled), [5.6 §3](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#3-api-composition-the-aggregator-verified-) ✅ |
 | C2 | Asynchronous messaging: commands vs events | Communication | Decouple in time | [5.10 §1.2](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md#12-the-contract-topics-keys-headers) ✅ |
 | C3 | Request / asynchronous reply | Communication | Long-running remote work | [5.10](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md) ✅ |
-| C4 | Competing consumers + partition-key ordering | Communication | Scale out without reordering | [5.10 sc. 6, 10](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md#5-reading-each-failure-mode-), [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) ✅ |
-| C5 | Dead-letter channel + retry classification | Communication | Poison messages | [5.10 sc. 9](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md#scenario-9-poison-messages), [6.6 §4](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md#4-retries-and-dead-letter-topics-) ✅ |
+| C4 | Competing consumers + partition-key ordering | Communication | Scale out without reordering | [5.10 sc. 6, 10](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md#5-reading-each-failure-mode-), [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) ✅ |
+| C5 | Dead-letter channel + retry classification | Communication | Poison messages | [5.10 sc. 9](10-Reference-Implementation-Saga-Orchestrator-Kafka-Outbox-Inbox-CQRS.md#scenario-9-poison-messages), [10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md#4-retries-and-dead-letter-topics-) ✅ |
 | C6 | Idempotency key for synchronous commands | Communication | Client retries of a POST | §8.3 ✅ |
 | C7 | Consumer-driven contracts | Communication | Independent deploys without breaking callers | [5.7 §4](07-Observability-Tracing-Correlation-IDs-Contract-Testing.md#4-consumer-driven-contract-testing-verified-with-pact-) ✅ |
 | C8 | Schema evolution: tolerant reader + upcaster | Communication | Changing an event others depend on | [5.5 §5](05-CQRS-and-Event-Sourcing.md#5-evolving-events-where-es-projects-get-stuck-), §8.4 ✅ |
 | D1 | API gateway | Edge | One front door | [5.6 §1](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#1-api-gateway-) |
 | D2 | Backend for frontend | Edge | Client-specific APIs | [5.6 §2](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#2-backend-for-frontend-bff-) |
 | D3 | Service mesh / sidecar | Edge | Uniform L4/L7 policy | [5.6 §4](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#4-service-mesh-sidecar-vs-sidecarless-) |
-| E1 | Timeouts + deadline propagation | Reliability | Bounded waiting end-to-end | §8.2, [6.2 §4](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#4-timeouts-and-the-timelimiter-) |
-| E2 | Retry with backoff + jitter | Reliability | Transient failures | [6.2 §3](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#3-retries-) ✅ |
-| E3 | Circuit breaker | Reliability | Stop calling a failing dependency | [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) ✅ |
-| E4 | Bulkhead / concurrency limit | Reliability | Contain a slow dependency | [6.2 §1](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#1-bulkheads-) ✅ |
-| E5 | Rate limiting / load shedding | Reliability | Protect capacity | [6.2 §2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#2-rate-limiters-), [4.5 §4](../04-Spring-Boot-Internals/05-Security-Filter-Chain-JWT-Method-Security-Rate-Limiting.md#4-a-rate-limiting-filter-verified-) ✅ |
+| E1 | Timeouts + deadline propagation | Reliability | Bounded waiting end-to-end | §8.2, [6.2 §4](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#4-timeouts-and-the-timelimiter-) |
+| E2 | Retry with backoff + jitter | Reliability | Transient failures | [6.2 §3](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#3-retries-) ✅ |
+| E3 | Circuit breaker | Reliability | Stop calling a failing dependency | [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) ✅ |
+| E4 | Bulkhead / concurrency limit | Reliability | Contain a slow dependency | [6.2 §1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#1-bulkheads-) ✅ |
+| E5 | Rate limiting / load shedding | Reliability | Protect capacity | [6.2 §2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#2-rate-limiters-), [4.5 §4](../04-Spring-Boot-Internals/05-Security-Filter-Chain-JWT-Method-Security-Rate-Limiting.md#4-a-rate-limiting-filter-verified-) ✅ |
 | E6 | Fallback / graceful degradation | Reliability | Partial answers beat errors | [5.6 §3](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#3-api-composition-the-aggregator-verified-) ✅ |
 | E7 | Health probes + graceful shutdown | Reliability | Deploys without dropped requests | [7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md), [4.8](../04-Spring-Boot-Internals/08-Request-Lifecycle-Events-Async-Graceful-Shutdown.md) ✅ |
 | F1 | Distributed tracing + correlation IDs | Observability | Follow one request | [5.7 §1–2](07-Observability-Tracing-Correlation-IDs-Contract-Testing.md#1-verified-propagation-across-two-spring-boot-services-) ✅ |
@@ -318,7 +318,7 @@
   * **Retries at every layer** (3 layers × 3 retries = 27 calls).
   * **Cascading failure** when a dependency slows down.
   * **No timeout at all:** the JDK `HttpClient` default request timeout is infinite.
-* **Spring:** §8.2 (compiled): `JdkClientHttpRequestFactory` with connect + read timeouts, and a `RestClient` interceptor that refuses to call once the deadline has passed and forwards `X-Request-Deadline`. Combine with E2–E4 ([6.2 §5](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#5-decorator-order-the-interview-question-) on decorator order).
+* **Spring:** §8.2 (compiled): `JdkClientHttpRequestFactory` with connect + read timeouts, and a `RestClient` interceptor that refuses to call once the deadline has passed and forwards `X-Request-Deadline`. Combine with E2–E4 ([6.2 §5](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#5-decorator-order-the-interview-question-) on decorator order).
 
 ### C2. Asynchronous messaging: commands vs events
 
@@ -349,7 +349,7 @@
   * **Repartitioning changes key → partition mapping.**
   * **Non-blocking retry topics break per-key order.**
   * **Async processing inside a listener reorders.**
-* **Evidence ✅:** 5.10 scenario 6 is correct *because* `ReleaseStock` queued behind `ReserveStock` on the same partition with 3 consumers per group. Background in [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md).
+* **Evidence ✅:** 5.10 scenario 6 is correct *because* `ReleaseStock` queued behind `ReserveStock` on the same partition with 3 consumers per group. Background in [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md).
 
 ### C5. Dead-letter channel + retry classification
 
@@ -438,10 +438,10 @@
 
 | Pattern | Problem | Key failure modes | Spring | Evidence |
 |---|---|---|---|---|
-| **E1 Timeouts + deadlines** | Unbounded waits pin threads and connections | Per-hop timeouts that sum past the SLO; no connect timeout | §8.2; `TimeLimiter` | [6.2 §4](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#4-timeouts-and-the-timelimiter-) |
-| **E2 Retry + backoff + jitter** | Transient errors | Retry storms, retrying non-idempotent calls, nested retries | Resilience4j `Retry`; Spring 7 `@Retryable` | [6.2 §3](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#3-retries-) ✅ |
-| **E3 Circuit breaker** | Calling a dependency that is down | Default windows too small or too large; breaker per instance vs per fleet; slow calls not counted | Resilience4j `CircuitBreaker` | [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) ✅ |
-| **E4 Bulkhead** | One slow dependency eats all threads | Thread-pool bulkheads with virtual threads; limits set without data | Semaphore bulkhead; `@ConcurrencyLimit` | [6.2 §1](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#1-bulkheads-) ✅ |
+| **E1 Timeouts + deadlines** | Unbounded waits pin threads and connections | Per-hop timeouts that sum past the SLO; no connect timeout | §8.2; `TimeLimiter` | [6.2 §4](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#4-timeouts-and-the-timelimiter-) |
+| **E2 Retry + backoff + jitter** | Transient errors | Retry storms, retrying non-idempotent calls, nested retries | Resilience4j `Retry`; Spring 7 `@Retryable` | [6.2 §3](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#3-retries-) ✅ |
+| **E3 Circuit breaker** | Calling a dependency that is down | Default windows too small or too large; breaker per instance vs per fleet; slow calls not counted | Resilience4j `CircuitBreaker` | [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) ✅ |
+| **E4 Bulkhead** | One slow dependency eats all threads | Thread-pool bulkheads with virtual threads; limits set without data | Semaphore bulkhead; `@ConcurrencyLimit` | [6.2 §1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md#1-bulkheads-) ✅ |
 | **E5 Rate limit / load shed** | Protect capacity and fairness | Per-instance limits ≠ global; shedding the wrong traffic | Resilience4j `RateLimiter`, filter | [4.5 §4](../04-Spring-Boot-Internals/05-Security-Filter-Chain-JWT-Method-Security-Rate-Limiting.md#4-a-rate-limiting-filter-verified-) ✅ |
 | **E6 Fallback / degrade** | Partial answers beat errors | Fallbacks that call another failing dependency; silent wrong data | Optional sections in composition | [5.6 §3](06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md#3-api-composition-the-aggregator-verified-) ✅ |
 | **E7 Probes + graceful shutdown** | Deploys drop requests | Liveness checking dependencies; no preStop; shutdown shorter than in-flight work | Boot probes, `server.shutdown=graceful`, lifecycle phases | [7.3 §3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md#3-graceful-shutdown-the-whole-sequence-), [4.8](../04-Spring-Boot-Internals/08-Request-Lifecycle-Events-Async-Graceful-Shutdown.md) ✅ |

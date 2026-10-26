@@ -2,7 +2,7 @@
 
 > **Verified 2026-10-25** via the GitHub API and file trees; versions read from each repo's build files and README. Every path below exists on the default branch.
 >
-> **Pairs with:** [5.6 gateway, BFF, aggregator, mesh](../05-Microservices-Patterns/06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md), [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)–[6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) resilience, [Pillar 7](../07-Docker-JVM-Kubernetes/05-Production-Blueprints-application-yml-Dockerfile-Deployment.md) Kubernetes.
+> **Pairs with:** [5.6 gateway, BFF, aggregator, mesh](../05-Microservices-Patterns/06-Edge-Patterns-Gateway-BFF-Aggregator-Service-Mesh.md), [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)–[6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) resilience, [Pillar 7](../07-Docker-JVM-Kubernetes/05-Production-Blueprints-application-yml-Dockerfile-Deployment.md) Kubernetes.
 
 ---
 
@@ -57,7 +57,7 @@ What it gets right, in the vocabulary of [5.6](../05-Microservices-Patterns/06-E
 What to probe:
 
 * The two calls are **sequential** (visits need the pet ids from the owner). Is there a per-call timeout and an overall deadline? Find where the `WebClient` timeouts are set, or notice that they aren't.
-* The fallback hides the failure from the user. Is it counted? A fallback rate is an SLO signal ([6.1 §6.4](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
+* The fallback hides the failure from the user. Is it counted? A fallback rate is an SLO signal ([6.1 §6.4](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
 * The gateway is also the aggregator (a BFF in practice). Who owns it when there are three frontends?
 
 ### 1.2 Other files
@@ -129,12 +129,12 @@ The Chapter 13 method signature, quoted:
 public Mono<Product> getProduct(int productId, int delay, int faultPercent) { … }
 ```
 
-Connect it to [6.2 §5.1](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md): the annotation order in the source doesn't matter. The Spring aspect orders make it `Retry(CircuitBreaker(TimeLimiter(call)))`, so every retry attempt is timed out and counted by the breaker. The fault-injection parameters are worth copying: they let you **demonstrate** the breaker opening on a live system.
+Connect it to [6.2 §5.1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md): the annotation order in the source doesn't matter. The Spring aspect orders make it `Retry(CircuitBreaker(TimeLimiter(call)))`, so every retry attempt is timed out and counted by the breaker. The fault-injection parameters are worth copying: they let you **demonstrate** the breaker opening on a live system.
 
 ### 2.3 Exercises
 
 1. `git diff` Chapter 12 and Chapter 13 of the composite service: list every line that resilience added. That's the honest cost of the pattern.
-2. Run Chapter 13 with `faultPercent=50` and watch `/actuator/health` and the circuit breaker events. Predict when it opens using [6.1 §5.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)'s arithmetic before you look.
+2. Run Chapter 13 with `faultPercent=50` and watch `/actuator/health` and the circuit breaker events. Predict when it opens using [6.1 §5.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)'s arithmetic before you look.
 3. Compare Chapter 16 and Chapter 17: write down every Spring Cloud component removed and the Kubernetes feature that replaced it.
 4. Port the composite service to the [7.5 blueprint](../07-Docker-JVM-Kubernetes/05-Production-Blueprints-application-yml-Dockerfile-Deployment.md): probes on the main port, preStop, `JAVA_TOOL_OPTIONS`, no CPU limit.
 
@@ -149,7 +149,7 @@ Connect it to [6.2 §5.1](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limit
 | Contract evolution | Consumer-driven contracts (Pact), versioned events | [5.7](../05-Microservices-Patterns/07-Observability-Tracing-Correlation-IDs-Contract-Testing.md) |
 | Container memory/CPU sizing | Heap + non-heap budget, `ActiveProcessorCount` | [7.1](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md), [7.4](../07-Docker-JVM-Kubernetes/04-CPU-Throttling-GC-Choice-HPA-KEDA.md) |
 | Graceful shutdown during rollouts | preStop + graceful drain + grace budget | [7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
-| Cache consistency | Leases / CDC invalidation, staleness budgets | [6.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| Cache consistency | Leases / CDC invalidation, staleness budgets | [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 
 ---
 

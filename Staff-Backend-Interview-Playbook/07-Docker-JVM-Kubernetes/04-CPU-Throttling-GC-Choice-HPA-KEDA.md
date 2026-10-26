@@ -4,7 +4,7 @@
 >
 > **What was run:** JVM thread ergonomics per CPU count, and a GC comparison (Serial, Parallel, G1, ZGC) **pinned to 2 CPUs** with Windows process affinity. That's like a `cpuset`: it shows CPU *scarcity*. It does **not** reproduce CFS *quota throttling*, which needs a Linux cgroup. The throttling section is a first-principles model; run the commands given to see it on a real node.
 >
-> **Related:** [7.1](01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) (how the JVM detects CPUs), [6.6 §6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) (consumer scaling limits), sibling kit [GC](../../Java-Backend-Master-Reference/01-JVM-Internals/04-Garbage-Collection-G1-ZGC-Shenandoah.md), [JFR & profiling](../../Java-Backend-Master-Reference/08-Observability-Security-Testing/01-JVM-Profiling-JFR-async-profiler-Thread-Dumps.md).
+> **Related:** [7.1](01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) (how the JVM detects CPUs), [10.2 §6](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) (consumer scaling limits), sibling kit [GC](../../Java-Backend-Master-Reference/01-JVM-Internals/04-Garbage-Collection-G1-ZGC-Shenandoah.md), [JFR & profiling](../../Java-Backend-Master-Reference/08-Observability-Security-Testing/01-JVM-Profiling-JFR-async-profiler-Thread-Dumps.md).
 
 ---
 
@@ -202,12 +202,12 @@ replicas ≈ ceil(total lag / lagThreshold), capped by partitions (allowIdleCons
   lag 12,000 on a 6-partition topic, lagThreshold 1,000 → 12 → capped at 6
 ```
 
-That cap is the consumer-group rule from [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md): more consumers than partitions sit idle.
+That cap is the consumer-group rule from [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md): more consumers than partitions sit idle.
 
 ### 4.2 Trade-offs to state in an interview 🧊
 
 * **Scale to zero means a cold start for the first event**: JVM start + context refresh + group join. The AOT cache and a cooperative or KIP-848 group protocol shorten it; a latency SLO on the first message may rule it out.
-* **Every scale event is a rebalance.** With the eager assignor, each one pauses all consumers ([6.6 §2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)). Use cooperative-sticky or KIP-848, and a `cooldownPeriod` and HPA `behavior` that don't flap.
+* **Every scale event is a rebalance.** With the eager assignor, each one pauses all consumers ([10.2 §2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)). Use cooperative-sticky or KIP-848, and a `cooldownPeriod` and HPA `behavior` that don't flap.
 * **Lag isn't time.** 10,000 tiny records may be 2 s of work; 10,000 image-processing records may be an hour. If processing cost varies, scale on a Prometheus query of *time lag* or processing backlog seconds instead.
 * A **Prometheus trigger** works for HTTP services too: for example `sum(rate(http_server_requests_seconds_count{app="order-service"}[2m]))` with a threshold in requests per second per replica.
 
@@ -247,5 +247,45 @@ That cap is the consumer-group rule from [6.6](../06-Resilience-Caching-Kafka/06
 * "On 2 pinned CPUs, ZGC reported 20 ms of total pauses, but the app still saw stalls up to 69 ms, because concurrent GC needs CPU too. I choose collectors by measured latency, not reported pauses."
 * "HPA utilization is relative to requests, the scale-down window is five minutes by default, and JVM startup spikes need readiness gating and initialization periods. I'd rather scale on RPS or queue depth."
 * "KEDA's Kafka scaler targets lag per replica and caps at partitions by default. Scale-to-zero costs a cold start and every scale event is a rebalance."
+
+---
+
+## 8. Deep dive: autoscaling inside quotas and partitions (verified) 🔥
+
+An autoscaler decides how many pods it *wants*. Quotas, partitions and the controller around it decide how many it *gets*, and whether they help. Batch 3 measured each limit:
+
+| Limit | Result | Evidence |
+|---|---|---|
+| KEDA's partition cap | Counts **pods**, not consumers: `concurrency: 3` × 12 replicas = 36 consumers for 12 partitions, 24 idle | [10.4 §3.1](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) |
+| Uneven partitions | 12 partitions over 5 consumers = the throughput of 4. `ensureEvenDistributionOfPartitions` steps through factors of 12; it **can't be combined** with `limitToPartitionsWithLag` (KEDA source) | 10.4 §3.2 |
+| `cooldownPeriod` | Governs only N → 0; between 1 and N it's the HPA `behavior` under `advanced.horizontalPodAutoscalerConfig` | 10.4 §3.4 |
+| Every scale-down is a rebalance | KIP-848 dynamic: 0.5 s; a static member: 45 s, which builds lag and invites a scale-up | 10.4 §1, §3.3 |
+| Quota at the HPA maximum | Peak = max + surge + **one terminating wave**: 74 CPU for this namespace. An HPA max of 60 would need 104 CPU against a quota of 84 (caught) | [7.8 §5.3](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md), N07 |
+| CPU limits via policy | A `limits.cpu` quota rejects the no-limit pods of §1.1. A LimitRange default CPU limit "fixes" that by **silently reintroducing throttling** | 7.8 §2.2, N09 |
+| KEDA configuration typos | Trigger metadata is `map[string]string`: a typo passes every schema and KEDA **ignores unknown keys** by default | 7.8 §7, N02 |
+
+Design rules:
+
+* **Divide KEDA's maximum by the consumers per pod**, or run one consumer per pod (7.8 does).
+* **Choose partition counts with many divisors** (12, 24, 60), because replica steps between divisors buy nothing.
+* **Size the namespace quota from the rendered maxima, surge and terminating pods included.** An HPA that can't create pods fails quietly: the ReplicaSet shows `FailedCreate`, and the `NamespaceQuotaNearlyFull` alert is the early warning.
+* **Keep CPU policy explicit end to end**: no CPU limit, no `limits.cpu` quota, no LimitRange CPU default, and `ActiveProcessorCount` pinned in the JVM profile ([7.7 §4.6](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md)).
+
+The GC choice in §2 became per-workload profiles in 7.7: G1 pinned for the API, Serial with 256 MB for 1-CPU consumers, Parallel for batch.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Requests vs limits | Requests place and share; limits cap per 100 ms period across all threads (15 ms burn, 85 ms freeze) | §0, §0.1 |
+| The JVM's CPU view | Without a limit it sees the node; pin `ActiveProcessorCount` | §1 |
+| CPU strategies | A: limit = request; B: request only + `ActiveProcessorCount`; C: exclusive cores (static CPU manager) | §1.1 |
+| GC in a pod | ZGC reported 20 ms of pauses while the app saw 69 ms stalls on 2 CPUs; choose by measured latency | §2.1–§2.2 |
+| HPA | Utilization relative to requests; 5-minute scale-down window; JVM startup spikes need readiness gating | §3.1–§3.2 |
+| KEDA | Lag per replica, activation threshold, capped at partitions; scale-to-zero costs a cold start | §4 |
+| Limits on scaling | Pods vs consumers, factors of the partition count, cooldown only to zero | §8 (10.4) |
+| Quotas | Max + surge + terminating wave; no `limits.cpu` quota; no LimitRange CPU default | §8 (7.8) |
 
 **Next:** [7.5 Production blueprints: application.yml, Dockerfile, Deployment →](05-Production-Blueprints-application-yml-Dockerfile-Deployment.md)

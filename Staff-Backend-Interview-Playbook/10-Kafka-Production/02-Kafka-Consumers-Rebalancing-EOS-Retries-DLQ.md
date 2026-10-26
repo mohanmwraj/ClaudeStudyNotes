@@ -1,8 +1,8 @@
-# 6.6 Kafka Consumers: Groups, Lag, Rebalancing (Eager vs Cooperative vs KIP-848), Exactly-Once, Retries and DLQs
+# 10.2 Kafka Consumers: Groups, Lag, Rebalancing (Eager vs Cooperative vs KIP-848), Exactly-Once, Retries and DLQs
 
 > **Verified stack:** Apache Kafka clients **4.2.2** + embedded single-node KRaft broker (`kafka-server` 4.2.2), spring-kafka **4.1.2** (Spring Framework 7.0.10), JDK **25.0.4.1**. Defaults were printed from `ConsumerConfig.configDef()` and a fresh `DefaultErrorHandler`; every scenario was run (`KafkaConsumerLab.java`, `ConsumerOpsLab.java`, `RetryTopicLab.java`). Rebalance **timings** depend on heartbeat intervals and a single local broker; the *what moved* is the result to remember.
 >
-> **Prereqs:** [6.5 producers](05-Kafka-Producers-Batching-Idempotence-Ordering.md). **Related:** [5.4 idempotent consumer](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [7.4 KEDA lag scaling](../07-Docker-JVM-Kubernetes/04-CPU-Throttling-GC-Choice-HPA-KEDA.md), sibling kit [6.5 consumer groups](../../Java-Backend-Master-Reference/06-Spring-Microservices/05-Kafka-Consumer-Groups-Rebalancing-EOS-DLQ.md).
+> **Prereqs:** [10.1 producers](01-Kafka-Producers-Batching-Idempotence-Ordering.md). **Related:** [5.4 idempotent consumer](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [7.4 KEDA lag scaling](../07-Docker-JVM-Kubernetes/04-CPU-Throttling-GC-Choice-HPA-KEDA.md), sibling kit [6.5 consumer groups](../../Java-Backend-Master-Reference/06-Spring-Microservices/05-Kafka-Consumer-Groups-Rebalancing-EOS-DLQ.md).
 
 ---
 
@@ -156,10 +156,10 @@ Why c2 waited *longer* in the cooperative and KIP-848 runs: cooperative needs **
 
 ### 2.2 Making rebalances rare and cheap ⚡
 
-* **Static membership** (`group.instance.id` = the pod name from a StatefulSet, or another stable id): a restart within `session.timeout.ms` rejoins as the same member, with **no rebalance**. Ideal for rolling deploys.
+* **Static membership** (`group.instance.id` = the pod name from a **StatefulSet**, or another id that survives restarts): a restart within `session.timeout.ms` rejoins as the same member, with **no rebalance**. ⚠️ **Not for Deployments:** their pods get a new name on every rollout, which turned each replacement into a 45 s stall, and every scale-down of a static member waits the session timeout ([10.4 §1–2](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)).
 * **Migrate eager → cooperative** with two rolling bounces: first `[CooperativeStickyAssignor, RangeAssignor]` (both), then `[CooperativeStickyAssignor]` alone. Or move to **KIP-848** (`group.protocol=consumer`, GA since Kafka 4.0). Note that client-side assignor settings don't apply under KIP-848; `group.remote.assignor` picks the broker-side one.
 * **Commit in `onPartitionsRevoked`**, flush local state, and stop in-flight work for exactly the revoked partitions. `onPartitionsLost` (verified above) means you **can't** commit anymore: someone else may already own them.
-* **Graceful shutdown**: `consumer.close()` leaves the group immediately, instead of the group waiting `session.timeout.ms` (45 s) to notice. In Kubernetes that means a `preStop` hook / `terminationGracePeriodSeconds` long enough ([7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md)).
+* **Graceful shutdown**: for a **dynamic** member, `consumer.close()` leaves the group immediately, instead of the group waiting `session.timeout.ms` (45 s) to notice. A **static** member's `close()` deliberately doesn't leave ([10.4 §1.1](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)). In Kubernetes, `terminationGracePeriodSeconds` must cover the in-flight batch and the container stop ([10.4 §6.3](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md), [7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md)).
 
 ---
 
@@ -286,7 +286,7 @@ producer.commitTransaction();                                                   
 // downstream consumers use isolation.level=read_committed
 ```
 
-The building block was verified in [6.5 §6](05-Kafka-Producers-Batching-Idempotence-Ordering.md): `read_uncommitted` saw aborted records, `read_committed` saw only committed ones. In Spring Kafka, setting `spring.kafka.producer.transaction-id-prefix` makes the container run each poll's processing in a Kafka transaction and send the offsets to it. Kafka Streams does all of this with `processing.guarantee=exactly_once_v2`.
+The building block was verified in [10.1 §6](01-Kafka-Producers-Batching-Idempotence-Ordering.md): `read_uncommitted` saw aborted records, `read_committed` saw only committed ones. In Spring Kafka, setting `spring.kafka.producer.transaction-id-prefix` makes the container run each poll's processing in a Kafka transaction and send the offsets to it. Kafka Streams does all of this with `processing.guarantee=exactly_once_v2`.
 
 ### 5.2 Kafka → anything else: idempotence
 
@@ -328,7 +328,7 @@ spring:
         max.poll.interval.ms: 120000
         group.protocol: consumer             # KIP-848 (brokers ≥ 4.0); otherwise cooperative-sticky:
         # partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
-        group.instance.id: ${POD_NAME}       # static membership: no rebalance on a quick restart
+        # no group.instance.id: a Deployment pod gets a new name per rollout (10.4 §4)
     listener:
       ack-mode: record
       concurrency: 3                         # ≤ partitions / replicas
@@ -369,7 +369,7 @@ class ShipmentListener {
 | Default `auto.offset.reset=latest` for a new group | `earliest`, deliberately |
 | Auto-commit + async hand-off | Container-managed commits; commit only completed work |
 | 500 records × slow processing per poll | Bounded `max.poll.records`, honest `max.poll.interval.ms`, pause/resume for long work |
-| Eager `RangeAssignor` (the first default) | Cooperative-sticky, or KIP-848 with brokers ≥ 4.0; static membership for rolling deploys |
+| Eager `RangeAssignor` (the first default) | Cooperative-sticky, or KIP-848 with brokers ≥ 4.0; dynamic members on Deployments, static only with StatefulSet ids ([10.4](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)) |
 | `DefaultErrorHandler` defaults (10 instant attempts, then log and skip) | Backoff + DLT recoverer + non-retryable classification |
 | Non-blocking retries for order-sensitive data | Blocking retries (short) → DLT when key order matters |
 | Plain deserializer | `ErrorHandlingDeserializer` so poison pills reach the DLT |
@@ -403,4 +403,42 @@ class ShipmentListener {
 * "Spring Kafka's default error handler retries ten times with no delay and then skips. I always configure backoff, a dead-letter recoverer, and non-retryable exceptions. In 4.x the DLT suffix is `-dlt`."
 * "Consumers beyond the partition count are idle, so lag-based autoscaling is capped by partitions."
 
-**Next:** [6.7 Bar-raiser drill-downs →](07-Bar-Raiser-Drill-Downs.md)
+---
+
+## 11. Deep dive: membership, scaling and shutdown on Kubernetes (verified) 🔥
+
+§2 measured rebalance *protocols*. [10.4](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) measured what Kubernetes does to a group: pods leaving on scale-down and being replaced on rollout.
+
+| One of two consumers… | Classic (default assignors) | KIP-848 | Static member, plain `close()` |
+|---|---|---|---|
+| leaves (KEDA scale-down) | 3.0 s | **0.5 s** | **45.1 s / 45.3 s**: no LeaveGroup, the group waits out the session |
+| is replaced by a pod with a **new** id (Deployment) | 3.0 s | 0.6–5.7 s | **45 s**; under the eager default the survivor owned **nothing for 41.4 s** |
+| is replaced by a pod with the **same** id (StatefulSet) | — | — | 0.16–0.54 s, no revocation |
+
+Three facts from the same module change how §2.2 and §7 read:
+
+* **§2.2 and §7 were corrected in place.** `group.instance.id: ${POD_NAME}` on a Deployment gave every rollout a new static member and a 45 s stall. Static membership needs an identity that survives restarts, and a Deployment pod doesn't have one.
+* **Under KIP-848 the client rejects** `session.timeout.ms`, `heartbeat.interval.ms` and `partition.assignment.strategy` at construction (verified). The session timeout is the broker's, with a default and a minimum of 45 s. Remove those keys when you switch §7's config to `group.protocol: consumer`.
+* **spring-kafka 4.1.2 stops consumers with plain `close()`**, and appends `-0…-N` to `group.instance.id` per concurrent consumer (bytecode). A static pod with `concurrency: 3` is three members, which strand their partitions together on every scale-down.
+
+§6's "capped by partitions" gets a correction too: **KEDA's cap counts pods**. With `concurrency: 3` and 12 partitions, 12 replicas are 36 consumers, 24 of them idle. The [7.8](../07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) consumer therefore runs one consumer per pod, KIP-848, no static id, no preStop, and a 30 s grace period covering spring-kafka's 10 s container stop.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Model | A consumer reads from a committed position; process-then-commit is at-least-once | §0 |
+| Defaults (4.2.2) | `auto.offset.reset=latest`, 45 s session, 300 s `max.poll.interval.ms` | §0.1 |
+| Poll-loop liveness | A 6 s batch with a 3 s limit: commit failed, partitions lost, batch processed twice | §1.1 |
+| Lag | Measured per partition; total lag hides hot partitions | §1.2 |
+| Rebalance protocols | Eager revoked 6 partitions to move 3; cooperative and KIP-848 revoked only the 3 | §2.1 |
+| Membership | Dynamic on Deployments; static only with StatefulSet ids (corrected) | §2.2, §11 |
+| Commits | The container commits per `AckMode`; never hand records to another pool and return | §3 |
+| Retries and DLTs | Blocking keeps order but stalled `next-1` 3.7 s; retry topics keep throughput but reorder; default `FixedBackOff(0, 9)`; DLT suffix `-dlt` | §4 |
+| Exactly-once | Kafka → Kafka transactions; Kafka → elsewhere: idempotent effects | §5 |
+| Scaling | Consumers ≤ partitions; KEDA's cap counts pods, so one consumer per pod | §6, §11 |
+| Kubernetes | 0.5 s KIP-848 handoff vs 45 s static; KIP-848 rejects classic settings; spring-kafka plain `close()` | §11 (10.4) |
+
+**Next:** [10.3 Production Kafka: multi-broker durability, compaction, topics as code, Strimzi →](03-Production-Kafka-Multi-Broker-Durability-Compaction-Strimzi-Blueprint.md)

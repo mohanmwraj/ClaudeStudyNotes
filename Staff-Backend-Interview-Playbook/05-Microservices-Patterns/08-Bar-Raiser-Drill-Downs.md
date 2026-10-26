@@ -493,4 +493,4 @@ What still went wrong in my verification ([5.9 §8.4](09-Microservices-Patterns-
 | Round 1 (1–10) | Splitting a monolith, the order saga, dual write, cross-service history, event sourcing, slow details page, service mesh, broken traces, broken E2E env, cross-service reporting | Choosing patterns and defending the boxes and arrows |
 | Round 2 (11–18) | Late pivot, replays doubling effects, poison messages, overselling, broker outage, module extraction, stale read models, renaming an event field | The same patterns under failure: timeouts, duplicates, ordering, outages, contracts, all reproduced in 5.9–5.11 |
 
-**Next pillar:** [6.1 Resilience4j circuit breaker internals →](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)
+**Next pillar:** [6.1 Resilience4j circuit breaker internals →](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)

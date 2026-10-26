@@ -352,4 +352,48 @@ The annotation order in source code **doesn't matter**. The aspect orders in §5
 * "Retry goes outside the breaker: the breaker counts each attempt and stops the retries. Inside-out, I measured 9 downstream calls with the breaker still closed."
 * "A breaker records every exception by default, including my own bulkhead rejections. I tell it to ignore those."
 
+---
+
+## 10. Deep dive: retries, bulkheads and budgets in the chaos lab (verified) 🔥
+
+The [6.6 chaos lab](06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md) measured each rule of this module under the same open-loop load. Demand in the slow phase was 3× the dependency's capacity (100 req/s against 20 workers ÷ 0.6 s = 33 req/s):
+
+| Stack | Slow phase: dependency load | Errors phase: ok | Max dependency queue | Wasted work |
+|---|---|---|---|---|
+| S1 timeout | 1.00× | 184 | 284 | 430 |
+| S2 timeout + **retry ×3** (backoff + jitter) | **2.72×** | **167** | **1,024** | **1,733** |
+| S4 + breaker + **bulkhead 10** + fallback | 0.07× | 18 ok + 382 fallback, **0 failed** | 2 | 0 |
+| S5 = S4 + retry ×2 **within a 10 % budget** | 0.07× | 14 ok + 386 fallback, 0 failed | 2 | 0 |
+
+What it proves about §3–§5:
+
+* **Retries are an amplifier when the failure is overload.** Three attempts tripled the load on a saturated dependency, the error phase got worse than without retries (167 ok vs 184), and p50 rose from 31 ms to about 1 s. **Jitter spreads retries in time but doesn't reduce their number.**
+* **A retry budget is what makes retries safe.** S5 looks almost exactly like S4. Budgeted retries, which never retry a breaker or bulkhead rejection, add only what the dependency can absorb.
+* **Timeouts alone create wasted work.** 430 responses went to clients that had already given up. Propagate the deadline so the server can drop expired requests ([5.9 §8.2](../05-Microservices-Patterns/09-Microservices-Patterns-Catalog-Flows-Failure-Modes-Spring-Code.md)).
+* **The bulkhead kept the queue at 2.** Concurrency, not rate, is what protected the dependency, as §1 argues from Little's law.
+
+**The fleet multiplies every per-pod limit.** A bulkhead of 10 per pod means 400 concurrent calls at the HPA maximum of 40 in [7.8](../07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md), against a dependency with 20 workers. So:
+
+* size the per-pod bulkhead from the **dependency's** capacity divided by the **maximum** replica count;
+* or use an adaptive concurrency limit;
+* or put the limit where the capacity is, in the dependency's own admission control.
+
+The same arithmetic applies to rate limiters (§2) and retry budgets.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Bulkhead vs rate limiter | Concurrency protects you and adapts to latency; rate protects them | §1 |
+| Virtual threads | The thread pool is no longer a bulkhead; use a semaphore sized to the connection pool | §1.2–§1.3 |
+| Resilience4j rate limiter | Fixed cycles with reservations, not a token bucket: 10 permits in 54 ms at 5/s across a boundary | §2.1 |
+| Retries | Transient failures, idempotent operations, backoff + jitter, one layer, under a budget; Spring 7 `@Retryable` | §3 |
+| Timeouts | `TimeLimiter` and client timeouts bound latency, not load | §4 |
+| Decorator order | Retry outside the breaker; inside-out gave 9 downstream calls with the breaker still closed | §5.1–§5.2 |
+| Breaker hygiene | Ignore your own bulkhead rejections | §5.3, §6 |
+| Under load | Retries ×3: 2.72× load, queue 1,024; budgeted retries ≈ no retries; bulkhead queue 2 | §10 (6.6) |
+| Fleet math | Per-pod limits × max replicas must fit the dependency | §10 |
+
 **Next:** [6.3 Caching: Caffeine W-TinyLFU and Redis/Lettuce L1/L2 →](03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)

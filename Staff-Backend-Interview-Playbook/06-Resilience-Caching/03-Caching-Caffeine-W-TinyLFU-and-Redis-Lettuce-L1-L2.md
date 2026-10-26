@@ -330,4 +330,41 @@ Why **delete, not set**, on write: if two writers update the DB in order A then 
 * "Pub/Sub invalidation is at-most-once, so L1 TTLs stay short. For stronger guarantees I'd use client-side caching or CDC."
 * "A Redis lease lock prevents duplicate work, not concurrent writes. For correctness I need fencing tokens or the database."
 
+---
+
+## 7. Deep dive: the two-level cache on a real Redis 8.10.2 (verified) 🔥
+
+This module's labs ran against jedis-mock. [6.7](07-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md) re-ran them on a **real Redis 8.10.2** and measured what a mock can't:
+
+| Question | Result on real Redis | What it changes here |
+|---|---|---|
+| Does the L1/L2 lab behave the same? | `diff` of jedis-mock vs Redis output: **empty** | Nothing: §2's numbers stand |
+| What does a small value cost? | 40-byte value: **110 bytes** as its own key, **44 bytes** in a listpack hash | Group small, related values in hashes when memory is the constraint |
+| Which eviction policy? | Zipf workload: `allkeys-lfu` **83.1 %**, `allkeys-lru` 81.3 %, `allkeys-random` 78.2 % hit rate | The same frequency-over-recency argument as W-TinyLFU (§1) |
+| `volatile-*` without TTLs? | Behaves like `noeviction`: **14,760 failed `SET`s** | Every cache key gets a TTL, or use `allkeys-*` |
+| Invalidation stronger than Pub/Sub? | RESP3 client-side caching: server reads down **100×**, invalidated by the server | The upgrade path from §2's at-most-once Pub/Sub invalidation |
+| What if Redis stalls? | Lettuce waits **60 s** by default | §2's `timeout: 200ms` is the defense, not an optimization |
+| Spring's Redis cache | Entries are written **asynchronously**: 21–59 of 200 immediate re-reads missed; a stall **fails the request** without a `CacheErrorHandler`; a `null` result **throws** | Configure `immediateWrites` if read-after-write matters, a `CacheErrorHandler` always, and decide how to cache absence (§3, [6.4](04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
+
+Design rules this adds:
+
+* **Measure memory per key before sizing a Redis cluster.** The 2.5× overhead of top-level keys decides node count more than raw value bytes do.
+* **A cache client must fail faster than the database it protects.** A 60 s default timeout turns a Redis blip into thread-pool exhaustion everywhere.
+* **Spring's cache abstraction has its own failure semantics.** Test that path, not only the Lettuce client.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Why caches matter | At high hit rates each point of hit rate is a large change in database load | §0 |
+| Caffeine internals | Exact `ConcurrentHashMap` + approximate policy; lossy striped read buffers; one maintainer under a try-lock | §1.1 |
+| W-TinyLFU | Admission by Count-Min frequency (4-bit, halving); 38.5 % vs LRU 29.7 % on a scan-polluted Zipf trace | §1.2 |
+| Coalescing | `cache.get(key, loader)`: one load per key per JVM; `SET NX PX` + compare-and-delete: 150 cold requests on 3 pods → 1 load | §1.4, §2.3 |
+| L2 via Lettuce | One shared connection, fail-fast timeouts; Pub/Sub invalidation is at-most-once, so short L1 TTLs; `CompositeCacheManager` isn't two-level | §2 |
+| Patterns | Cache-aside, read/write-through, write-behind trade-offs | §3 |
+| Leases | Prevent duplicate work, not concurrent writes; correctness needs fencing or the database | §2.3, §4 |
+| Real Redis | Lab identical; 110 vs 44 bytes; LFU best; 60 s default stall; Spring async writes | §7 (6.7) |
+
 **Next:** [6.4 Cache stampede, penetration, avalanche, invalidation →](04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)

@@ -60,7 +60,7 @@ This kit ran all three: a shortcut into `inventory.internal` produced two violat
 
 ### 2.4 What to critique 🧊
 
-* Module boundaries are **compile-time packages + tests**, not runtime isolation: one module can still exhaust the shared connection pool or heap. Bulkheads still matter ([6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
+* Module boundaries are **compile-time packages + tests**, not runtime isolation: one module can still exhaust the shared connection pool or heap. Bulkheads still matter ([6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
 * All modules share one database by default. Encapsulation of *tables* is a convention unless you add schemas and grants ([5.2](../05-Microservices-Patterns/02-Data-Ownership-Database-per-Service.md)).
 * The registry table grows with every event. Choose a `CompletionMode` and a cleanup policy.
 

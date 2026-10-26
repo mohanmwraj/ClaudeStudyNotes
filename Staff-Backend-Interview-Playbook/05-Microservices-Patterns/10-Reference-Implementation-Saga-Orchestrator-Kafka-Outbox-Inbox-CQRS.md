@@ -232,7 +232,7 @@ public int publishBatch() {
 }
 ```
 
-The producer runs with `acks=all` and `enable.idempotence=true`. Idempotence keeps per-partition order intact even with up to 5 in-flight requests, which is why pipelining the batch is safe ([6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md)).
+The producer runs with `acks=all` and `enable.idempotence=true`. Idempotence keeps per-partition order intact even with up to 5 in-flight requests, which is why pipelining the batch is safe ([10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md)).
 
 ### 3.4 Starting the saga: five rows, one transaction
 

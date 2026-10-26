@@ -33,7 +33,7 @@
 | 30–40 | Tests: concurrent misses → one load; expired entry → reload; loader failure → not cached |
 | 40–45 | Probes below |
 
-🔍 Probes: *"What if the loader takes 5 s and holds a lock?"* (the `ConcurrentHashMap.compute` bin-lock trap; futures outside the lock, [6.3 §1.4](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) · *"Why does Caffeine beat LRU?"* ([6.3 §1.2](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) · *"Readers block at expiry. Fix it."* (refresh-ahead).
+🔍 Probes: *"What if the loader takes 5 s and holds a lock?"* (the `ConcurrentHashMap.compute` bin-lock trap; futures outside the lock, [6.3 §1.4](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) · *"Why does Caffeine beat LRU?"* ([6.3 §1.2](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) · *"Readers block at expiry. Fix it."* (refresh-ahead).
 
 DSA-style coding rounds are covered by the sibling kit: [FAANG interview framework](../../CP-Codeforces-Master-Kit/17-FAANG-Interview-DSA/01-interview-framework-and-communication.md) and [design problems (LRU, LFU, rate limiter)](../../CP-Codeforces-Master-Kit/17-FAANG-Interview-DSA/17-design-problems.md).
 
@@ -80,13 +80,13 @@ Prompts: *"An incident you led."* · *"A time you pushed back on a deadline."* �
 
 **Script:** *"Twelve teams want to publish domain events. Design the platform: how events get out of services, how schemas evolve, how consumers fail safely, and how it's operated."*
 
-Expected L6 content: outbox via CDC as a paved road, with a polling fallback ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)); topic naming, keys and partition policy ([6.5 §5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md)); schema registry with compatibility rules; consumer library defaults (idempotency, retry/DLT policy, cooperative or KIP-848 groups; [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)); replication-slot monitoring; DLT replay tooling; cost and ownership model.
+Expected L6 content: outbox via CDC as a paved road, with a polling fallback ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)); topic naming, keys and partition policy ([10.1 §5](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md)); schema registry with compatibility rules; consumer library defaults (idempotency, retry/DLT policy, cooperative or KIP-848 groups; [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)); replication-slot monitoring; DLT replay tooling; cost and ownership model.
 
-🔍 Probes: *"A team's connector was down for a day."* · *"A producer changed a field type."* · *"One consumer group is 3 hours behind on one partition."* ([6.6 §1.2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
+🔍 Probes: *"A team's connector was down for a day."* · *"A producer changed a field type."* · *"One consumer group is 3 hours behind on one partition."* ([10.2 §1.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
 
 ### B3. Deep dive: "the most complex system you've worked on" (60 min)
 
-The interviewer uses bar-raiser chains: every answer gets "why?", "what did you measure?", "what broke?", "what would you change?". Prepare **one** system so well that you can go five levels down on any component. The drill-down files are the practice material: [1.5](../01-Build-Systems/05-Bar-Raiser-Drill-Downs.md), [2.8](../02-SQL-RDBMS-Internals/08-Bar-Raiser-Drill-Downs.md), [3.6](../03-JPA-Hibernate-Spring-Data/06-Bar-Raiser-Drill-Downs.md), [4.6](../04-Spring-Boot-Internals/06-Bar-Raiser-Drill-Downs.md), [5.8](../05-Microservices-Patterns/08-Bar-Raiser-Drill-Downs.md), [6.7](../06-Resilience-Caching-Kafka/07-Bar-Raiser-Drill-Downs.md), [7.6](../07-Docker-JVM-Kubernetes/06-Bar-Raiser-Drill-Downs.md), [8.5](../08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md).
+The interviewer uses bar-raiser chains: every answer gets "why?", "what did you measure?", "what broke?", "what would you change?". Prepare **one** system so well that you can go five levels down on any component. The drill-down files are the practice material: [1.5](../01-Build-Systems/05-Bar-Raiser-Drill-Downs.md), [2.8](../02-SQL-RDBMS-Internals/08-Bar-Raiser-Drill-Downs.md), [3.6](../03-JPA-Hibernate-Spring-Data/06-Bar-Raiser-Drill-Downs.md), [4.6](../04-Spring-Boot-Internals/06-Bar-Raiser-Drill-Downs.md), [5.8](../05-Microservices-Patterns/08-Bar-Raiser-Drill-Downs.md), [6.5](../06-Resilience-Caching/05-Bar-Raiser-Drill-Downs.md), [7.6](../07-Docker-JVM-Kubernetes/06-Bar-Raiser-Drill-Downs.md), [8.5](../08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md).
 
 ### B4. Design review: critique a flawed proposal (45 min)
 
@@ -109,15 +109,15 @@ The interviewer hands you this (read it in 5 minutes, then review it like a staf
 | # | Problem | Fix | Reference |
 |---|---|---|---|
 | 1 | Dual write; the send happens before commit, so a rollback publishes a phantom event | Outbox | [5.4 §0](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
-| 2 | Auto-commit = possible loss or duplicates; read-modify-write loses updates; not idempotent | Container-managed commits; `points = points + ?` with a dedup row in the same transaction | [6.6 §3](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), [2.6](../02-SQL-RDBMS-Internals/06-Isolation-Anomalies-Row-Locks-SKIP-LOCKED-Gap-Locks-Deadlocks.md) |
-| 3 | That's the `DefaultErrorHandler` default behavior: instant retries, then silent loss | Backoff + DLT + alerting + replay | [6.6 §4](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
-| 4 | Cache set before commit (rollback leaves wrong data); set-order races | Delete after commit; leases or versioned fills | [6.4 §5](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| 2 | Auto-commit = possible loss or duplicates; read-modify-write loses updates; not idempotent | Container-managed commits; `points = points + ?` with a dedup row in the same transaction | [10.2 §3](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), [2.6](../02-SQL-RDBMS-Internals/06-Isolation-Anomalies-Row-Locks-SKIP-LOCKED-Gap-Locks-Deadlocks.md) |
+| 3 | That's the `DefaultErrorHandler` default behavior: instant retries, then silent loss | Backoff + DLT + alerting + replay | [10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| 4 | Cache set before commit (rollback leaves wrong data); set-order races | Delete after commit; leases or versioned fills | [6.4 §5](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 | 5 | Liveness checks a dependency → restart storms | Liveness = livenessState only | [7.3 §0](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | 6 | `-Xmx` = limit → OOMKilled; 1 CPU → SerialGC by default | Heap + non-heap budget; explicit GC; CPU policy | [7.1](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |
 | 7 | Memory-based HPA on a JVM never scales down | CPU against honest requests, or lag via KEDA | [7.4 §3.2](../07-Docker-JVM-Kubernetes/04-CPU-Throttling-GC-Choice-HPA-KEDA.md) |
-| 8 | Adding partitions remaps keys (per-account ordering breaks); 3 partitions caps consumers at 3 | Size partitions up front | [6.5 §1.2](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) |
-| 9 | Kafka transactions don't cover the DB write; the consumer is the problem | Idempotent consumer | [6.5 §6](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) |
-| 10 | Fixed window allows 2× bursts; per-pod limit multiplies with replicas | Below the limit / central limiter / honor `Retry-After` | [6.2 §2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
+| 8 | Adding partitions remaps keys (per-account ordering breaks); 3 partitions caps consumers at 3 | Size partitions up front | [10.1 §1.2](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) |
+| 9 | Kafka transactions don't cover the DB write; the consumer is the problem | Idempotent consumer | [10.1 §6](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) |
+| 10 | Fixed window allows 2× bursts; per-pod limit multiplies with replicas | Below the limit / central limiter / honor `Retry-After` | [6.2 §2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
 
 An L6 review also **prioritizes**: 1, 2 and 4 are correctness bugs (lost or wrong points); 5–7 are availability risks; 8–10 are scaling and cost risks. And it proposes the smallest change set that makes the design safe to ship.
 </details>
@@ -126,7 +126,7 @@ An L6 review also **prioritizes**: 1, 2 and 4 are correctness bugs (lost or wron
 
 Prompts:
 
-* *"Your org has 40 services with five different retry and timeout conventions. What do you do?"* (paved road: a shared client library or platform defaults, ADR, migration plan, metrics to prove adoption; [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
+* *"Your org has 40 services with five different retry and timeout conventions. What do you do?"* (paved road: a shared client library or platform defaults, ADR, migration plan, metrics to prove adoption; [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
 * *"Leadership wants to split the monolith this year."* (modular monolith first, extraction criteria, strangler; [5.1](../05-Microservices-Patterns/01-Decomposition-Modular-Monolith-Strangler-Branch-by-Abstraction.md))
 * *"Tell me about a time you changed another team's direction without authority."*
 
@@ -138,7 +138,7 @@ Prompts:
 |---|---|---|
 | C1 | *"PostgreSQL CPU at 100 % every night at 3 AM, and disk keeps growing."* | Autovacuum vs a long transaction, wraparound warnings, replication slot retention, `pg_stat_statements` ([2.5](../02-SQL-RDBMS-Internals/05-MVCC-Visibility-Vacuum-Wraparound-vs-InnoDB-Undo.md), [2.7](../02-SQL-RDBMS-Internals/07-Scaling-Replicas-Partitioning-Pooling-Sharding.md), [5.4 §6](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)) |
 | C2 | *"Our Java services get OOMKilled after a Kubernetes upgrade; heap dashboards look fine."* | Exit 137 vs OOME, NMT, direct memory, cgroup v2, GC choice by CPU ([7.1](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md), [7.4](../07-Docker-JVM-Kubernetes/04-CPU-Throttling-GC-Choice-HPA-KEDA.md)) |
-| C3 | *"Design exactly-once processing for a payments ledger fed by Kafka."* | What EOS covers, idempotent effects, LSO stalls, reconciliation ([6.5 §6](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md), [6.6 §5](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
+| C3 | *"Design exactly-once processing for a payments ledger fed by Kafka."* | What EOS covers, idempotent effects, LSO stalls, reconciliation ([10.1 §6](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md), [10.2 §5](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
 
 ---
 
@@ -166,10 +166,10 @@ Prepare 6–8 stories in **STAR + reflection** form (Situation, Task, Action, Re
 | Story theme | Covers prompts like | Technical hook from this kit you can use |
 |---|---|---|
 | Led an incident | "Incident you led", "pressure", "communication" | A rollout causing 502s fixed with preStop + grace budget ([7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md)) |
-| Changed a decision with data | "Disagreed with a senior", "influence" | Retry outside the breaker: 6 vs 9 downstream calls ([6.2 §5.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)) |
+| Changed a decision with data | "Disagreed with a senior", "influence" | Retry outside the breaker: 6 vs 9 downstream calls ([6.2 §5.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)) |
 | Raised the bar for many teams | "Impact beyond your team" | A paved-road service template (the [7.5](../07-Docker-JVM-Kubernetes/05-Production-Blueprints-application-yml-Dockerfile-Deployment.md) blueprint, config validated mechanically) |
 | Killed or re-scoped a project | "Ambiguity", "saying no" | Microservices split replaced by a modular monolith with extraction criteria ([5.1](../05-Microservices-Patterns/01-Decomposition-Modular-Monolith-Strangler-Branch-by-Abstraction.md)) |
-| Was wrong | "Mistake", "learning" | A cache-aside design that served stale prices until leases were added ([6.4 §5](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
+| Was wrong | "Mistake", "learning" | A cache-aside design that served stale prices until leases were added ([6.4 §5](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
 | Mentored someone to independence | "Growing others" | Teaching `EXPLAIN (ANALYZE, BUFFERS)` reading ([2.3](../02-SQL-RDBMS-Internals/03-Query-Planning-EXPLAIN-Statistics-Join-Algorithms.md)) |
 | Long migration | "Execution over months" | Strangler + branch by abstraction ([5.1](../05-Microservices-Patterns/01-Decomposition-Modular-Monolith-Strangler-Branch-by-Abstraction.md)) |
 

@@ -139,7 +139,7 @@ RUN ["/usr/bin/java", "-XX:+UseG1GC", "-XX:AOTCacheOutput=/app/app.aot", \
 USER 65532:65532
 
 EXPOSE 8080
-# Exec form: java is PID 1 and receives SIGTERM directly. JVM flags come from JAVA_TOOL_OPTIONS (7.5),
+# Exec form: java is PID 1 and receives SIGTERM directly. JVM flags come from JDK_JAVA_OPTIONS (7.7 section 4.5),
 # so they can be tuned per environment without rebuilding.
 ENTRYPOINT ["/usr/bin/java", "-XX:AOTCache=/app/app.aot", "-jar", "/app/application.jar"]
 ```
@@ -273,7 +273,7 @@ Supply chain: build-time secrets via `RUN --mount=type=secret` (never `COPY`/`AR
 | Fat jar in one layer | Four layers via `jarmode=tools extract --layers` |
 | Shell-form `ENTRYPOINT` / wrapper without `exec` | Exec form; Java is PID 1 |
 | Root user | uid 65532, `runAsNonRoot`, read-only root FS, capabilities dropped |
-| JVM flags baked into the image | `JAVA_TOOL_OPTIONS` from the Deployment |
+| JVM flags baked into the image | `JDK_JAVA_OPTIONS` from the Deployment (`JAVA_TOOL_OPTIONS` also reaches `jcmd`: [7.7 §4.5](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md)) |
 | `COPY . .` without `.dockerignore` | Explicit copies + `.dockerignore`; secrets via `--mount=type=secret` |
 | AOT cache built on a laptop or in the build stage | Trained in the runtime image, with a training profile |
 | `HEALTHCHECK curl …` | Kubernetes probes (distroless has no curl anyway) |
@@ -300,5 +300,44 @@ Supply chain: build-time secrets via `RUN --mount=type=secret` (never `COPY`/`AR
 * "The AOT cache must be trained by the same JVM build that reads it. The distroless image ships 25.0.5 while my build stage had 25.0.4.1, so I train inside the runtime stage, with a profile that starts without external systems."
 * "A mismatched AOT cache doesn't fail; the JVM just runs without it. A G1-trained cache was rejected under ZGC in my test. CI starts the image with `AOTMode=on` to catch that."
 * "The AOT cache halves startup but adds a ~60 MB layer that changes every commit. That's a deliberate trade."
+
+---
+
+## 11. Deep dive: the image beyond the Dockerfile (verified) 🔥
+
+[7.7](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md) replaced this module's distroless Java image with a jlink'd runtime on `distroless/java-base`. [7.8](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) moved digest pinning from convention into admission. What changed and why:
+
+| Decision here (§3–§6) | Batch 3 result | Evidence |
+|---|---|---|
+| `distroless/java25` base (73.3 MB compressed) | jlink runtime (21 modules) + `java-base` (11.2 MB): **29.7 MB** of runtime to pull, with every check passing | 7.7 §1.1, §2.2 |
+| "jdeps gives you the module list" | jdeps **can't see** service providers: German/Japanese dates silently printed in English and `IBM037` vanished. Dropping `java.desktop` broke Spring (`java.beans`) | 7.7 §1.1–§1.2 |
+| Buildpacks as the easy path (§7) | Paketo's default jlink is `java.*` only: CPU metrics **404**, `-XX:StartFlightRecording` **fails at boot** | 7.7 §1.3 |
+| Smaller is better | `--compress zip-6` made the runtime **8 MB bigger to pull** (zip-in-gzip) with the same startup | 7.7 §2.2 |
+| AOT cache (§4.3–§4.4) | Works on a jlink runtime with or without a CDS archive: 2.31 s → **1.29 s** | 7.7 §2.1 |
+| Multi-arch | Temurin 25 has no jmods, so jlink **can't cross-link** (JEP 493). Build on `$BUILDPLATFORM`, jlink and AOT training on the target arch | 7.7 §1.4, §3.2 |
+| Pinned by digest in the Deployment | A `ValidatingAdmissionPolicy` denies tag-only images, foreign registries, unpinned init containers and a look-alike `registry.example.com.evil.io` (CEL evaluated) | 7.8 §2.5 |
+| Flags from `JAVA_TOOL_OPTIONS` | `JDK_JAVA_OPTIONS`: the former also reaches `jcmd` (corrected in §4.1's comment and §8's table) | 7.7 §4.5 |
+
+Two lessons that generalize:
+
+* **A linter checks hygiene, not posture.** hadolint passed the 7.7 Dockerfile and flagged the naïve one's shell-form entrypoint. It said nothing about the floating tag, the full JDK, or running as root. Non-root, digests and limits are enforced at admission ([7.8 §2](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md)) and Pod Security, not in review.
+* **Measure what the registry ships, not what `du` says.** Layers travel gzipped, and scale-out speed depends on pull bytes.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Layers | Cached positionally; order by change frequency; a commit changes ~1 MB instead of a 24 MB fat jar | §0, §2 |
+| Base image | Distroless: no shell, uid 65532; debug with ephemeral containers | §3 |
+| The Dockerfile | Multi-stage, `jarmode=tools` extract, exec-form entrypoint | §4.1–§4.2 |
+| AOT cache | Train in the runtime stage with the same JVM build; a mismatch fails **silently** (G1-trained cache rejected under ZGC); CI runs `AOTMode=on` | §4.3 |
+| AOT trade-off | Halves startup, adds a ~60 MB layer per commit | §4.4 |
+| PID 1 | Exec form, so Java gets `SIGTERM`; shell form silently breaks graceful shutdown | §5 |
+| Pod security | Non-root, read-only root, drop ALL, seccomp `RuntimeDefault` | §6 |
+| Buildpacks vs Jib | Convenience vs control; Paketo's jlink needs explicit modules | §7, §11 |
+| jlink runtime | jdeps + `jdk.localedata` + `jdk.charsets`; no `--compress`; 29.7 MB gzipped | §11 (7.7) |
+| Admission | Registry + digest enforced by CEL on Pods | §11 (7.8 §2.5) |
 
 **Next:** [7.3 Kubernetes probes and graceful shutdown →](03-Kubernetes-Probes-and-Graceful-Shutdown.md)

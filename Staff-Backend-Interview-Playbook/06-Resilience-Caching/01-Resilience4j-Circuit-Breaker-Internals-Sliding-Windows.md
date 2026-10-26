@@ -401,4 +401,39 @@ Resilience4j state lives in one JVM. With 40 pods behind a load balancer, each p
 * "Half-open needs timeouts. A hung trial call keeps the breaker in half-open forever, because the default max wait there is zero, which means unlimited."
 * "Breakers protect a logical dependency per instance. Per-host ejection is the mesh's job, and dependency health never goes into readiness."
 
+---
+
+## 11. Deep dive: what the breaker bought under load, measured (verified) 🔥
+
+The [6.6 chaos lab](06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md) put this module's breaker in front of a dependency with 20 workers, under open-loop load of 100 req/s. The dependency went through four 4-second phases: healthy, slow (600 ms), 50 % errors, and recovery. The breaker config was: count window 20, minimum 10 calls, 50 % failures or 50 % slow calls (> 250 ms), 1 s open, 5 half-open calls. Stack S1 (timeout only) against S3 (timeout + breaker):
+
+| Phase | S1 dependency load | S3 dependency load | S1 dependency queue (max) | S3 dependency queue (max) | S3 cost |
+|---|---|---|---|---|---|
+| slow (600 ms) | 1.00× | **0.13×** | 284 | **22** | Rejections fail in 0 ms |
+| errors (50 %) | 1.00× | **0.09×** | (same) | (same) | — |
+| recovery | 1.00× | 0.86× | — | — | **57 failed** while OPEN → HALF_OPEN (1 s) → CLOSED (5 trial calls) |
+
+What this adds to §1–§7:
+
+* **The breaker's main beneficiary is the dependency.** The client's latency was already bounded by the timeout in S1 (p99 ≈ 313 ms). What the breaker did was **give capacity back**: load dropped to 0.13× and the queue to 22, so the dependency could drain instead of drowning. In a design review, describe a breaker as load shedding on behalf of the downstream service.
+* **Set `slowCallDurationThreshold` below the client timeout** (250 ms < 300 ms here). Then slowness counts before it turns into timeouts, and the breaker opens on "getting slow", not only on "already failing".
+* **Recovery has a price you choose.** 57 of 400 recovery-phase requests failed while the breaker waited out its open duration and ran 5 trial calls. A shorter wait recovers faster but probes more during the incident. Multiply by the fleet: 40 pods × 5 half-open calls means 200 probes the moment the dependency recovers (§7).
+* **Breaker + bulkhead + fallback** (S4) turned **every** failure into a degraded success: 0 failed in all four phases. The breaker alone still returns errors; whether a fallback is acceptable is a product decision ([6.2 §10](02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Model | Measure in a sliding window, decide after a minimum sample, fail fast while open, probe half-open | §0 |
+| Internals (2.4.0) | No `RingBitBuffer` since 1.0; immutable state behind an `AtomicReference`; windows default to `SYNCHRONIZED` | §1–§2, §3.3 |
+| Windows | Count-based windows span different times at different traffic; time-based for variable load, sized per pod | §3 |
+| Defaults that bite | `minimumNumberOfCalls` 100, `slowCallDurationThreshold` 60 s, `maxWaitDurationInHalfOpenState` 0 = unlimited | §4, §2.4 |
+| Lazy transition | OPEN → HALF_OPEN happens on the first call after the wait (617 ms with a 500 ms wait) | §2.3, §5.1 |
+| Slow calls | A breaker opens on latency even when every call succeeds | §5.2 |
+| Spring Boot 4 wiring | Instances, ignore/record exceptions, fallbacks, metrics | §6 |
+| Fleet view | Per-instance breakers; per-host ejection is the mesh's job; never in readiness | §7 |
+| Under load | Dependency load 0.13× / 0.09×, queue 22 vs 284; 57 recovery failures; S4 = 0 failures | §11 (6.6) |
+
 **Next:** [6.2 Bulkheads, rate limiters, retries, decorator order →](02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)

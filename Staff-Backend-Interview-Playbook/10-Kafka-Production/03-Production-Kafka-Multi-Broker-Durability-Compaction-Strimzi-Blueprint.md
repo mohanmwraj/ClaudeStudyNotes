@@ -1,8 +1,8 @@
-# 6.10 Production Kafka: a Real 3-Broker Cluster, Durability Under Broker Loss, Topics as Code, Partition Planning, and a Strimzi 1.3 Blueprint
+# 10.3 Production Kafka: a Real 3-Broker Cluster, Durability Under Broker Loss, Topics as Code, Partition Planning, and a Strimzi 1.3 Blueprint
 
 > **Verified stack:** Apache Kafka **4.2.2** brokers from the official test kit (`KafkaClusterTestKit`: **1 dedicated KRaft controller + 3 brokers**, real replication over loopback), kafka-clients **4.2.2**, spring-kafka **4.1.2** (`KafkaAdmin`, `TopicBuilder`), Spring Boot **4.1.2** metadata, **Strimzi 1.3.0** CRDs (released 2026-10-12) for the Kubernetes blueprint, JDK **25**. Throughput numbers are *one run on loopback on a laptop*: ratios, not capacity.
 >
-> **Builds on:** [6.5](05-Kafka-Producers-Batching-Idempotence-Ordering.md) and [6.6](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), which ran against a **single** broker, so replication, ISR and broker loss couldn't be shown. This file adds a real multi-broker cluster.
+> **Builds on:** [10.1](01-Kafka-Producers-Batching-Idempotence-Ordering.md) and [10.2](02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), which ran against a **single** broker, so replication, ISR and broker loss couldn't be shown. This file adds a real multi-broker cluster.
 
 ---
 
@@ -15,7 +15,7 @@
 | RF=3, `min.insync.replicas=2`: one broker down → writes continue; two down → `acks=all` writes **refused**, `acks=1` writes **accepted with a single copy** | §3 |
 | The refusal reaches the application as a `TimeoutException` after `delivery.timeout.ms` (default **120 s**), not as `NotEnoughReplicas` | §3 |
 | The Strimzi 1.3.0 blueprint (node pools, cluster, topics, users) validates; 4 classic migration mistakes are caught | §6 |
-| The Spring Boot client config for mTLS validates (26 keys, 0 problems; all 8 Kafka keys known) | §7 |
+| The Spring Boot client config for mTLS validates (25 keys, 0 problems; all 7 Kafka keys known) | §7 |
 | **Not run here:** log compaction, because Kafka's log cleaner fails on Windows (§4 shows the error and explains the mechanism) | §4 |
 
 Two test-kit lessons from building the lab. Neither is a production statement:
@@ -51,7 +51,7 @@ ka.createOrModifyTopics(TopicBuilder.name("payments").partitions(3).replicas(3)
 * **Config changes are ignored by default.** Retention stayed at 1 h until `setModifyTopicConfigs(true)`. A team that edits `retention.ms` in a `NewTopic` bean and redeploys has changed nothing, silently.
 * **Decreasing partitions is impossible in Kafka,** and `KafkaAdmin` didn't even fail: it left 6. Your "declared" state and the real state now disagree.
 
-**Increasing partitions isn't free either:** the default partitioner maps a key to `hash(key) % partitions`, so adding partitions **moves keys**, which breaks per-key ordering across the change ([6.5 §5](05-Kafka-Producers-Batching-Idempotence-Ordering.md#5-ordering-choosing-the-key-is-a-design-decision-)). Plan the count up front (§5).
+**Increasing partitions isn't free either:** the default partitioner maps a key to `hash(key) % partitions`, so adding partitions **moves keys**, which breaks per-key ordering across the change ([10.1 §5](01-Kafka-Producers-Batching-Idempotence-Ordering.md#5-ordering-choosing-the-key-is-a-design-decision-)). Plan the count up front (§5).
 
 **Where topic definitions should live:**
 
@@ -72,7 +72,7 @@ ka.createOrModifyTopics(TopicBuilder.name("payments").partitions(3).replicas(3)
 ```
 
 * **`acks=all` waits for the in-sync followers to fetch the batch**, so its latency is the leader's write *plus* a replication round trip. On loopback that cost 1.7× `acks=1`. Across availability zones, the follower fetch adds the inter-zone round trip to every batch.
-* **Batching recovers most of it.** `linger.ms` and `batch.size` let many records share one replication round trip ([6.5 §2](05-Kafka-Producers-Batching-Idempotence-Ordering.md#2-batching-and-compression-)). A previous run gave 331/420/567 ms, the same ordering.
+* **Batching recovers most of it.** `linger.ms` and `batch.size` let many records share one replication round trip ([10.1 §2](01-Kafka-Producers-Batching-Idempotence-Ordering.md#2-batching-and-compression-)). A previous run gave 331/420/567 ms, the same ordering.
 
 ---
 
@@ -152,7 +152,7 @@ Partitions are the unit of parallelism, ordering and recovery cost, and the coun
 | Input | Rule of thumb |
 |---|---|
 | Throughput | `partitions ≥ max(target produce MB/s ÷ per-partition produce MB/s, target consume MB/s ÷ per-consumer MB/s)`. Measure per-partition throughput on *your* brokers and record size (§2 shows how much `acks` alone moves it) |
-| Consumer parallelism | ≥ the peak consumer instance count (× listener concurrency). A partition is consumed by one member of a group at a time ([6.6 §6](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md#6-scaling-consumers-)) |
+| Consumer parallelism | ≥ the peak consumer instance count (× listener concurrency). A partition is consumed by one member of a group at a time ([10.2 §6](02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md#6-scaling-consumers-)) |
 | Key cardinality and skew | A hot key pins one partition. More partitions don't help a single hot key; a key design change does |
 | Growth | Choose for 1–2 years of growth up front: adding partitions later remaps keys (ordering break) |
 | Cost | Each partition costs controller metadata, open files, replication fetchers and recovery time. Thousands per broker are fine on KRaft; hundreds of thousands per cluster need planning |
@@ -384,7 +384,7 @@ spring:
       max-poll-records: 200
       properties:
         partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
-        group.instance.id: ${POD_NAME}          # static membership: a rolling restart doesn't rebalance (6.6 §2)
+        # no group.instance.id: on a Deployment it stalled partitions 45 s per rollout (10.4 §4)
         session.timeout.ms: 45000
         client.rack: ${NODE_ZONE}               # fetch from the replica in the consumer's own zone (RackAwareReplicaSelector)
     listener:
@@ -406,8 +406,8 @@ spring:
 
 **Validation (verified):**
 
-* **Spring Boot keys:** checked against the 4.1.2 metadata, `26 keys: 15 exact, 11 under a Map/List property, 0 problems`.
-* **The 8 free-form Kafka keys:** all `known` to `ProducerConfig.configNames()` / `ConsumerConfig.configNames()` in kafka-clients 4.2.2.
+* **Spring Boot keys:** checked against the 4.1.2 metadata, `25 keys: 15 exact, 10 under a Map/List property, 0 problems` (re-run after the [10.4 §4](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) correction removed `group.instance.id`).
+* **The 7 free-form Kafka keys:** all `known` to `ProducerConfig.configNames()` / `ConsumerConfig.configNames()` in kafka-clients 4.2.2.
 
 `client.rack` + the broker's `RackAwareReplicaSelector` (§6) let a consumer fetch from a follower in its own zone. That cuts cross-zone transfer cost, often the largest Kafka line item in a cloud bill. Set `NODE_ZONE` from the node's topology label (a downward-API env var or an init step).
 
@@ -494,6 +494,6 @@ Enough for the peak consumer parallelism and throughput, sized for 1–2 years, 
 | Compaction | Latest value per key; tombstones; Windows can't run the cleaner (not verified here) | §4 |
 | Partitions | Plan for growth; increases remap keys; hot keys need key design | §5 |
 | Strimzi 1.3.0 | `v1` only; node pools; validated blueprint + caught mistakes | §6 |
-| Client config | mTLS via SSL bundle, rack-aware fetching, static membership, deliberate timeouts | §7 |
+| Client config | mTLS via SSL bundle, rack-aware fetching, dynamic membership ([10.4](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)), deliberate timeouts | §7 |
 
-**Next:** [6.7 Bar-raiser drill-downs (Round 2 covers 6.8–6.10) →](07-Bar-Raiser-Drill-Downs.md)
+**Next:** [10.4 Consumer scaling: static membership vs KIP-848, KEDA scale-down, rolling deploys →](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)

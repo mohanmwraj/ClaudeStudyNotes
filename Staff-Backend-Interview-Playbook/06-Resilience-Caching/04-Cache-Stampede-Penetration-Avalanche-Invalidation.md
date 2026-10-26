@@ -297,4 +297,40 @@ on write (after COMMIT, or from CDC):
 * "Delete-after-update still has a race: a slow reader re-caches the old value after the delete. I reproduced it, and leases fix it: the delete revokes the reader's lease, and its fill is rejected."
 * "I set a staleness budget per data type. Checkout prices and stock reservations never come from a cache."
 
-**Next:** [6.5 Kafka producers: batching, idempotence, ordering →](05-Kafka-Producers-Batching-Idempotence-Ordering.md)
+---
+
+## 10. Deep dive: failure modes against a real server and a real failover (verified) 🔥
+
+[6.7](07-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md) replayed this module's failure modes on Redis 8.10.2 with Sentinel:
+
+| Failure mode | What was measured | Consequence for §1–§6 |
+|---|---|---|
+| Invalidation race (§5) | The lease fix behaves **identically** on real Redis (`diff` empty) | The fix holds; it wasn't a mock artifact |
+| Avalanche: a primary dies | Sentinel failover took **1.75 s** in one run and **17.5 s** in another: a retried failover plus client back-off | "Redis is down for a moment" can be 17 s. The miss bulkhead (§3.2) must survive that long |
+| Avalanche: what failover loses | **38 acknowledged writes lost** (asynchronous replication); `WAIT` lost **0** of the writes it confirmed | A lease or lock written just before failover can vanish, and a second holder can then take it. That's why a lease prevents duplicate *work*, not concurrent *writes* ([6.3 §2.3](03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) |
+| Slow, not down | Lettuce's default command timeout is **60 s** | A stall without a short timeout is worse than an outage: threads pile up waiting |
+| The Spring layer | Without a `CacheErrorHandler`, a Redis stall **fails the request**, which turns a cache incident into a user-facing error | The "fast-failing client" defense must include the cache abstraction, not only Lettuce |
+
+Two rules follow:
+
+* **Treat a cache failover as a burst of correlated misses that lasts as long as the slowest failover.** Size the miss bulkhead (§3.2) and the database's headroom for 17 s, not for 1.
+* **Anything that must survive a failover doesn't belong only in Redis**: idempotency keys, locks guarding money, reservations. The database with a unique constraint, or fencing tokens, is the guard ([6.3 §2](03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)).
+
+The [6.6 chaos lab](06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md) shows the same principle from the client side. Concurrency limits kept a dependency's queue at 2 where an unprotected client built 284. A miss bulkhead is that bulkhead, pointed at the database.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Taxonomy | Correlated misses: one key (stampede), absent keys (penetration), many keys (avalanche), one shard (hot key) | §0 |
+| Stampede | Per-JVM coalescing + fleet lease + stale-while-revalidate + XFetch (simulation: expired reads 100 → 0) | §1 |
+| Penetration | Bloom filter: 1M ids at 1 % = 1.1 MB, 7 hashes; 0.96 % of fake ids still reached the database | §2 |
+| Avalanche | TTL jitter, L1 shield, fast-failing client, **miss bulkhead**, staggered rollouts | §3 |
+| Hot keys | Replicate or split the key; local L1 for the hottest | §4 |
+| Invalidation race | Delete-after-update re-caches stale data; leases revoke the slow reader's fill | §5 |
+| Blueprint | A read path that survives all five; staleness budget per data type | §6 |
+| Real failover | 1.75 s vs 17.5 s; 38 acknowledged writes lost; 60 s default stall; `CacheErrorHandler` | §10 (6.7) |
+
+**Next:** [6.5 Bar-raiser drill-downs: resilience and caching →](05-Bar-Raiser-Drill-Downs.md)

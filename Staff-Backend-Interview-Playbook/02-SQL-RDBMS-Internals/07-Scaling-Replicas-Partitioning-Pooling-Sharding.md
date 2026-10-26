@@ -21,7 +21,7 @@ Each scaling technique attacks a different limit:
 | Read replicas | CPU and I/O for **reads** | Writes, hot rows, read-your-writes consistency |
 | Partitioning | Index size, vacuum cost, retention (`DROP` vs `DELETE`), pruning for time-bounded queries | Total write throughput on one node |
 | Connection pooling | Connection count, process overhead | Actual query cost |
-| Caching ([6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) | Repeated reads | Freshness |
+| Caching ([6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)) | Repeated reads | Freshness |
 | Sharding | **Write** throughput and data size beyond one node | Cross-shard queries, transactions and operational simplicity |
 
 Scale **vertically and with replicas first**. A modern 64-core, 512 GB primary handles more than most companies ever need. Shard only when write volume or data size truly exceeds one node.

@@ -1,6 +1,6 @@
 # 9.1 Reference Architecture: An End-to-End Order Platform
 
-> **What this is:** the capstone that puts Pillars 1–8 into one design, the way you'd present it in a 45–60 minute staff-level system-design round. Every mechanism used here was explained and, where possible, **run** earlier in the kit; the links point to the evidence. The capacity numbers in §2 are **assumptions and arithmetic**, not measurements.
+> **What this is:** the capstone that puts Pillars 1–8 and 10 into one design, the way you'd present it in a 45–60 minute staff-level system-design round. Every mechanism used here was explained and, where possible, **run** earlier in the kit; the links point to the evidence. The capacity numbers in §2 are **assumptions and arithmetic**, not measurements.
 >
 > Tags: 🔥 must-know · ⚡ senior (L5) · 🧊 staff (L6)
 
@@ -14,12 +14,12 @@ Before drawing anything, pin down what "correct" means. These requirements drive
 
 | Requirement | Target | Why it shapes the design |
 |---|---|---|
-| **No lost orders** | An acknowledged order is never lost | Outbox, `acks=all`, replicated storage ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md)) |
+| **No lost orders** | An acknowledged order is never lost | Outbox, `acks=all`, replicated storage ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md), [10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md)) |
 | **No double charge** | One authorization per order, even with retries | Idempotency keys end to end, unknown-outcome handling |
 | **No oversell** (or a bounded, explicit amount) | Reservation never exceeds stock | Atomic conditional updates or a single owner per SKU ([2.6](../02-SQL-RDBMS-Internals/06-Isolation-Anomalies-Row-Locks-SKIP-LOCKED-Gap-Locks-Deadlocks.md)) |
 | Checkout latency | p99 < 800 ms for the synchronous part | Few synchronous hops; everything else async |
 | Availability | 99.95 % for checkout (≈ 22 min/month error budget) | Multi-zone, graceful degradation, no shared single points of failure |
-| Freshness | Product page price: seconds; checkout price: exact | A staleness budget per data type ([6.4 §5.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
+| Freshness | Product page price: seconds; checkout price: exact | A staleness budget per data type ([6.4 §5.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
 
 ---
 
@@ -174,13 +174,13 @@ For a **flash-sale SKU** (5,000 attempts/s on one row), that single row is a ser
 
 | Topic | Key | Partitions | Retention / policy | Producer → consumers | Ordering need | Failure policy |
 |---|---|---|---|---|---|---|
-| `order-events` | orderId | 24 | 7 days | commerce outbox → fulfillment, notification, history, analytics | per order | consumers: short blocking retries → DLT ([6.6 §4](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
+| `order-events` | orderId | 24 | 7 days | commerce outbox → fulfillment, notification, history, analytics | per order | consumers: short blocking retries → DLT ([10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
 | `inventory-commands` / `-replies` | sku (commands), orderId (replies) | 24 | 3 days | saga ↔ inventory | per SKU | idempotent handlers; DLT + alert |
 | `payment-commands` / `-replies` | orderId | 12 | 3 days | saga ↔ payment | per order | **no automatic replays** without the unknown-outcome check |
 | `inventory-levels` | sku+location | 48 | **compacted** | inventory → catalog (availability badges), search | latest per key | lag alerts only |
 | `catalog-changes` (CDC) | productId | 12 | compacted | Debezium → cache invalidation, search | latest per key | — |
 
-Producer settings from [6.5 §7](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) (`acks=all`, idempotence, lz4, `linger.ms` 10); topic RF 3, `min.insync.replicas=2`, racks = zones. Consumers: cooperative or KIP-848 groups, static membership, `max.poll.records` bounded ([6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)). Partition counts chosen for **consumer parallelism at peak**, fixed up front because changing them remaps keys.
+Producer settings from [10.1 §7](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) (`acks=all`, idempotence, lz4, `linger.ms` 10); topic RF 3, `min.insync.replicas=2`, racks = zones. Consumers: cooperative or KIP-848 groups, dynamic membership on Deployments ([10.4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)), `max.poll.records` bounded ([10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)). Partition counts chosen for **consumer parallelism at peak**, fixed up front because changing them remaps keys.
 
 ---
 
@@ -188,14 +188,14 @@ Producer settings from [6.5 §7](../06-Resilience-Caching-Kafka/05-Kafka-Produce
 
 | Read | Source | Freshness | Mechanism |
 |---|---|---|---|
-| Product page (description, images) | Catalog DB → L2 Redis → L1 Caffeine | minutes | `refreshAfterWrite` + TTL jitter + leases ([6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
+| Product page (description, images) | Catalog DB → L2 Redis → L1 Caffeine | minutes | `refreshAfterWrite` + TTL jitter + leases ([6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
 | Listing price | Pricing → cache, invalidated by CDC | seconds | Leases for the fill race; Bloom filter for unknown SKUs |
 | **Checkout price** | Pricing DB (source of truth), versioned | exact | Price version captured on the order; never from cache |
 | Availability badge | `inventory-levels` compacted topic → cache | seconds | Eventually consistent, labeled "in stock" vs "limited" |
 | Order history | CQRS projection from `order-events` | seconds | Rebuildable read model ([5.5](../05-Microservices-Patterns/05-CQRS-and-Event-Sourcing.md)); the confirmation page reads the write side (read-your-writes) |
 | Search | Search index from CDC | seconds–minutes | Reindex from compacted topics |
 
-The cache tier has a **miss bulkhead**: at most N concurrent DB loads per pod, so a Redis failover can't multiply DB load by 100 ([6.4 §3.2](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)).
+The cache tier has a **miss bulkhead**: at most N concurrent DB loads per pod, so a Redis failover can't multiply DB load by 100 ([6.4 §3.2](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)).
 
 ---
 
@@ -209,7 +209,7 @@ The cache tier has a **miss bulkhead**: at most N concurrent DB loads per pod, s
 | Catalog → Redis | 50 ms command timeout | none | yes | — | L1 or DB through the miss bulkhead |
 | Any service → its DB | `connectionTimeout` 2 s, statement timeouts | serialization failures only | — | **the pool** (sized from DB capacity) | 503 + `Retry-After` |
 
-Configured as in [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)/[6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md): `Retry(CircuitBreaker(…))`, slow-call thresholds from p99, breakers ignore client errors and self-inflicted rejections, one retry layer.
+Configured as in [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)/[6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md): `Retry(CircuitBreaker(…))`, slow-call thresholds from p99, breakers ignore client errors and self-inflicted rejections, one retry layer.
 
 ---
 
@@ -239,12 +239,12 @@ Traces cross Kafka hops through record headers (observation enabled in producers
 
 | Failure | Detection | Blast radius | Mitigation | Evidence in the kit |
 |---|---|---|---|---|
-| Kafka broker down | Under-replicated partitions | None for producers (RF 3, ISR 2) | Leader election; idempotent retries | [6.5 §3–4](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) |
+| Kafka broker down | Under-replicated partitions | None for producers (RF 3, ISR 2) | Leader election; idempotent retries | [10.1 §3–4](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) |
 | Outbox relay crashed after publishing, before marking | Duplicate event | Consumers see a duplicate | Idempotent consumers (dedup row in the same tx) | [5.4 §5](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) (one duplicate, ignored) |
 | CDC connector down 2 h | Slot lag / retained WAL | Events delayed; **primary disk fills** | Slot-lag alerts, `max_slot_wal_keep_size` | [5.4 §6](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
-| Payment PSP slow | Slow-call rate | Sagas wait; checkout submission unaffected | Breaker, step timeout, status query, compensation | [6.1 §5.2](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) |
-| Redis failover (cold L2) | Hit-rate drop, Redis errors | Catalog DB load ×10–100 | L1 shield, miss bulkhead, TTL jitter | [6.4 §3](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
-| Poison event on `order-events` | DLT arrivals | One order stuck (blocking) / reordered (non-blocking) | Short blocking retries → DLT + replay tool | [6.6 §4.2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| Payment PSP slow | Slow-call rate | Sagas wait; checkout submission unaffected | Breaker, step timeout, status query, compensation | [6.1 §5.2](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) |
+| Redis failover (cold L2) | Hit-rate drop, Redis errors | Catalog DB load ×10–100 | L1 shield, miss bulkhead, TTL jitter | [6.4 §3](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| Poison event on `order-events` | DLT arrivals | One order stuck (blocking) / reordered (non-blocking) | Short blocking retries → DLT + replay tool | [10.2 §4.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
 | Bad deploy (OOMKilled loop) | Restarts, exit 137 | One service | Rollback; memory budget per [7.1](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md); `maxUnavailable: 0` keeps capacity | [7.1 §3–4](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |
 | Rolling deploy drops requests | 5xx/connection errors during rollout | Users mid-request | preStop sleep, graceful shutdown, grace budget | [7.3 §3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | DB connection exhaustion with virtual threads | Pool wait time | Whole service | Pool sized from DB capacity, semaphore bulkhead | [4.4](../04-Spring-Boot-Internals/04-Web-Concurrency-Tomcat-Virtual-Threads-WebFlux.md), [8.4 §1](../08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md) |
@@ -287,6 +287,6 @@ Traces cross Kafka hops through record headers (observation enabled in producers
 | 30–38 | Kafka topology and reads (keys, partitions, caches, staleness budgets) |
 | 38–45 | Failure modes and SLOs, then what you'd build first and what you'd defer |
 
-Let the interviewer pull you into any row of §10. That's where the bar-raiser probes, and where the kit's drill-downs ([6.7](../06-Resilience-Caching-Kafka/07-Bar-Raiser-Drill-Downs.md), [7.6](../07-Docker-JVM-Kubernetes/06-Bar-Raiser-Drill-Downs.md), [5.8](../05-Microservices-Patterns/08-Bar-Raiser-Drill-Downs.md)) prepare you.
+Let the interviewer pull you into any row of §10. That's where the bar-raiser probes, and where the kit's drill-downs ([6.5](../06-Resilience-Caching/05-Bar-Raiser-Drill-Downs.md), [7.6](../07-Docker-JVM-Kubernetes/06-Bar-Raiser-Drill-Downs.md), [5.8](../05-Microservices-Patterns/08-Bar-Raiser-Drill-Downs.md)) prepare you.
 
 **Next:** [9.2 Comparison matrices master sheet →](02-Comparison-Matrices-Master-Sheet.md)

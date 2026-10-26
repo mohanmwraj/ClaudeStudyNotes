@@ -56,7 +56,7 @@
 - [ ] Contracts tested (consumer-driven), events versioned with compatibility rules ([5.7](../05-Microservices-Patterns/07-Observability-Tracing-Correlation-IDs-Contract-Testing.md))
 - [ ] CDC replication slots monitored (retained WAL, slot lag) ([5.4 §6](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md))
 
-## 6. Resilience ([6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
+## 6. Resilience ([6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
 
 - [ ] Every outbound call has a client timeout below the breaker's slow-call threshold
 - [ ] Breakers sized per pod from real traffic; slow-call thresholds from p99; `maxWaitDurationInHalfOpenState` set
@@ -68,7 +68,7 @@
 - [ ] Fallbacks are explicit business decisions, and their usage is a metric
 - [ ] Breaker state on dashboards and alerts, **never** in probes
 
-## 7. Caching ([6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md))
+## 7. Caching ([6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md))
 
 - [ ] A staleness budget written down per cached data type; zero-staleness data never cached
 - [ ] Bounded caches (Caffeine `maximumSize`/`maximumWeight`), sized inside the heap budget
@@ -78,13 +78,13 @@
 - [ ] Redis: `maxmemory-policy` set (not `noeviction`), command timeouts, breaker, miss bulkhead toward the DB
 - [ ] Hit rate alerting (a hit-rate drop is a capacity incident)
 
-## 8. Kafka ([6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md), [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
+## 8. Kafka ([10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md), [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
 
 - [ ] Topics: RF 3, `min.insync.replicas=2`, racks = zones; partitions sized for peak consumer parallelism and fixed up front
 - [ ] Keys = ordering domain; skew checked
 - [ ] Producers: `acks=all`, idempotence on, `linger.ms`/`batch.size`/compression tuned with real payloads, `max.block.ms` bounded, send failures handled
 - [ ] Consumers: `auto.offset.reset` chosen deliberately, container-managed commits, bounded `max.poll.records`, honest `max.poll.interval.ms`
-- [ ] Cooperative-sticky or KIP-848 group protocol; static membership for rolling deploys
+- [ ] Cooperative-sticky or KIP-848 group protocol; dynamic membership on Deployments, static only with StatefulSet ids ([10.4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md))
 - [ ] Error handling: backoff + DLT + non-retryable classification; `ErrorHandlingDeserializer`; ordering decision for blocking vs non-blocking retries
 - [ ] DLT alerting, retention and a replay tool
 - [ ] Per-partition lag and lag growth alerts; LSO lag if transactions are used
@@ -131,13 +131,13 @@
 
 | Experiment | Expected behavior | If it fails, see |
 |---|---|---|
-| Kill a pod mid-traffic (`kubectl delete pod`) | Zero failed requests; consumers rebalance only the moved partitions | [7.3 §3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md), [6.6 §2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| Kill a pod mid-traffic (`kubectl delete pod`) | Zero failed requests; consumers rebalance only the moved partitions | [7.3 §3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md), [10.2 §2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
 | Force-kill a pod (`--grace-period=0 --force`) | Duplicates possible, no loss; idempotent consumers absorb them | [5.4 §5](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
 | Rolling deploy under load | No 5xx / connection errors | [7.3](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
-| Add 2 s latency to a dependency | Breaker opens on slow calls; fallbacks; no pool exhaustion | [6.1 §5.2](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) |
-| Stop one Kafka broker | Producers continue (RF 3, ISR 2); no acknowledged loss | [6.5 §3](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md) |
-| Publish a poison message | DLT receives it; alert fires; replay works | [6.6 §4](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
-| Flush Redis | DB load capped by the miss bulkhead; hit rate recovers | [6.4 §3.2](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
+| Add 2 s latency to a dependency | Breaker opens on slow calls; fallbacks; no pool exhaustion | [6.1 §5.2](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) |
+| Stop one Kafka broker | Producers continue (RF 3, ISR 2); no acknowledged loss | [10.1 §3](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md) |
+| Publish a poison message | DLT receives it; alert fires; replay works | [10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| Flush Redis | DB load capped by the miss bulkhead; hit rate recovers | [6.4 §3.2](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 | Stop the CDC connector for 30 min | Slot lag alert; events delayed, none lost; WAL growth bounded | [5.4 §6](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
 | Fail over the primary database | Brief write errors, retries, no data loss (synchronous standby) | [2.7](../02-SQL-RDBMS-Internals/07-Scaling-Replicas-Partitioning-Pooling-Sharding.md) |
 | Hold a long transaction for 1 h | Vacuum blocked alert fires before bloat hurts | [2.5](../02-SQL-RDBMS-Internals/05-MVCC-Visibility-Vacuum-Wraparound-vs-InnoDB-Undo.md) |

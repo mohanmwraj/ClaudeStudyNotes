@@ -189,7 +189,7 @@ public static class RateLimitFilter extends OncePerRequestFilter {
   9th response: 429 rate limit exceeded for carol
 ```
 
-Five tokens of burst, then **429 + `Retry-After`**. The token-bucket algorithm itself (and Resilience4j's `RateLimiter`, which works differently) is covered in [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md).
+Five tokens of burst, then **429 + `Retry-After`**. The token-bucket algorithm itself (and Resilience4j's `RateLimiter`, which works differently) is covered in [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md).
 
 ### The "filter is also a `@Bean`" trap (verified, and why it didn't bite here)
 

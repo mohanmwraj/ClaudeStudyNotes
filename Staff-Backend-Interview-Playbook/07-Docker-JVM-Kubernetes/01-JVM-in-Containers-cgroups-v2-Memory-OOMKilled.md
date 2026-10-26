@@ -179,9 +179,10 @@ resources:
   requests: { cpu: "1",  memory: 1Gi }
   limits:   {            memory: 1Gi }      # memory: requests = limits; CPU limit: see 7.4
 env:
-  - name: JAVA_TOOL_OPTIONS
+  - name: JDK_JAVA_OPTIONS                    # launcher only: jcmd/jstack don't inherit it (7.7 section 4.5)
     value: >-
-      -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=70
+      -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=65
+      -XX:MaxHeapFreeRatio=100 -XX:+AlwaysPreTouch
       -XX:+UseG1GC -XX:ActiveProcessorCount=2
       -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps
       -XX:MaxDirectMemorySize=128m
@@ -190,7 +191,7 @@ env:
 ```
 
 * **Percentages break for small pods.** At 512 MiB, 75 % is a 384 MiB heap, and the idle non-heap measured above was about 165 MB, so the pod is OOMKilled under load. Below about 1 GiB use explicit `-Xmx` with 250–400 MB of non-heap headroom for a Spring Boot service. From 2 GiB up, 70–80 % usually works.
-* **Initial = max** commits the heap at startup: steadier, and an undersized pod fails **at deploy time** instead of at peak traffic. `-XX:+AlwaysPreTouch` also faults the pages in, so the RSS is honest from the start (it adds startup time).
+* ⚠️ **Initial = max alone doesn't keep the heap** (corrected after measuring, [7.7 §4.2](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md)). G1 uncommitted 674 MB of a 718 MB initial heap at the first Remark, 0.85 s into a Spring start. To keep it committed add `-XX:MaxHeapFreeRatio=100` (or `-Xms = -Xmx`). To make it **resident**, so an undersized pod fails at deploy time instead of at peak traffic, add `-XX:+AlwaysPreTouch`: working set 874 MB vs 267 MB without it, at no measurable startup cost at that size. 65 % leaves room for the measured 159 MB idle non-heap.
 * **Measure, then set.** Run a load test with NMT on, watch `container_memory_working_set_bytes` (what the kubelet uses for eviction) and the kernel's `memory.current`, and keep peak usage under about 85 % of the limit.
 * **Guaranteed memory**: `requests.memory = limits.memory`. A JVM's RSS rarely shrinks, so a request below the actual usage just marks the pod for eviction.
 
@@ -231,5 +232,43 @@ env:
 * "A small Boot app had 68 MB of heap committed and about 165 MB outside it: GC structures, metaspace, code cache, CDS. Container sizing is heap plus non-heap plus margin."
 * "OOMKilled with exit code 137 is the kernel, not the JVM. No stack trace, often a healthy heap. Raising `-Xmx` makes it worse."
 * "Memory requests equal limits, exit on `OutOfMemoryError` with a heap dump, and NMT baselines in staging to catch native growth."
+
+---
+
+## 9. Deep dive: what the JVM actually keeps, per workload (verified) 🔥
+
+[7.7 §4](07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md) measured this module's sizing recipe on the real order-service. Container limits were simulated with `-XX:MaxRAM`/`ActiveProcessorCount`; NMT and the process working set were read through `jcmd`. The rows that matter:
+
+| Profile | Committed heap | Working set | Lesson |
+|---|---|---|---|
+| 70 % max, **70 % initial** (§5 as first written) | **70 MB** of 718 | 182 MB | G1 uncommitted 674 MB at the first Remark, **0.85 s** into startup |
+| + `-XX:MaxHeapFreeRatio=100` (or `-Xms = -Xmx`) | 718 MB | **265–269 MB** | Committed isn't resident: pages count only once touched |
+| + `-XX:+AlwaysPreTouch` | 718 MB | **874 MB** | Now an undersized pod fails at deploy time; startup unchanged at this size |
+| 65 %, pinned + pre-touched | 666 MB | 818 MB | The honest setting for 1 GiB with 159 MB idle non-heap |
+| Consumer: Serial, `-Xms256m`, pre-touched, 512 MiB | 256 MB | 393 MB | Small pods: explicit sizes, as §5 says |
+
+Three corrections and additions to this module:
+
+* **§5's "Initial = max commits the heap" was wrong, and is corrected in place.** Spring's class loading crosses the Metaspace threshold, which starts a concurrent cycle. At its Remark pause, G1 shrinks the heap to what `MaxHeapFreeRatio` (default 70 %) allows. Keeping the heap takes `MaxHeapFreeRatio=100` or `-Xms`; making it resident takes `AlwaysPreTouch`.
+* **The non-heap budget, itemized:** GC structures 51 MB, Metaspace 33, compiler arenas 24, code cache 17, CDS/AOT 14, symbols 8, class space 6, NMT 3, threads 2, for **159 MB at idle**. §3's ~165 MB came from a smaller app and a different profile, and it's the same order of magnitude.
+* **`JAVA_TOOL_OPTIONS` reaches every JVM in the container, `jcmd` included** (`-Xmx1m` there killed it). App flags go in `JDK_JAVA_OPTIONS`, which only the `java` launcher reads. §5's snippet now uses it.
+
+**Pinning changes monitoring.** A pinned, pre-touched heap sits at about 85 % of the limit from the first second, so "working set under 85 %" would fire on a healthy idle pod. The [7.8](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) alert `JvmNonHeapHeadroomLow` measures non-heap against the space left above the heap instead, and its promtool test fires on a pod at 93 % of that headroom and stays silent at 51 %.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Ergonomics | The JVM sizes heap, GC and threads from cgroup `memory.max`/`cpu.max`; CPU requests aren't read since JDK 19 | §0–§1 |
+| Defaults (JDK 25) | Max heap 25 % of the limit; Serial GC at 1 CPU | §2.1–§2.2 |
+| Thread pools | Follow the detected CPU count; pin it with `ActiveProcessorCount` | §2.3 |
+| Memory map | Heap + non-heap (GC, Metaspace, code cache, CDS, threads, direct buffers) + margin | §3 |
+| Four failures | Heap `OutOfMemoryError`; Metaspace/direct/native-thread `OutOfMemoryError`; the kernel's OOMKilled (exit 137, no stack trace); kubelet eviction | §4 |
+| Sizing recipe | Guaranteed memory; 65–75 % for big pods, explicit `-Xmx` below 1 GiB; pinned + pre-touched (corrected) | §5, §9 |
+| Measured profiles | `InitialRAMPercentage` undone at 0.85 s; committed ≠ resident; 159 MB idle non-heap | §9 (7.7 §4) |
+| Flag delivery | `JDK_JAVA_OPTIONS`, not `JAVA_TOOL_OPTIONS` | §9 (7.7 §4.5) |
+| Monitoring | With a pinned heap, alert on non-heap headroom (promtool-tested) | §9 (7.8 §6) |
 
 **Next:** [7.2 Dockerfiles: multi-stage, distroless, layers, buildpacks, Jib →](02-Dockerfiles-Multistage-Distroless-Layers-Buildpacks-Jib.md)

@@ -34,7 +34,7 @@ Evidence and drill-downs: [1.4 blueprints](../01-Build-Systems/04-Enterprise-Bui
 ### 2.1 First principles
 
 * A **B+Tree** keeps keys sorted in fixed-size pages (8 KB in PostgreSQL, 16 KB in InnoDB). An insert or update **finds the page and modifies it**, splitting pages when full. Reads are ~log_fanout(N) page visits (3–4 for billions of rows with fanout in the hundreds). Writes touch random pages and log every change in the WAL/redo log ([2.1](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md), [2.2](../02-SQL-RDBMS-Internals/02-Indexes-BTree-Hash-GIN-GiST-BRIN-Covering-Composite.md)).
-* An **LSM-tree** (Log-Structured Merge) buffers writes in an in-memory sorted structure (**memtable**) plus a write-ahead log. When full, the memtable is flushed as an immutable sorted file (**SSTable**). Background **compaction** merges SSTables into larger levels, dropping overwritten and deleted (tombstoned) entries. A read checks the memtable, then SSTables from newest to oldest, using **Bloom filters** to skip files that can't contain the key ([6.4 §2.2](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) has the Bloom filter math).
+* An **LSM-tree** (Log-Structured Merge) buffers writes in an in-memory sorted structure (**memtable**) plus a write-ahead log. When full, the memtable is flushed as an immutable sorted file (**SSTable**). Background **compaction** merges SSTables into larger levels, dropping overwritten and deleted (tombstoned) entries. A read checks the memtable, then SSTables from newest to oldest, using **Bloom filters** to skip files that can't contain the key ([6.4 §2.2](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) has the Bloom filter math).
 * The **RUM conjecture**: you can optimize two of **R**ead overhead, **U**pdate overhead and **M**emory/space overhead, never all three. B+Trees favor reads; LSMs favor updates and (with compaction) space.
 
 ### 2.2 Matrix
@@ -197,7 +197,7 @@ From [2.1 §5](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md), 
 | Failure mode | Events wait (safe) | Connector down → **WAL retention grows** |
 | Fit | Most services | High volume, platform-run CDC |
 
-### 6.8 Resilience primitives ([6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
+### 6.8 Resilience primitives ([6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
 
 | Primitive | Limits | Protects | Key trap |
 |---|---|---|---|
@@ -213,7 +213,7 @@ From [2.1 §5](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md), 
 | Coverage in time | Varies with traffic | Fixed |
 | Fit | Steady, predictable traffic | Variable traffic, per-pod sizing |
 
-### 6.9 Rate-limiting algorithms ([6.2 §2.2](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
+### 6.9 Rate-limiting algorithms ([6.2 §2.2](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md))
 
 | Algorithm | Burst behavior | Where |
 |---|---|---|
@@ -223,7 +223,7 @@ From [2.1 §5](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md), 
 | Token bucket | Bucket-size bursts, then refill rate | Bucket4j, Spring Cloud Gateway (Redis) |
 | GCRA / leaky bucket | Smooth | NGINX `limit_req`, redis-cell |
 
-### 6.10 Caching ([6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md))
+### 6.10 Caching ([6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md), [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md))
 
 | Eviction | LRU | W-TinyLFU (Caffeine) |
 |---|---|---|
@@ -245,7 +245,7 @@ From [2.1 §5](../02-SQL-RDBMS-Internals/01-Storage-Pages-Tuples-TOAST-WAL.md), 
 | Inconsistent across pods (needs invalidation) | One copy (still stale vs the DB) |
 | Shields L2 and hot keys | Survives pod restarts |
 
-### 6.11 Kafka ([6.5](../06-Resilience-Caching-Kafka/05-Kafka-Producers-Batching-Idempotence-Ordering.md), [6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
+### 6.11 Kafka ([10.1](../10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md), [10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md))
 
 | Delivery semantics | How | Cost |
 |---|---|---|

@@ -1,8 +1,8 @@
-# 6.5 Kafka Producers: Batching, Durability, Idempotence, Ordering, Transactions
+# 10.1 Kafka Producers: Batching, Durability, Idempotence, Ordering, Transactions
 
 > **Verified stack:** Apache Kafka clients **4.2.2** against an embedded single-node **KRaft** broker (`kafka-server` 4.2.2 via `spring-kafka-test` **4.1.2**'s `EmbeddedKafkaKraftBroker`), spring-kafka **4.1.2**, JDK **25.0.4.1**. Defaults were printed from `ProducerConfig.configDef()`; every scenario was run (`KafkaProducerLab.java`, `KafkaConsumerLab.java`). Throughput numbers come from **one run each on loopback with one broker**. They show *direction*, not capacity.
 >
-> **Related:** [5.4 outbox](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) (how events *get* to the producer safely), [6.6 consumers](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), sibling kit [6.5 Kafka](../../Java-Backend-Master-Reference/06-Spring-Microservices/05-Kafka-Consumer-Groups-Rebalancing-EOS-DLQ.md).
+> **Related:** [5.4 outbox](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) (how events *get* to the producer safely), [10.2 consumers](02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), sibling kit [6.5 Kafka](../../Java-Backend-Master-Reference/06-Spring-Microservices/05-Kafka-Consumer-Groups-Rebalancing-EOS-DLQ.md).
 
 ---
 
@@ -216,7 +216,7 @@ Costs and traps:
 
 * **An open transaction blocks every `read_committed` consumer at the LSO**, on every partition it touched, until it commits, aborts or hits `transaction.timeout.ms` (default 60 s). One stuck producer stalls downstream consumers. Alert on LSO lag.
 * Small transactions are expensive (coordinator round trips + markers per partition). Batch many records per transaction.
-* **Kafka transactions cover Kafka only.** A database write plus a Kafka send is still a dual write, so use the outbox ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)). The consume-transform-produce use is in [6.6 §5](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md).
+* **Kafka transactions cover Kafka only.** A database write plus a Kafka send is still a dual write, so use the outbox ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)). The consume-transform-produce use is in [10.2 §5](02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md).
 
 ---
 
@@ -312,4 +312,42 @@ Topic settings that go with it: `replication.factor=3`, `min.insync.replicas=2`,
 * "Ordering is per partition, so the key is the ordering domain. Adding partitions breaks key-to-partition mapping."
 * "Kafka transactions are Kafka-only, and an open transaction freezes `read_committed` consumers at the LSO."
 
-**Next:** [6.6 Kafka consumers: rebalancing, EOS, retries, DLQ →](06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)
+---
+
+## 12. Deep dive: the producer against a real three-broker cluster (verified) 🔥
+
+This module's measurements used one broker. [10.3](03-Production-Kafka-Multi-Broker-Durability-Compaction-Strimzi-Blueprint.md) ran a KRaft cluster with three brokers, a topic at RF=3 and `min.insync.replicas=2`, and stopped brokers one at a time:
+
+| Situation | `acks=all` (idempotent) | `acks=1` | What the application saw |
+|---|---|---|---|
+| All brokers up | ~2.7× the time of `acks=0`, ~1.7× of `acks=1` (loopback) | — | The cost of waiting for the ISR (§3) |
+| One broker down | Writes continue | Writes continue | Nothing |
+| **Two brokers down** (ISR 1 < 2) | **Refused** (`NotEnoughReplicas`, retriable) | **Accepted with one copy** | A `TimeoutException` after `delivery.timeout.ms`, **120 s** by default; every send blocked its caller that long |
+
+What it adds to §3 and §8:
+
+* **`acks=1` turns `min.insync.replicas` into decoration.** The setting constrains only producers that ask for `acks=all`. In the two-down state, `acks=1` happily acknowledged records that existed on one disk.
+* **The refusal is invisible as such.** `NotEnoughReplicasException` is retriable, so the producer retries until the delivery timeout and reports a generic timeout. Alert on the broker's under-min-ISR partition count, not on producer exceptions.
+* **Shorten `delivery.timeout.ms`** (10.3 uses 30 s, with `request.timeout.ms` 10 s), so a stuck partition fails requests in seconds, not minutes. Then decide what the caller does: the outbox ([5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)) turns "Kafka is refusing writes" into "the relay is behind", with no user-facing error.
+
+**Topics as code** (10.3 §1) is where §5's "adding partitions breaks key mapping" happens without anyone deciding it. `KafkaAdmin` applied a partition increase **asynchronously** on startup, ignored config changes unless `setModifyTopicConfigs(true)`, and silently ignored a partition **decrease**. Review topic definitions like schema migrations, because they are one.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Model | A replicated, partitioned log; ordering per partition | §0 |
+| Producer internals | Per-partition batches in an accumulator; one Sender thread; `send()` can block on metadata or a full buffer | §1, §1.1 |
+| Partitioning | Key hash → partition; null keys: sticky partitioning | §1.2 |
+| Batching | Loopback: `linger.ms` 5 → 1.8×, 128 KB + linger 20 → 3.7×; compression lost with no network to save | §2 |
+| Durability | `acks=all` = the ISR; needs RF 3 + `min.insync.replicas` 2 | §3 |
+| Idempotence | PID + per-partition sequence; the broker keeps the last 5 batches, so ≤ 5 in flight keeps order | §4 |
+| Ordering | The key is the ordering domain; adding partitions remaps keys | §5 |
+| Transactions | Kafka-only atomicity; an open transaction freezes `read_committed` consumers at the LSO | §6 |
+| Configuration | `acks=all`, idempotence, bounded timeouts, observations on | §7–§8 |
+| Three brokers | Two down: `acks=all` refused (120 s timeout), `acks=1` accepted with one copy | §12 (10.3) |
+| Topics as code | Async partition changes, config changes ignored by default, decreases silently ignored | §12 (10.3 §1) |
+
+**Next:** [10.2 Kafka consumers: rebalancing, EOS, retries, DLQ →](02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)

@@ -2,7 +2,7 @@
 
 > **Verified stack:** Spring Boot **4.1.2** (Tomcat 11.0.27, Actuator, `spring-boot-health`), Temurin **25.0.4.1**. The probe endpoints, availability-state events and graceful-shutdown sequence were run (`ProbeApp`, with `KUBERNETES_SERVICE_HOST` set to make Boot detect Kubernetes). Shutdown was triggered through Actuator's `shutdown` endpoint, which closes the context exactly as the JVM shutdown hook does on `SIGTERM`. **Not run here:** a cluster. The kubelet/EndpointSlice side of the timeline follows the Kubernetes pod-lifecycle documentation.
 >
-> **Related:** CKAD kit [probes and health checks](../../CKAD-Exam-Prep/03-Application-Observability-and-Maintenance/02-probes-and-health-checks.md), [rolling updates](../../CKAD-Exam-Prep/02-Application-Deployment/02-rolling-updates-and-rollbacks.md); [6.6 §2.2](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) (consumers leaving the group on shutdown).
+> **Related:** CKAD kit [probes and health checks](../../CKAD-Exam-Prep/03-Application-Observability-and-Maintenance/02-probes-and-health-checks.md), [rolling updates](../../CKAD-Exam-Prep/02-Application-Deployment/02-rolling-updates-and-rollbacks.md); [10.2 §2.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) (consumers leaving the group on shutdown).
 
 ---
 
@@ -85,7 +85,7 @@ class FatalStateGuard {
 
 ### 1.4 What goes into readiness 🧊
 
-Readiness should answer "can this pod serve?", so include **pod-local** conditions (warm-up done, local resources OK) and leave out **shared** dependencies. If the shared database is down, every pod goes unready at once, the Service has zero endpoints, and clients get connection errors instead of your well-designed degraded response. Shared dependency health belongs in circuit breakers and dashboards ([6.1 §6.4](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
+Readiness should answer "can this pod serve?", so include **pod-local** conditions (warm-up done, local resources OK) and leave out **shared** dependencies. If the shared database is down, every pod goes unready at once, the Service has zero endpoints, and clients get connection errors instead of your well-designed degraded response. Shared dependency health belongs in circuit breakers and dashboards ([6.1 §6.4](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
 
 ```yaml
 management:
@@ -222,7 +222,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata: { name: order-service }
 spec:
-  minAvailable: 75%                                        # node drains can't take too many at once
+  maxUnavailable: 25%                                      # rounds UP: never 0 evictions (minAvailable 75% of 2 pods = 0: 7.8 section 5.2)
   selector: { matchLabels: { app: order-service } }
 ```
 
@@ -266,5 +266,42 @@ spec:
 * "In Boot 4 graceful shutdown is the default with a 30-second phase timeout. In my run, readiness flipped to refusing first, the in-flight request completed with 200, and new connections were refused."
 * "That refusal is why I add a preStop sleep: endpoint removal and SIGTERM happen in parallel, and the sleep covers propagation to every load balancer."
 * "The grace period counts from deletion, including preStop, so it has to cover preStop plus the drain plus consumers leaving the group, or SIGKILL cuts everything."
+
+---
+
+## 8. Deep dive: shutdown and disruption budgets across a namespace (verified) 🔥
+
+This module derived the budgets for one HTTP service. [7.8 §5](08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) checked them mechanically over a rendered namespace, and [10.4](../10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md) measured the consumer side:
+
+| Budget | Result | Evidence |
+|---|---|---|
+| API: preStop 10 + drain 30 + margin 5 vs grace 45 | OK. Raising preStop to 20 without the grace period was caught (55 > 45) | 7.8 §5.4, N08 |
+| Consumer: no preStop; 10 s container stop + in-flight record + margin vs grace 30 | OK. A consumer gets no Service traffic, so a preStop sleep only delays its LeaveGroup | 10.4 §6.3 |
+| Consumer leaving the group (§3.4's "consumers leaving") | **0.5 s** for a KIP-848 dynamic member; **45 s** for a static member, whose `close()` doesn't leave at all | 10.4 §1.1 |
+| PDB `minAvailable: 75%` (this module's §4 as first written) | At 2 or 3 replicas: **0 evictions allowed**, so node drains hang. Corrected in place to `maxUnavailable: 25%` | 7.8 §5.2 |
+| Rollout at max scale | The Deployment controller **doesn't wait for terminating pods**; quota counts them. Budget one extra wave | 7.8 §5.3 |
+| Batch pods during a drain | A Job's `podFailurePolicy` with `Ignore` on `DisruptionTarget` retries an evicted pod without spending its `backoffLimit` | 7.8 §4.2 |
+
+What this adds to §3–§4:
+
+* **§3.4's budget formula holds, with the drain term depending on the workload type.** HTTP: preStop + web drain. Consumer: in-flight work + spring-kafka's 10 s container stop, and no preStop. Batch: whatever the current step needs, and the step must be idempotent anyway, because a `SIGKILL` skips every hook.
+* **PDB percentages round up.** That's harmless for large Deployments and fatal for small ones. `maxUnavailable` as a percentage never reaches zero; `minAvailable` as a percentage reaches it at small scale.
+* **Terminating pods overlap the next wave.** In v1.37 `status.terminatingReplicas` (beta, on by default) reports them, but no spec field makes a rollout wait. A rollout at 40 replicas with a 45 s grace period briefly holds 40 + 10 new + up to 10 terminating pods. That's a quota and capacity question, not a correctness one.
+
+---
+
+## Summary
+
+| Topic | Key point | Evidence |
+|---|---|---|
+| Three questions | Startup gates, liveness restarts, readiness routes; liveness never checks dependencies | §0, §2 |
+| Boot's probes | `/livez` and `/readyz` groups; readiness flips after `ApplicationRunner`s | §1.1–§1.2 |
+| Probe port and content | Main port; readiness = "can I serve", not "is everything I call healthy" | §1.3–§1.4 |
+| Graceful shutdown | Boot 4 default, 30 s phase; readiness refuses first, in-flight completes, new connections refused | §3.1–§3.2 |
+| preStop sleep | Endpoint removal and SIGTERM run in parallel; the sleep covers propagation | §3.3 |
+| The budget | Grace ≥ preStop + drain + remaining phases + margin, counted from deletion | §3.4 |
+| What it doesn't handle | Long-lived connections, unmanaged executors, non-idempotent work | §3.5 |
+| Rollouts and PDBs | `maxUnavailable: 0`, `minReadySeconds`; PDB `maxUnavailable: 25%` (corrected) | §4, §8 |
+| Namespace-wide budgets | Audited per workload; consumers without preStop; terminating pods cost quota | §8 (7.8 §5) |
 
 **Next:** [7.4 CPU throttling, GC choice, HPA and KEDA →](04-CPU-Throttling-GC-Choice-HPA-KEDA.md)

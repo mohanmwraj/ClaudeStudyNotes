@@ -309,7 +309,7 @@ Scenario D had no double sends, but `SKIP LOCKED` doesn't preserve **per-aggrega
 | Consumer dedup table growth | TTL cleanup beyond the maximum redelivery window (days), partitioned by date |
 | Event schema | Versioned domain events; never publish entities ([5.2 §4](02-Data-Ownership-Database-per-Service.md)) |
 | Trace context | Put `traceparent` in the outbox row and copy it into the Kafka headers, so traces span the async hop ([5.7](07-Observability-Tracing-Correlation-IDs-Contract-Testing.md)) |
-| Kafka transactions (EOS) | Not needed for the outbox→consumer path: dedup gives exactly-once effects. Kafka EOS is for consume-transform-produce within Kafka ([6.6](../06-Resilience-Caching-Kafka/06-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
+| Kafka transactions (EOS) | Not needed for the outbox→consumer path: dedup gives exactly-once effects. Kafka EOS is for consume-transform-produce within Kafka ([10.2](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
 
 ---
 

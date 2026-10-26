@@ -1,6 +1,6 @@
 # 8.4 High-Performance Internals: HikariCP, Resilience4j, Caffeine
 
-> **Verified 2026-10-25.** Excerpts are quoted from each project's default branch on that date: HikariCP `dev` (tags up to `HikariCP-7.1.0`; the labs in this kit used 7.0.2), Resilience4j `master` (2.4.0 jars verified with `javap` in [6.1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)), Caffeine `master` (3.3.1 jar verified in [6.3](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)). All three are Apache-2.0 licensed; excerpts are short and attributed.
+> **Verified 2026-10-25.** Excerpts are quoted from each project's default branch on that date: HikariCP `dev` (tags up to `HikariCP-7.1.0`; the labs in this kit used 7.0.2), Resilience4j `master` (2.4.0 jars verified with `javap` in [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)), Caffeine `master` (3.3.1 jar verified in [6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)). All three are Apache-2.0 licensed; excerpts are short and attributed.
 >
 > **Go deeper:** sibling kit [5.1 JDBC & HikariCP](../../Java-Backend-Master-Reference/05-Persistence-JPA-Hibernate/01-JDBC-HikariCP-Connection-Pooling.md), [3.3 lock-free CAS](../../Java-Backend-Master-Reference/03-Concurrency-Loom/03-Lock-Free-CAS-Atomics.md), [1.3 object layout & mechanical sympathy](../../Java-Backend-Master-Reference/01-JVM-Internals/03-Object-Layout-Mechanical-Sympathy.md).
 
@@ -17,7 +17,7 @@ They sit on the hot path of every request (a connection borrow, a breaker check,
 | Immutable state objects replaced atomically | — | Breaker state, rate-limiter `State` | — |
 | Accept loss where it's harmless | — | — | **Lossy** read buffer (dropped access events) |
 | Batch the bookkeeping, do it under `tryLock` | Housekeeper thread | — | `maintenance()` under `evictionLock` |
-| Jitter to avoid synchronized events | `maxLifetime` variance up to 25 % | — | (same idea as cache TTL jitter, [6.4](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
+| Jitter to avoid synchronized events | `maxLifetime` variance up to 25 % | — | (same idea as cache TTL jitter, [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)) |
 | Shape data structures to the access pattern | `FastList`: reverse scan, identity compare | Circular array + running totals | Sketch counters within one 64-byte block |
 
 ---
@@ -161,7 +161,7 @@ final var variance = maxLifetime > 10_000L ? ThreadLocalRandom.current().nextLon
 final var variance = ThreadLocalRandom.current().nextLong(keepaliveTime / 5);
 ```
 
-Connections created together (at startup) would otherwise all expire together and reconnect in one burst: the same synchronized-expiry problem as cache TTLs ([6.4 §3.1](../06-Resilience-Caching-Kafka/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)).
+Connections created together (at startup) would otherwise all expire together and reconnect in one burst: the same synchronized-expiry problem as cache TTLs ([6.4 §3.1](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md)).
 
 ### 1.6 Reading questions
 
@@ -218,7 +218,7 @@ private Measurement moveWindowByOne() {
 }
 ```
 
-O(1) per call: add the new outcome to the running totals, subtract the evicted slot's outcome, reuse the slot. The `ReentrantLock` is the default `SYNCHRONIZED` strategy; the lock-free variant is opt-in ([6.1 §1](../06-Resilience-Caching-Kafka/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
+O(1) per call: add the new outcome to the running totals, subtract the evicted slot's outcome, reuse the slot. The `ReentrantLock` is the default `SYNCHRONIZED` strategy; the lock-free variant is opt-in ([6.1 §1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
 
 ### 2.3 The rate limiter is a fixed window: proof in code
 
@@ -239,7 +239,7 @@ if (nextCycle != currentCycle) {
 }
 ```
 
-Time is cut into whole cycles; on a new cycle permissions jump back to (at most) `permissionsPerCycle`. Negative permissions (reservations by waiting callers) are repaid by elapsed cycles. A token bucket would refill continuously instead. That's the code behind the measured 2× burst across a boundary ([6.2 §2.1](../06-Resilience-Caching-Kafka/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
+Time is cut into whole cycles; on a new cycle permissions jump back to (at most) `permissionsPerCycle`. Negative permissions (reservations by waiting callers) are repaid by elapsed cycles. A token bucket would refill continuously instead. That's the code behind the measured 2× burst across a boundary ([6.2 §2.1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
 
 ---
 
@@ -292,7 +292,7 @@ boolean admit(Object candidateKeyRef, Object victimKeyRef) {
 }
 ```
 
-This matches the 3.3.1 bytecode read in [6.3 §1.2](../06-Resilience-Caching-Kafka/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md).
+This matches the 3.3.1 bytecode read in [6.3 §1.2](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md).
 
 ### 3.3 Reads never wait for the policy
 

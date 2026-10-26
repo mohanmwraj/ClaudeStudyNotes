@@ -1,10 +1,10 @@
 # 9.4 Rapid-Fire Flashcards
 
-> **290 cards.** Pillars 1–8 are collected verbatim from each pillar's bar-raiser file (so they stay in sync with the evidence), followed by 20 capstone cards. Click a question to reveal the answer.
+> **330 cards.** Pillars 1–8 and 10 are collected verbatim from each pillar's bar-raiser file (so they stay in sync with the evidence), followed by 20 capstone cards. Click a question to reveal the answer.
 >
 > **How to use:** a Leitner box. Five boxes; every card starts in box 1. Review box 1 daily, box 2 every 2 days, box 3 every 4, box 4 weekly, box 5 before the interview. A correct answer moves a card up one box; a miss sends it back to box 1. Say answers **out loud** in one or two sentences, then follow the source link for any card you hesitate on.
 
-**Jump to:** [1. Build systems](#1-build-systems) · [2. SQL and RDBMS internals](#2-sql-and-rdbms-internals) · [3. JPA, Hibernate, Spring Data](#3-jpa-hibernate-spring-data) · [4. Spring and Spring Boot internals](#4-spring-and-spring-boot-internals) · [5. Microservices patterns](#5-microservices-patterns) · [6. Resilience, caching, Kafka](#6-resilience-caching-kafka) · [7. Docker, JVM, Kubernetes](#7-docker-jvm-kubernetes) · [8. Reading real codebases](#8-reading-real-codebases) · [Capstone](#capstone)
+**Jump to:** [1. Build systems](#1-build-systems) · [2. SQL and RDBMS internals](#2-sql-and-rdbms-internals) · [3. JPA, Hibernate, Spring Data](#3-jpa-hibernate-spring-data) · [4. Spring and Spring Boot internals](#4-spring-and-spring-boot-internals) · [5. Microservices patterns](#5-microservices-patterns) · [6. Resilience and caching](#6-resilience-and-caching) · [7. Docker, JVM, Kubernetes](#7-docker-jvm-kubernetes) · [8. Reading real codebases](#8-reading-real-codebases) · [10. Kafka in production](#10-kafka-in-production) · [Capstone](#capstone)
 
 ---
 
@@ -436,9 +436,9 @@ Source and context: [05-Microservices-Patterns bar-raiser file](../05-Microservi
 
 ---
 
-## 6. Resilience, caching, Kafka
+## 6. Resilience and caching
 
-Source and context: [06-Resilience-Caching-Kafka bar-raiser file](../06-Resilience-Caching-Kafka/07-Bar-Raiser-Drill-Downs.md)
+Source and context: [06-Resilience-Caching bar-raiser file](../06-Resilience-Caching/05-Bar-Raiser-Drill-Downs.md)
 
 <details><summary>1. What replaced `RingBitBuffer` in Resilience4j?</summary>The `Metrics` sliding windows in `resilience4j-core` (count- and time-based), since 1.0.</details>
 
@@ -476,23 +476,33 @@ Source and context: [06-Resilience-Caching-Kafka bar-raiser file](../06-Resilien
 
 <details><summary>18. Lease lock vs correctness?</summary>A lease prevents duplicate work, not concurrent writes; correctness needs fencing tokens or DB constraints.</details>
 
-<details><summary>19. Kafka 4.x producer defaults for acks, idempotence, linger?</summary>`all`, `true`, 5 ms.</details>
+<details><summary>19. Retries ×3 with backoff + jitter on an overloaded dependency: measured load?</summary>2.72×, queue 284 → 1,024, and fewer successes than without retries (167 vs 184).</details>
 
-<details><summary>20. Why `max.in.flight ≤ 5` with idempotence?</summary>The broker tracks the last 5 batch sequences per producer and partition.</details>
+<details><summary>20. What made retries safe in the chaos lab?</summary>A 10 % retry budget that never retries breaker or bulkhead rejections: load stayed at 0.07×–0.09×.</details>
 
-<details><summary>21. What does `read_committed` stop at?</summary>The last stable offset (start of the oldest open transaction).</details>
+<details><summary>21. What does a circuit breaker mainly protect?</summary>The dependency: load fell to 0.13× / 0.09× and its queue to 22 (vs 284). Latency was already bounded by the timeout.</details>
 
-<details><summary>22. Consumer default `auto.offset.reset`?</summary>`latest`: new groups skip existing data.</details>
+<details><summary>22. Where should `slowCallDurationThreshold` sit?</summary>Below the client timeout (250 ms vs 300 ms), so slowness counts before calls time out. The default is 60 s.</details>
 
-<details><summary>23. Eager vs cooperative vs KIP-848?</summary>Eager revokes all; cooperative revokes only moving partitions (two rounds); KIP-848 is broker-side, incremental, with no group barrier.</details>
+<details><summary>23. What did breaker recovery cost in the lab?</summary>57 of 400 recovery-phase requests failed during OPEN (1 s) → HALF_OPEN (5 trial calls) → CLOSED.</details>
 
-<details><summary>24. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts, no delay, then log and skip.</details>
+<details><summary>24. Per-pod bulkhead of 10, HPA max 40, dependency of 20 workers?</summary>400 concurrent calls: per-pod limits multiply with replicas. Size from max replicas or use adaptive limits.</details>
 
-<details><summary>25. Spring Kafka 4 DLT suffix?</summary>`-dlt` (older versions used `.DLT`).</details>
+<details><summary>25. What did a Sentinel failover lose?</summary>38 acknowledged writes (asynchronous replication); `WAIT` lost 0 of the writes it confirmed.</details>
 
-<details><summary>26. Blocking vs non-blocking retries?</summary>Blocking keeps order but stalls the partition; non-blocking keeps throughput but breaks per-key order.</details>
+<details><summary>26. How long did Sentinel failover take?</summary>1.75 s in one run, 17.5 s in another (a retried failover plus client back-off).</details>
 
-<details><summary>27. Max useful consumers in a group?</summary>The partition count.</details>
+<details><summary>27. Lettuce's default command timeout?</summary>60 s. Set ~200 ms for a cache.</details>
+
+<details><summary>28. `@Cacheable` on Redis, Redis stalls, no `CacheErrorHandler`?</summary>The request fails (`QueryTimeoutException`). With a handler it degrades to a miss.</details>
+
+<details><summary>29. Spring Data Redis 4 cache writes are…?</summary>Asynchronous by default: 21–59 of 200 immediate re-reads missed. Use immediate writes for read-your-writes.</details>
+
+<details><summary>30. `volatile-lru` with keys that have no TTL?</summary>Behaves like `noeviction`: 14,760 failed `SET`s in the lab.</details>
+
+<details><summary>31. Best eviction policy on a Zipf workload?</summary>`allkeys-lfu` 83.1 % vs `allkeys-lru` 81.3 % vs `allkeys-random` 78.2 %.</details>
+
+<details><summary>32. Memory for a 40-byte value?</summary>110 bytes as its own key, 44 bytes inside a listpack hash.</details>
 
 ---
 
@@ -548,6 +558,34 @@ Source and context: [07-Docker-JVM-Kubernetes bar-raiser file](../07-Docker-JVM-
 
 <details><summary>24. Removed Redis property in Boot 4.1?</summary>`spring.data.redis.lettuce.cluster.refresh.adaptive`: adaptive triggers are always on.</details>
 
+<details><summary>25. What does jdeps miss?</summary>Service providers: `jdk.localedata` (de/ja dates printed in English) and `jdk.charsets` (IBM037), silently.</details>
+
+<details><summary>26. Why keep `java.desktop` in a server runtime?</summary>Spring uses `java.beans`; without it: `NoClassDefFoundError: java/beans/PropertyEditorSupport`.</details>
+
+<details><summary>27. Paketo's default jlink?</summary>`java.*` only: CPU metrics 404, `-XX:StartFlightRecording` fails at boot. Pass `--add-modules`.</details>
+
+<details><summary>28. Does `InitialRAMPercentage` keep the heap committed?</summary>No: G1 uncommitted 674 MB at the first Remark, 0.85 s into startup.</details>
+
+<details><summary>29. What makes a pinned heap resident?</summary>`-XX:+AlwaysPreTouch`: working set 874 MB vs 267 MB without it.</details>
+
+<details><summary>30. Idle non-heap of the order-service (NMT)?</summary>159 MB: GC 51, Metaspace 33, compiler 24, code cache 17, CDS/AOT 14, symbols 8, class space 6, NMT 3, threads 2.</details>
+
+<details><summary>31. `JAVA_TOOL_OPTIONS` vs `JDK_JAVA_OPTIONS`?</summary>The first reaches every JVM, `jcmd` included (`-Xmx1m` killed it); the second only the `java` launcher.</details>
+
+<details><summary>32. `minAvailable: 75%` at 2 replicas allows how many evictions?</summary>0: percentages round up. `maxUnavailable: 25%` allows 1.</details>
+
+<details><summary>33. Does quota count terminating pods?</summary>Yes, until they reach a terminal phase. The Deployment controller doesn't wait for them: budget one extra wave.</details>
+
+<details><summary>34. Exit code of plain Spring Boot when Flyway fails at startup?</summary>1, for every cause. Exit-code mappers aren't consulted when the context never became active.</details>
+
+<details><summary>35. `podFailurePolicy` for a migration Job?</summary>`FailJob` on the permanent exit code, `Ignore` on `DisruptionTarget`, count the rest; requires `restartPolicy: Never`.</details>
+
+<details><summary>36. Two Flyway runs at once on PostgreSQL?</summary>Safe: the second waited ~5 s for the lock, then found the schema up to date.</details>
+
+<details><summary>37. Why did a canary alert lose its `job` label?</summary>`a > on (namespace) b` keeps only the `on` labels; `group_left` keeps the left side's.</details>
+
+<details><summary>38. What only the API server catches?</summary>Cross-field rules, e.g. `podFailurePolicy` with `restartPolicy: OnFailure`, an invalid CronJob `timeZone`: run `--dry-run=server`.</details>
+
 ---
 
 ## 8. Reading real codebases
@@ -593,6 +631,54 @@ Source and context: [08-GitHub-Codebases-Study-Guide bar-raiser file](../08-GitH
 <details><summary>19. Caffeine counters per key and locality?</summary>Depth 4, all within one 64-byte block.</details>
 
 <details><summary>20. Where does Kafka keep per-producer sequence state on the broker?</summary>`ProducerStateManager` (storage module).</details>
+
+---
+
+## 10. Kafka in production
+
+Source and context: [10-Kafka-Production bar-raiser file](../10-Kafka-Production/05-Bar-Raiser-Drill-Downs.md)
+
+<details><summary>1. Kafka 4.x producer defaults for acks, idempotence, linger?</summary>`all`, `true`, 5 ms.</details>
+
+<details><summary>2. Why `max.in.flight ≤ 5` with idempotence?</summary>The broker tracks the last 5 batch sequences per producer and partition.</details>
+
+<details><summary>3. What does `read_committed` stop at?</summary>The last stable offset (start of the oldest open transaction).</details>
+
+<details><summary>4. Consumer default `auto.offset.reset`?</summary>`latest`: new groups skip existing data.</details>
+
+<details><summary>5. Eager vs cooperative vs KIP-848?</summary>Eager revokes all; cooperative revokes only moving partitions (two rounds); KIP-848 is broker-side, incremental, with no group barrier.</details>
+
+<details><summary>6. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts, no delay, then log and skip.</details>
+
+<details><summary>7. Spring Kafka 4 DLT suffix?</summary>`-dlt` (older versions used `.DLT`).</details>
+
+<details><summary>8. Blocking vs non-blocking retries?</summary>Blocking keeps order but stalls the partition; non-blocking keeps throughput but breaks per-key order.</details>
+
+<details><summary>9. Max useful consumers in a group?</summary>The partition count.</details>
+
+<details><summary>10. Static member, plain `close()`: how long until its partitions move?</summary>The session timeout: 45.1 s classic, 45.3 s KIP-848, 48 s cooperative. No LeaveGroup is sent.</details>
+
+<details><summary>11. Static id = Deployment pod name, eager assignor, one pod replaced?</summary>45 s to recover, and the survivor owned nothing for 41.4 s: the whole group stopped.</details>
+
+<details><summary>12. KIP-848 dynamic member leaves: handoff?</summary>0.5 s (classic: ~3 s, one heartbeat).</details>
+
+<details><summary>13. How does spring-kafka 4.1.2 close consumers and name static members?</summary>Plain `close()`; `group.instance.id` + `-0…-N` per concurrent consumer.</details>
+
+<details><summary>14. Which client settings does KIP-848 reject?</summary>`session.timeout.ms`, `heartbeat.interval.ms`, `partition.assignment.strategy` ("cannot be set when group.protocol=CONSUMER").</details>
+
+<details><summary>15. KIP-848 session timeout default and minimum?</summary>Broker-side `group.consumer.session.timeout.ms`: 45 s default, 45 s minimum; heartbeat 5 s.</details>
+
+<details><summary>16. KEDA's partition cap counts…?</summary>Pods, not consumers: concurrency 3 × 12 replicas = 36 consumers for 12 partitions.</details>
+
+<details><summary>17. `ensureEvenDistributionOfPartitions` on 12 partitions?</summary>Replicas step through factors: 1, 2, 3, 4, 6, 12. Can't be combined with `limitToPartitionsWithLag`.</details>
+
+<details><summary>18. KEDA `cooldownPeriod` applies to…?</summary>Scaling to zero only; 1 ↔ N is the HPA `behavior`.</details>
+
+<details><summary>19. RF 3, min ISR 2, two brokers down?</summary>`acks=all` refused (`NotEnoughReplicas`, retriable → `TimeoutException` after 120 s); `acks=1` accepted with one copy.</details>
+
+<details><summary>20. `KafkaAdmin` partition increase, config change, partition decrease?</summary>Applied asynchronously; ignored unless `setModifyTopicConfigs(true)`; silently ignored.</details>
+
+<details><summary>21. Does a Kafka consumer pod need a preStop sleep?</summary>No: no Service traffic. Grace = in-flight work + 10 s container stop + leave + margin.</details>
 
 ---
 

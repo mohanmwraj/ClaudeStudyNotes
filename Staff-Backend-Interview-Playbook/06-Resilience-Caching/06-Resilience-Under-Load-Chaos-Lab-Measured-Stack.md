@@ -1,4 +1,4 @@
-# 6.8 Resilience Under Load: a Chaos Lab That Measures What Each Layer Buys (Timeouts, Retries, Breakers, Bulkheads, Fallbacks, Retry Budgets)
+# 6.6 Resilience Under Load: a Chaos Lab That Measures What Each Layer Buys (Timeouts, Retries, Breakers, Bulkheads, Fallbacks, Retry Budgets)
 
 > **Verified stack:** Resilience4j **2.4.0** (programmatic `Decorators` in the lab; `resilience4j-spring-boot4` 2.4.0 for the blueprint), JDK **25** (`java.net.http.HttpClient`, `com.sun.net.httpserver`, virtual threads), Spring Boot **4.1.2** for the binding check. The lab ran **twice**; every conclusion below held in both runs, with counts within a few percent. Latencies are from a laptop on loopback: compare the stacks with each other, not with production numbers.
 >
@@ -283,4 +283,4 @@ Without both, the dependency stays saturated and recovers later than it needs to
 | S4 + bulkhead + fallback | 0.07× / 0.09× | 0 failures (degraded answers) | Shed and degrade |
 | S5 + budgeted retry | 0.07× / 0.09× | Same as S4, no amplification | Retry outside, within a budget |
 
-**Next:** [6.9 Redis in production: memory, eviction, client-side caching, failover, Spring's Redis cache →](09-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md)
+**Next:** [6.7 Redis in production: memory, eviction, client-side caching, failover, Spring's Redis cache →](07-Redis-in-Production-Memory-Eviction-Client-Caching-Failover-Spring-Cache.md)
