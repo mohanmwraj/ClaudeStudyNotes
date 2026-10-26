@@ -110,7 +110,7 @@ The interviewer hands you this (read it in 5 minutes, then review it like a staf
 |---|---|---|---|
 | 1 | Dual write; the send happens before commit, so a rollback publishes a phantom event | Outbox | [5.4 §0](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) |
 | 2 | Auto-commit = possible loss or duplicates; read-modify-write loses updates; not idempotent | Container-managed commits; `points = points + ?` with a dedup row in the same transaction | [10.2 §3](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md), [2.6](../02-SQL-RDBMS-Internals/06-Isolation-Anomalies-Row-Locks-SKIP-LOCKED-Gap-Locks-Deadlocks.md) |
-| 3 | That's the `DefaultErrorHandler` default behavior: instant retries, then silent loss | Backoff + DLT + alerting + replay | [10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| 3 | That's the `DefaultErrorHandler` default behavior: retries with no back-off, then silent loss | Backoff + DLT + alerting + replay | [10.2 §4](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
 | 4 | Cache set before commit (rollback leaves wrong data); set-order races | Delete after commit; leases or versioned fills | [6.4 §5](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md) |
 | 5 | Liveness checks a dependency → restart storms | Liveness = livenessState only | [7.3 §0](../07-Docker-JVM-Kubernetes/03-Kubernetes-Probes-and-Graceful-Shutdown.md) |
 | 6 | `-Xmx` = limit → OOMKilled; 1 CPU → SerialGC by default | Heap + non-heap budget; explicit GC; CPU policy | [7.1](../07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |

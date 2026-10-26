@@ -56,7 +56,7 @@ What it gets right, in the vocabulary of [5.6](../05-Microservices-Patterns/06-E
 
 What to probe:
 
-* The two calls are **sequential** (visits need the pet ids from the owner). Is there a per-call timeout and an overall deadline? Find where the `WebClient` timeouts are set, or notice that they aren't.
+* The two calls are **sequential** (visits need the pet ids from the owner). Is there a per-call timeout and an overall deadline? Find where the `WebClient` timeouts are set, or notice that they aren't. (Answered in §5.1: none on the clients; the breaker's time limiter is 10 s.)
 * The fallback hides the failure from the user. Is it counted? A fallback rate is an SLO signal ([6.1 §6.4](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)).
 * The gateway is also the aggregator (a BFF in practice). Who owns it when there are three frontends?
 
@@ -159,5 +159,74 @@ Connect it to [6.2 §5.1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Re
 * "On Kubernetes I'd drop Eureka and Config Server for platform discovery and ConfigMaps. Larsson's book does exactly that between chapters 16 and 17."
 * "Larsson's chapter 13 stacks retry, time limiter and circuit breaker on a reactive call, and builds in fault injection so you can watch the breaker open. I'd copy the fault injection before I'd copy the annotations."
 * "What samples skip is my checklist: outbox, idempotent consumers, contract tests, shutdown behavior, container sizing."
+
+---
+
+## 5. Deep dive: what the samples actually configure (verified 2026-10-26) 🧊
+
+Pinned for this section: petclinic microservices at commit [`e8b747ab52`](https://github.com/spring-petclinic/spring-petclinic-microservices/tree/e8b747ab522721076cacb5cf688eb8a54ba8c5c9) ([Spring Cloud `2025.1.0`](https://github.com/spring-petclinic/spring-petclinic-microservices/blob/e8b747ab522721076cacb5cf688eb8a54ba8c5c9/pom.xml#L32)), Larsson's Fourth Edition at commit [`db9e0fa7d4`](https://github.com/PacktPublishing/Microservices-with-Spring-Boot-and-Spring-Cloud-Fourth-Edition/tree/db9e0fa7d41756224a149a5a870647e0f0426b2e), Resilience4j `v2.4.0`. All **18 paths cited in this file** resolve at those commits.
+
+### 5.1 Petclinic's real timeouts: the probe in §1.1, answered
+
+§1.1 asked where the `WebClient` timeouts are set. In the gateway at the pin:
+
+* **There are none on the clients.** [`VisitsServiceClient`](https://github.com/spring-petclinic/spring-petclinic-microservices/blob/e8b747ab522721076cacb5cf688eb8a54ba8c5c9/spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java#L46) calls `.retrieve()` on a load-balanced `WebClient` with no response timeout, and nothing in the gateway's `application.yml` sets one.
+* **The only bound is the circuit breaker's time limiter.** The application declares a default customizer for every breaker:
+
+```java
+public Customizer<ReactiveResilience4JCircuitBreakerFactory> defaultCustomizer() {
+    return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
+        .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
+        .timeLimiterConfig(TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(10)).build())
+        .build());
+```
+
+What that means for the owner-details page (§1.1):
+
+| Call | Bounded by | Consequence |
+|---|---|---|
+| `getVisitsForPets` (inside `cb.run`, [here](https://github.com/spring-petclinic/spring-petclinic-microservices/blob/e8b747ab522721076cacb5cf688eb8a54ba8c5c9/spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L61)) | The time limiter: **10 s**, then the fallback (owner without visits) | A slow visits service makes the page wait up to 10 s before degrading |
+| `getOwner` (not wrapped) | Nothing | A hung customers service hangs the request |
+| The breaker itself | [`CircuitBreakerConfig.ofDefaults()`](https://github.com/spring-petclinic/spring-petclinic-microservices/blob/e8b747ab522721076cacb5cf688eb8a54ba8c5c9/spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/ApiGatewayApplication.java#L87): count-based, [window 100, minimum 100 calls](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreakerConfig.java#L47), 50 % failures | Can't open before 100 calls in the window; in a demo it effectively never opens |
+
+Without that customizer, Spring Cloud CircuitBreaker would have used [`TimeLimiterConfig.ofDefaults()`](https://github.com/spring-cloud/spring-cloud-circuitbreaker/blob/v5.0.1/spring-cloud-circuitbreaker-resilience4j/src/main/java/org/springframework/cloud/circuitbreaker/resilience4j/Resilience4JConfigBuilder.java#L33), which is [1 second](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-timelimiter/src/main/java/io/github/resilience4j/timelimiter/TimeLimiterConfig.java#L14). Either way the time limit is a breaker setting nobody sees in the client code. That's why "find the timeout" is a review question ([8.9 C12](09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md)).
+
+### 5.2 Larsson's Chapter 13, worked through from the configuration
+
+[`product-composite.yml`](https://github.com/PacktPublishing/Microservices-with-Spring-Boot-and-Spring-Cloud-Fourth-Edition/blob/db9e0fa7d41756224a149a5a870647e0f0426b2e/Chapter13/config-repo/product-composite.yml#L120) at the pin:
+
+| Setting | Value |
+|---|---|
+| Circuit breaker | count-based, window **5**, failure threshold **50 %**, open for **10 s**, **3** half-open calls, automatic transition on |
+| Time limiter | **2 s** ([line](https://github.com/PacktPublishing/Microservices-with-Spring-Boot-and-Spring-Cloud-Fourth-Edition/blob/db9e0fa7d41756224a149a5a870647e0f0426b2e/Chapter13/config-repo/product-composite.yml#L102)) |
+| Retry | **3** attempts, **1 s** apart, only on `WebClientResponseException$InternalServerError` ([line](https://github.com/PacktPublishing/Microservices-with-Spring-Boot-and-Spring-Cloud-Fourth-Edition/blob/db9e0fa7d41756224a149a5a870647e0f0426b2e/Chapter13/config-repo/product-composite.yml#L107)) |
+
+`minimumNumberOfCalls` isn't set, so its default of 100 applies. But Resilience4j [caps it at the window size for count-based windows](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerMetrics.java#L51), so the breaker evaluates after 5 calls. With Spring's aspect order `Retry(CircuitBreaker(TimeLimiter(call)))` ([6.2 §5.1](../06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)), each retry attempt is one breaker call. That gives a prediction to check on a live system (§2.3, exercise 2). **It's derived from the configuration, not run here:**
+
+* With `faultPercent=100`, request 1 is three failed attempts (calls 1–3). Request 2's first two attempts are calls 4–5: the window is full with 5/5 failures, and the breaker opens.
+* Request 2's third attempt is rejected with `CallNotPermittedException`. That isn't in `retryExceptions`, so it isn't retried; the fallback answers.
+* A 2 s time-limiter timeout is a `TimeoutException`, not an `InternalServerError`, so **timeouts are never retried** here. That's a sensible choice for a slow dependency ([6.6](../06-Resilience-Caching/06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md)), and worth saying out loud in an interview.
+
+### 5.3 What I'd change
+
+| Sample | Change | Evidence |
+|---|---|---|
+| Petclinic gateway | Response and connect timeouts on both `WebClient`s, below the 10 s limiter | §5.1 |
+| Petclinic gateway | A breaker sized for the traffic (window and minimum calls far below 100), or none | §5.1 |
+| Petclinic gateway | Count and alert on fallbacks; "owner without visits" hides the outage | [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md) |
+| Larsson Chapter 13 | A retry budget instead of a fixed 3 attempts | 2.72× load on an overloaded dependency ([6.6](../06-Resilience-Caching/06-Resilience-Under-Load-Chaos-Lab-Measured-Stack.md)) |
+| Both | On Kubernetes, drop Eureka and Config Server (as Larsson's Chapter 17 does) | §1.3 |
+
+## Summary
+
+| Topic | Key point | Section |
+|---|---|---|
+| Reading samples | Keep a list of what's missing: data ownership, slow dependencies, outbox, idempotency, contracts, rollout behaviour | §0 |
+| Petclinic aggregator | One batched call for all pets' visits; a breaker that degrades to an owner without visits | §1.1 |
+| Petclinic timeouts | No client timeouts; a 10 s time limiter; `ofDefaults()` breaker needs 100 calls before it can open | §5.1 |
+| Platform | On Kubernetes, Eureka and Config Server duplicate Services and ConfigMaps | §1.3 |
+| Larsson | One system evolving by chapter; diff chapters to see what each capability costs | §2 |
+| Chapter 13 | Window 5, 50 %, 10 s open; 2 s time limit; retries only on 500s; predicted to open on the 5th call | §5.2 |
+| The gap list | Outbox, sagas, contracts, sizing, shutdown, cache consistency | §3 |
 
 **Next:** [8.3 Saga, outbox and event-driven repositories →](03-Saga-Outbox-Event-Driven-Repos.md)

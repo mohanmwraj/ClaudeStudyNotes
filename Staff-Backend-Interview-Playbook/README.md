@@ -2,7 +2,7 @@
 
 A first-principles, **verified** reference for Senior (L5) and Staff (L6) backend interviews on the Java / Spring / PostgreSQL / Kafka / Kubernetes stack, and a production reference you can keep using after the interview.
 
-* **75 Markdown files in 10 pillars + an introduction**, about 33,000 lines.
+* **79 Markdown files in 10 pillars + an introduction**, about 35,500 lines.
 * **Batch 1 deep dive (2026-10-25):** Pillars 1–3 were deepened: five new modules (1.6 platform and quality-gate blueprints, 2.9–2.10 a line-by-line EXPLAIN atlas, 2.11 plan pathologies, 3.7 high-scale persistence), new verified sections and a **Summary** in every module, and a Round 2 of bar-raiser drills in 1.5, 2.8 and 3.6.
 * **Batch 2 deep dive (2026-10-25):** Pillars 4–5 were deepened: five new modules (4.7 auto-configuration internals and a production starter blueprint, 4.8 request lifecycle, events, `@Async` and graceful shutdown, 5.9 an exhaustive patterns catalog with failure modes and Spring code, 5.10 a saga + Kafka + outbox/inbox + CQRS reference implementation broken eleven ways, 5.11 a modular-monolith blueprint with Kafka-externalized events and an extraction path), a verified deep-dive section and a **Summary** in every module, and a Round 2 of bar-raiser drills in 4.6 and 5.8.
 * **Batch 3 deep dive (2026-10-25/26):** Pillars 6–7 were deepened, and **Kafka got its own pillar (10)**:
@@ -10,8 +10,17 @@ A first-principles, **verified** reference for Senior (L5) and Staff (L6) backen
   * **In every existing module:** a deep-dive section and a **Summary**.
   * **Round 2 drills** in 6.5, 7.6 and 10.5.
   * **Three earlier claims corrected in place:** static membership on Deployments, `InitialRAMPercentage` "committing" the heap, and `minAvailable: 75%` PDBs.
+* **Batch 4 deep dive (2026-10-26):** Pillar 8 was rebuilt around **pinned source**. Every GitHub link points to the release tag of the version the kit ran, anchored at the line that matters, and checked by a script.
+  * **Four new modules:**
+    * 8.6: framework internals read from real stack traces (653 captured frames checked against their release tags).
+    * 8.7: the source line behind each measured surprise.
+    * 8.8: a 111-class study matrix across Pillars 1–7 and 10, plus a master interview synthesis.
+    * 8.9: a 20-question staff system and code review checklist, with a flawed pull request whose ten defects were reproduced.
+  * **In 8.1–8.4:** a deep-dive section and a **Summary**; all 105 cited paths re-checked at the pins.
+  * **Round 2 drills** in 8.5.
+  * **Two earlier claims corrected in place:** HikariCP's virtual-thread back-off (it's in 7.1.0, not the 7.0.2 that Boot ships), and "10 instant attempts" for spring-kafka's default retries (~0.5 s apart when the consumer is caught up).
 * Every pillar: first principles → under-the-hood mechanics → ❌ naïve vs ✅ production-hardened → **experiments that were actually run** → source code to read → interview soundbites → a **bar-raiser drill-down** file.
-* **Verified stack (2026-10-25):** JDK 25 (Temurin 25.0.4.1) · Spring Boot 4.1.2 (Framework 7.0.10, Security 7.1.2, Data 4.1.2) · Hibernate 7.4.13 · HikariCP 7.0.2 · PostgreSQL 18.6 · MySQL 8.4.13 · Kafka 4.2.2 · spring-kafka 4.1.2 · Debezium 3.7.0 · Spring Modulith 2.1.2 · Resilience4j 2.4.0 · Caffeine 3.3.1 · Lettuce 7.9.0 (Boot-managed 7.5.2 in 6.7) · Redis 8.10.2 · Flyway 12.4.0 · Maven 3.10.0 / 4.0.0-rc-7 · Gradle 9.8.2 · Kubernetes v1.37.1 · KEDA v2.21.0 · Strimzi 1.3.0 · kustomize 5.8.3 · promtool 3.15.1 · hadolint 2.15.1 · cel-java 0.10.1.
+* **Verified stack (2026-10-25):** JDK 25 (Temurin 25.0.4.1) · Spring Boot 4.1.2 (Framework 7.0.10, Security 7.1.2, Data 4.1.2, Tomcat 11.0.27) · Hibernate 7.4.13 · HikariCP 7.0.2 · PostgreSQL 18.6 · MySQL 8.4.13 · Kafka 4.2.2 · spring-kafka 4.1.2 · Debezium 3.7.0 · Spring Modulith 2.1.2 · Resilience4j 2.4.0 · Caffeine 3.3.1 · Lettuce 7.9.0 (Boot-managed 7.5.2 in 6.7) · Redis 8.10.2 · Flyway 12.4.0 · Maven 3.10.0 / 4.0.0-rc-7 · Gradle 9.8.2 · Kubernetes v1.37.1 · KEDA v2.21.0 · Strimzi 1.3.0 · kustomize 5.8.3 · promtool 3.15.1 · hadolint 2.15.1 · cel-java 0.10.1.
 
 **Start here:** [00 · How to Think Like a Staff Engineer](00-How-to-Think-Like-a-Staff-Engineer.md)
 
@@ -118,7 +127,11 @@ Kafka moved to its own [Pillar 10](#pillar-10--kafka-in-production) on 2026-10-2
 | 8.2 | [Microservices & cloud-native: petclinic microservices, Larsson's book repos](08-GitHub-Codebases-Study-Guide/02-Microservices-and-Cloud-Native-Repos.md) |
 | 8.3 | [Sagas, outbox, CDC, Kafka internals: Eventuate, FTGO, debezium-examples, Apache Kafka, spring-kafka](08-GitHub-Codebases-Study-Guide/03-Saga-Outbox-Event-Driven-Repos.md) |
 | 8.4 | [High-performance internals: HikariCP, Resilience4j, Caffeine source](08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md) |
-| 8.5 | [Code-reading plan + BR](08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md) |
+| 8.5 | [Code-reading plan + BR (Round 1 + Round 2)](08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md) |
+| 8.6 | [**Framework internals by stack trace**: one request, one `@Transactional` call, the commit order, pool exhaustion in a thread dump, virtual threads, `@Cacheable(sync)`, a Kafka record, with every frame checked against its release tag](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| 8.7 | [**The source behind the measurements**: each surprise in the kit linked to the line that causes it (JDK, PostgreSQL, Redis, Kubernetes, KEDA, Kafka, Spring, Hibernate), plus an upgrade watchlist](08-GitHub-Codebases-Study-Guide/07-Source-Behind-the-Measurements-JDK-PostgreSQL-Redis-Kubernetes-Kafka.md) |
+| 8.8 | [**GitHub codebase study matrix + master interview synthesis**: 111 classes in 31 pinned repositories, rounds, twelve cross-pillar stories, a four-week plan](08-GitHub-Codebases-Study-Guide/08-GitHub-Codebase-Study-Matrix-and-Master-Interview-Synthesis.md) |
+| 8.9 | [**The staff-level system and code review checklist (20 questions)**, with a flawed pull request whose ten defects were reproduced and fixed](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
 
 ### Pillar 9 · Staff capstone
 | # | File |
@@ -126,7 +139,7 @@ Kafka moved to its own [Pillar 10](#pillar-10--kafka-in-production) on 2026-10-2
 | 9.1 | [Reference architecture: an end-to-end order platform](09-Staff-Capstone/01-Reference-Architecture-End-to-End-Order-Platform.md) |
 | 9.2 | [Comparison matrices master sheet (Maven vs Gradle, B+Tree vs LSM, sagas, locking, G1 vs ZGC, and 20+ more)](09-Staff-Capstone/02-Comparison-Matrices-Master-Sheet.md) |
 | 9.3 | [Mock interview loops, L5 vs L6 (scripts, rubrics, a flawed design to review)](09-Staff-Capstone/03-Mock-Interview-Loops-L5-vs-L6.md) |
-| 9.4 | [330 rapid-fire flashcards](09-Staff-Capstone/04-Rapid-Fire-Flashcards.md) |
+| 9.4 | [342 rapid-fire flashcards](09-Staff-Capstone/04-Rapid-Fire-Flashcards.md) |
 | 9.5 | [Production-readiness checklists + game days](09-Staff-Capstone/05-Production-Readiness-Checklists.md) |
 
 ### Pillar 10 · Kafka in production
@@ -147,7 +160,7 @@ Read it right after Pillar 6 (it was part of it until 2026-10-26).
 | Track | For | Path |
 |---|---|---|
 | **A · Two weeks to a senior loop** | L5 interview soon | [00](00-How-to-Think-Like-a-Staff-Engineer.md) → 🔥 sections of 2.2, 2.3, 2.4, 2.6 → 3.3, 3.4, 3.5 → 4.3, 4.4, 4.8 → 5.3, 5.4, 5.10 → 6.1, 6.2, 10.1, 10.2 → 7.1, 7.3 → every BR file → [9.3 Loop A](09-Staff-Capstone/03-Mock-Interview-Loops-L5-vs-L6.md) → [9.4](09-Staff-Capstone/04-Rapid-Fire-Flashcards.md) daily |
-| **B · Six weeks to a staff loop** | L6 interview | Pillars 1–8 in order, with Pillar 10 right after 6 (one pillar every ~5 days, including 🧊 sections and the [8.5 reading plan](08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md)) → [9.1](09-Staff-Capstone/01-Reference-Architecture-End-to-End-Order-Platform.md) practiced three times → [9.3 Loop B and C](09-Staff-Capstone/03-Mock-Interview-Loops-L5-vs-L6.md) |
+| **B · Six weeks to a staff loop** | L6 interview | Pillars 1–8 in order, with Pillar 10 right after 6 (one pillar every ~5 days, including 🧊 sections, the [8.5 reading plan](08-GitHub-Codebases-Study-Guide/05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md) and the [8.8 study matrix](08-GitHub-Codebases-Study-Guide/08-GitHub-Codebase-Study-Matrix-and-Master-Interview-Synthesis.md)) → [9.1](09-Staff-Capstone/01-Reference-Architecture-End-to-End-Order-Platform.md) practiced three times → [9.3 Loop B and C](09-Staff-Capstone/03-Mock-Interview-Loops-L5-vs-L6.md) |
 | **C · Production reference** | On the job | Use the symptom index below, then the matching ❌/✅ table and [9.5 checklists](09-Staff-Capstone/05-Production-Readiness-Checklists.md) |
 
 ### Symptom → where to look
@@ -199,6 +212,16 @@ Read it right after Pillar 6 (it was part of it until 2026-10-26).
 | The HPA can't create pods during a deploy (`FailedCreate`) | [7.8 §5.3](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) |
 | A migration Job retried a SQL typo until the deploy timed out | [7.8 §4](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) |
 | A CronJob can't reach its database | [7.8 §5.1](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) |
+| Requests time out waiting for a connection while the database is idle | [8.6 §4](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md), [8.9 C11](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
+| The thread dump shows nothing stuck after enabling virtual threads | [8.6 §5](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| Replacing a row with the same unique key fails at commit | [8.6 §3](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| `@Cacheable(sync = true)` throws `Recursive update` | [8.6 §6](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| Kafka retries take seconds, or a DLT publish stalls a partition | [8.6 §7](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| `UnexpectedRollbackException` after catching an exception | [8.9 C18](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
+| An HTTP call hangs far longer than any timeout you remember setting | [8.9 C12](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
+| A circuit breaker went half-open while it was held open | [8.4 §6.2](08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md) |
+| You need the line of source behind a default or a surprise | [8.7](08-GitHub-Codebases-Study-Guide/07-Source-Behind-the-Measurements-JDK-PostgreSQL-Redis-Kubernetes-Kafka.md) |
+| You're reviewing a pull request or a design doc | [8.9](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
 
 ---
 
@@ -220,7 +243,7 @@ Labels used in the files:
 | 6 | Resilience4j 2.4.0 (plus `javap` of the jars), Caffeine 3.3.1, Lettuce 7.9.0. Batch 3: an open-loop chaos lab (six client stacks × four dependency phases, run twice); a real Redis 8.10.2: the 6.3/6.4 labs re-run (identical), `MEMORY USAGE`, eviction policies, RESP3 client-side caching, pipelining, Sentinel failovers with and without `WAIT`; Spring Data Redis cache behaviours; `redis.conf`/ACL/Sentinel blueprints started and enforced |
 | 7 | JDK 25 ergonomics and NMT, a GC comparison pinned to 2 CPUs, Boot probes and graceful shutdown, layer extraction, AOT-cache flag mismatch; registry metadata for base images; `application.yml` checked against Boot metadata and manifests against Kubernetes v1.37.1 OpenAPI + KEDA/Gateway API CRDs. Batch 3: six jdeps/jlink runtimes started and probed; startup timed 5× per variant; eleven JVM profiles measured with NMT and working set; hadolint; kustomize renders of five targets validated (60 documents) and audited, 12 negative tests; promtool rule tests; the admission policy's CEL evaluated with cel-java; a Flyway migration entry point run against PostgreSQL 18.6 in six scenarios |
 | 10 | Kafka 4.2.2 + spring-kafka 4.1.2 (rebalance protocols, transactions, retry topics, lag). Batch 3: a KRaft cluster with three brokers (RF 3, min ISR 2, broker loss, `KafkaAdmin` behaviours); a Strimzi 1.3.0 blueprint validated against its CRDs; a scale-down/rolling-deploy lab (15 scenarios); `KafkaConsumer` config validation; `javap` of spring-kafka; KEDA 2.21.0 source read |
-| 8 | GitHub API, file trees and raw-file checks for every referenced repo and path; source excerpts read from the default branches |
+| 8 | GitHub API, file trees and raw-file checks for every referenced repo and path. Batch 4: 38 repositories pinned to release tags (commits for untagged samples); 230 source references checked by script at the pins (the file exists and the quoted code is on the linked line); the 105 paths in 8.1–8.4 re-checked; a Boot 4.1.2 + PostgreSQL 18.6 call-path lab and a spring-kafka 4.1.2 lab (stacks captured; 653 frames linked and line-checked); a ten-defect review lab (run twice); a Resilience4j 2.4.0 transition-race experiment (run twice) |
 | 9 | Synthesis; flashcards generated from the Pillar 1–8 and 10 files |
 
 **Limits, stated plainly:**
@@ -230,9 +253,10 @@ Labels used in the files:
 * **Manifests:** schema-validated, and in 7.8 audited. No admission plugin ran: the Pod Security check is our own implementation of the documented controls (the Kyverno CLI wasn't permitted on this machine), and the CEL engine is cel-java, not the API server's.
 * **Kafka log compaction** wasn't run: Kafka's log cleaner fails on Windows ([10.3 §4](10-Kafka-Production/03-Production-Kafka-Multi-Broker-Durability-Compaction-Strimzi-Blueprint.md)).
 * **B+Tree vs LSM** ([9.2 §2](09-Staff-Capstone/02-Comparison-Matrices-Master-Sheet.md)) is first-principles, with sources; no LSM engine was run.
+* **Pillar 8:** the Larsson Chapter 13 breaker sequence in [8.2 §5.2](08-GitHub-Codebases-Study-Guide/02-Microservices-and-Cloud-Native-Repos.md) is derived from the configuration and Resilience4j's source, not run.
 * Lab harness code lived in a temporary workspace; the code that matters is shown inline in each section.
 
-All GitHub repository and path references were verified to resolve: 158 at the Batch 2 check; the 70 unique GitHub URLs re-checked on 2026-10-26.
+All GitHub repository and path references were verified to resolve: 158 at the Batch 2 check; the 70 unique GitHub URLs re-checked on 2026-10-26; after Batch 4, all **336 unique GitHub URLs** in the kit returned 200 (2026-10-26).
 
 ---
 
@@ -243,6 +267,10 @@ All GitHub repository and path references were verified to resolve: 158 at the B
 * Resilience4j has no `RingBitBuffer` since 1.0, its default windows use a lock, and its rate limiter is a **fixed window**, not a token bucket ([6.1](06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md), [6.2](06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md)).
 * Hibernate 7.4 changed when `JOIN FETCH` + pagination happens in memory (HHH90003004) ([3.3](03-JPA-Hibernate-Spring-Data/03-NPlus1-Lazy-Loading-Fetch-Plans-Pagination-Projections.md)).
 * Spring's documentation says data access in an `AFTER_COMMIT` callback is not committed. With Hikari's default auto-commit it **was** committed (the transaction manager restores auto-commit during cleanup); with `auto-commit=false` it was lost. Rely on neither: use `REQUIRES_NEW` ([4.8 §2.1](04-Spring-Boot-Internals/08-Request-Lifecycle-Events-Async-Graceful-Shutdown.md#21-the-after_commit-write-trap-proven-both-ways-)).
+* **Corrected in Batch 4:**
+  * 8.4 quoted HikariCP's `dev` branch for `requite`. The virtual-thread back-off first shipped in 7.1.0, and Boot 4.1.2 manages 7.0.2 ([8.4 §6.1](08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md)).
+  * spring-kafka's default retries were described as "10 instant attempts". The back-off is 0, but on a caught-up partition each retry waited ~0.5 s for the consumer's in-flight fetch ([8.6 §7](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md)).
+  * Fixed in 10.2, 10.5, 9.3 and this README.
 * **Corrected in this kit (Batch 3):** `group.instance.id: ${POD_NAME}` on Deployments, which stalled partitions 45 s per rollout ([10.4 §4](10-Kafka-Production/04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)); `InitialRAMPercentage = MaxRAMPercentage` as a way to commit the heap, which G1 undid at 0.85 s ([7.7 §4.2](07-Docker-JVM-Kubernetes/07-Container-Images-and-JVM-Profiles-Blueprints-II-jlink-AOT-Workloads.md)); and `minAvailable: 75%` PDBs, which allow 0 evictions at 2–3 replicas ([7.8 §5.2](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md)). Each is fixed in place where it appeared.
 
 ## Verified surprises worth knowing
@@ -260,7 +288,7 @@ All GitHub repository and path references were verified to resolve: 158 at the B
 | Event-store projectors can skip events on out-of-order commits; fix with `pg_snapshot_xmin` | [5.5](05-Microservices-Patterns/05-CQRS-and-Event-Sourcing.md) |
 | Retry outside the breaker: 6 downstream calls; inside: 9 with the breaker still closed | [6.2 §5.2](06-Resilience-Caching/02-Bulkheads-Rate-Limiters-Retries-Jitter-Decorator-Order.md) |
 | Kafka 4.x: `linger.ms` defaults to 5; eager rebalancing revoked 6 partitions to move 3 | [10.1](10-Kafka-Production/01-Kafka-Producers-Batching-Idempotence-Ordering.md), [10.2](10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
-| spring-kafka 4: DLT suffix `-dlt`; `DefaultErrorHandler` = 10 instant attempts then skip; retry topics broke per-key order | [10.2 §4](10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
+| spring-kafka 4: DLT suffix `-dlt`; `DefaultErrorHandler` = 10 attempts with no back-off (≈0.5 s apart when caught up), then skip; retry topics broke per-key order | [10.2 §4](10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md) |
 | One CPU → SerialGC at any memory size; a small Boot app had ~165 MB outside a 68 MB heap | [7.1](07-Docker-JVM-Kubernetes/01-JVM-in-Containers-cgroups-v2-Memory-OOMKilled.md) |
 | VACUUM skips index cleanup when < ~2 % of pages have dead items, so index-only scans keep heap-fetching | [2.9 §5](02-SQL-RDBMS-Internals/09-EXPLAIN-Atlas-Part-1-Scans-Sorts-Aggregates-Parallelism.md#5-index-only-scan-the-visibility-map-and-the-vacuum-that-didnt-help-) |
 | Range predicates don't propagate across joins (equalities do): 660 ms → 135 ms with a redundant predicate | [2.10 §3](02-SQL-RDBMS-Internals/10-EXPLAIN-Atlas-Part-2-Joins-Subqueries-Partitions-DML.md#3-merge-join-and-the-predicate-postgresql-doesnt-copy-) |
@@ -289,12 +317,22 @@ All GitHub repository and path references were verified to resolve: 158 at the B
 | Spring Boot exits 1 for every startup failure: `ExitCodeExceptionMapper`s aren't consulted when refresh fails | [7.8 §4.1](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) |
 | `> on (namespace)` stripped the `job` label from a canary alert (caught by a promtool test) | [7.8 §6.2](07-Docker-JVM-Kubernetes/08-Kubernetes-Platform-Blueprints-II-Kustomize-Guardrails-Consumers-Jobs-Canary.md) |
 | `jsonb` rewrote the outbox payload text; Jackson's default tree parsing turned `25.00` into `25.0` | [4.7 §5.4](04-Spring-Boot-Internals/07-Auto-Configuration-Internals-Production-Starter-Blueprint.md#54-end-to-end-the-starter-with-a-real-database-and-broker-verified), [5.9 §8](05-Microservices-Patterns/09-Microservices-Patterns-Catalog-Flows-Failure-Modes-Spring-Code.md#8-spring-code-sheet-the-patterns-not-implemented-elsewhere-in-the-kit) |
+| `Thread.getAllStackTraces()` doesn't include virtual threads: a request blocked on the pool was invisible; the JSON thread dump found it | [8.6 §5](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| With Hikari's default auto-commit, Spring takes the connection in `doBegin`, so a `@Transactional` method holds it across an HTTP call (2 of 4 requests timed out on a pool of 2) | [8.6 §4](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md), [8.9 C11](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
+| `@TransactionalEventListener` runs after `afterCommit` callbacks, on the request thread, before the response is written | [8.6 §3](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| Delete-then-insert of a unique key sent only the `INSERT`: the ActionQueue runs inserts before deletes | [8.6 §3](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| `@Cacheable(sync = true)` runs the loader inside `ConcurrentHashMap.compute`; same-key recursion throws `Recursive update` | [8.6 §6](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| spring-kafka's "no back-off" retries were ~515 ms apart on a caught-up partition; the recoverer runs on the consumer thread | [8.6 §7](08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) |
+| Resilience4j: racing manual transitions left orphaned timers; one flipped a breaker held open for 10 minutes to HALF_OPEN within a second | [8.4 §6.2](08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md) |
+| Boot's auto-configured `RestClient` has no read timeout (a 3 s call returned after 3 s); a "best effort" `REQUIRED` audit rolled back the order | [8.9 C12, C18](08-GitHub-Codebases-Study-Guide/09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md) |
+| The Boot 4.1.2 BOM ships HikariCP 7.0.2 and Caffeine 3.2.4, not the versions most write-ups describe | [8.4 §6](08-GitHub-Codebases-Study-Guide/04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md), [8.8 §1](08-GitHub-Codebases-Study-Guide/08-GitHub-Codebase-Study-Matrix-and-Master-Interview-Synthesis.md) |
+| Petclinic's gateway breaker has a 10 s time limiter and needs 100 calls before it can open | [8.2 §5.1](08-GitHub-Codebases-Study-Guide/02-Microservices-and-Cloud-Native-Repos.md) |
 
 ---
 
 ## Conventions
 
-* Each topic file: header (verified stack, prerequisites, go-deeper links) → **§0 first principles** → numbered sections → ❌ naïve vs ✅ production-hardened → source to read → interview soundbites → deep-dive section (Batches 1–3) → **Summary** table → **Next** link.
+* Each topic file: header (verified stack, prerequisites, go-deeper links) → **§0 first principles** → numbered sections → ❌ naïve vs ✅ production-hardened → source to read → interview soundbites → deep-dive section (Batches 1–4) → **Summary** table → **Next** link.
 * Bar-raiser files: 🎤 candidate · 🔍 interviewer probe · 🛡️ staff-level defense (hidden in a click-to-expand block), then an L5 vs L6 table, red flags and flashcards.
 * Versions drift. Before quoting a default in an interview, check it on the version you'll be asked about; the kit shows how (`javap -constants`, `PrintFlagsFinal`, configuration metadata, `ConfigDef`).
 

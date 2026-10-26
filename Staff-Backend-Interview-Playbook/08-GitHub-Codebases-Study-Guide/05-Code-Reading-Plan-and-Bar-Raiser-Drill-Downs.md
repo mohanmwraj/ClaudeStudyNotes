@@ -1,6 +1,6 @@
 # 8.5 Code-Reading Plan and Bar-Raiser Drill-Downs
 
-> Builds on [8.1](01-Modular-Monolith-and-DDD-Repos.md)–[8.4](04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md). All repositories and paths referenced there were verified to exist on 2026-10-25.
+> Builds on [8.1](01-Modular-Monolith-and-DDD-Repos.md)–[8.4](04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md). All repositories and paths referenced there were verified to exist on 2026-10-25, and re-checked against pinned release tags on 2026-10-26. **Round 2** (drills 10–15) builds on [8.6](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md)–[8.9](09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md); for a shorter plan than §1, use the four weeks in [8.8 §10.4](08-GitHub-Codebase-Study-Matrix-and-Master-Interview-Synthesis.md).
 >
 > 🎤 candidate · 🔍 interviewer probe · 🛡️ staff-level defense
 
@@ -66,7 +66,7 @@ I predicted behavior and checked it. For Caffeine I ran a Zipf trace with period
 
 <details><summary>🛡️ Defense</summary>
 
-Have a real critique ready, and frame it as a trade-off. For Resilience4j: `stateTransition` runs `preTransitionHook()` inside `AtomicReference.getAndUpdate`, whose Javadoc says the updater should be side-effect-free because it can be re-applied under contention. I'd want to know whether concurrent transitions can run the hook twice and whether that's harmless. If not, I'd do the CAS first and the side effects after a successful swap.
+Have a real critique ready, and frame it as a trade-off. For Resilience4j: `stateTransition` runs `preTransitionHook()` inside `AtomicReference.getAndUpdate`, whose Javadoc says the updater should be side-effect-free because it can be re-applied under contention. I'd want to know whether concurrent transitions can run the hook twice and whether that's harmless. If not, I'd do the CAS first and the side effects after a successful swap. (I later measured it: [8.4 §6.2](04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md), and Round 2 drill 13.)
 </details>
 
 ---
@@ -229,6 +229,200 @@ On Kubernetes they duplicate platform features (Services/DNS for discovery, Conf
 
 ---
 
+# Round 2: pinned source, thread dumps, a measured critique, and a code review (Batch 4 deep dive)
+
+> Evidence for Round 2 is in:
+> * [8.6](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md): stacks captured from Boot 4.1.2 and spring-kafka 4.1.2, with 653 frames checked against their release tags;
+> * [8.7](07-Source-Behind-the-Measurements-JDK-PostgreSQL-Redis-Kubernetes-Kafka.md): the source line behind each measured surprise;
+> * [8.4 §6](04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md): the Resilience4j race, measured;
+> * [8.9](09-Staff-Level-System-and-Code-Review-Checklist-20-Questions.md): ten reproduced review findings.
+>
+> 🎤 candidate · 🔍 probe · 🛡️ staff-level defense.
+
+---
+
+## Drill 10: "I've read HikariCP's source on GitHub, so I know how our pool behaves" 🔥
+
+🎤 *"`requite` parks when the returning thread is virtual, so virtual threads are handled."*
+
+🔍 **Probe 1: Which version is on your classpath?**
+
+<details><summary>🛡️ Defense</summary>
+
+With Spring Boot 4.1.2, the BOM manages **HikariCP 7.0.2**. The virtual-thread back-off I quoted is on `dev` and first shipped in **7.1.0**. 7.0.2's `requite` parks only periodically and otherwise calls `Thread.yield()`, whatever the thread type. So the sentence is true of the code I read and false of the code we run. Same story for Caffeine: Boot ships 3.2.4 while most write-ups describe 3.3.x. There the admission rule happens to be identical, but I only know that because I checked both tags.
+</details>
+
+🔍 **Probe 2: How do you make sure you're reading the right code?**
+
+<details><summary>🛡️ Defense</summary>
+
+Three steps.
+1. Get the version from the build (`dependency:tree`, or the BOM's managed versions), not from a blog.
+2. Open the release tag, not `main`, and link to it with a line anchor.
+3. Check one frame. A stack trace from the running service gives `ConcurrentBag.borrow(ConcurrentBag.java:163)`. If line 163 at the tag is inside `borrow` (it's `handoffQueue.poll`), the jar was built from that tag and every other line maps too. In 8.6, 653 frames passed that check.
+</details>
+
+🔍 **Probe 3 (L6): How do you keep this true after upgrades?**
+
+<details><summary>🛡️ Defense</summary>
+
+Keep an upgrade watchlist: the handful of lines our behaviour depends on, per dependency. For a Boot BOM bump that's the managed pool and cache versions, the exit-code mapping, `server.shutdown` and the executor's queue capacity. For kafka-clients it's the producer defaults and the leave-group rule. Re-read them on every bump, and turn the important ones into tests: config validation at startup, a statement-count assertion, a `promtool` test. Reading source is cheap; re-reading the right ten lines is the habit that pays.
+</details>
+
+---
+
+## Drill 11: "Here's a thread dump from the outage. 180 threads are waiting" ⚡
+
+🎤 *"Tomcat was saturated, so we doubled `server.tomcat.threads.max`."*
+
+🔍 **Probe 1: What are those threads waiting on?**
+
+<details><summary>🛡️ Defense</summary>
+
+I'd look at the top frames first. If they're `ConcurrentBag.borrow` → `SynchronousQueue.poll` (on JDK 25, through `LinkedTransferQueue`), under `JpaTransactionManager.doBegin`, the pool was exhausted, not Tomcat. Doubling Tomcat's threads makes it worse: more requests queue on the same few connections. The next step is to find the **holders**: threads inside our own code, inside a transaction, doing something other than SQL.
+</details>
+
+🔍 **Probe 2: Why would a holder hold a connection while not using it?**
+
+<details><summary>🛡️ Defense</summary>
+
+Because with Hikari's default `auto-commit=true`, Spring takes the connection in `doBegin`, to switch auto-commit off. A `@Transactional` method therefore holds it from its first line, including an HTTP call made before any query. I reproduced it with a pool of 2: four concurrent requests with a 1.5 s pricing call inside the transaction, and two of them failed after the 1 s connection timeout. Moving the call out of the transaction fixed it. With `auto-commit=false` and `hibernate.connection.provider_disables_autocommit=true`, the borrow moves to the first SQL statement, which I also saw in a dump. The real fix is still no remote I/O inside transactions.
+</details>
+
+🔍 **Probe 3 (L6): After moving to virtual threads, the dump shows nothing waiting at all. Good news?**
+
+<details><summary>🛡️ Defense</summary>
+
+No. The blocked requests are probably virtual threads, and `Thread.getAllStackTraces()` doesn't return them. The Javadoc says it covers "all live platform threads… does not include virtual threads". I measured exactly that: the borrower was missing from the map. The JSON thread dump (`HotSpotDiagnosticMXBean.dumpThreads`, or `jcmd <pid> Thread.dump_to_file -format=json`) found it with the same Hikari frames. Even that dump only promises it "may" include virtual threads. With virtual threads I'd rather alert on Hikari's pending-threads and acquire-time metrics than depend on a dump during the incident.
+</details>
+
+---
+
+## Drill 12: "Review this pull request" 🔥
+
+🎤 *"It looks fine: tests pass, the code is clean. Maybe rename a few methods."*
+
+🔍 **Probe 1: Where do you start?**
+
+<details><summary>🛡️ Defense</summary>
+
+With the classes of bug that lose data or money, in order: is anything sent before the commit? Are failures caught inside a transaction? What happens if the request arrives twice? Is there a read-modify-write without a version or lock? Then availability: remote calls inside transactions, missing timeouts. Then efficiency: N+1, unbounded caches and queues. In the 8.9 lab, a PR with clean code and passing happy-path tests had all of those. Measured:
+* an order event delivered for an order that rolled back;
+* 2 orders from one client retry;
+* stock 9 instead of 8;
+* 51 statements for one list.
+</details>
+
+🔍 **Probe 2: "The audit is best effort, so we catch its exception." Fine?**
+
+<details><summary>🛡️ Defense</summary>
+
+Not if the audit method is `@Transactional` with the default `REQUIRED`. Its exception marks the *shared* transaction rollback-only, and catching it doesn't undo that. At commit Spring throws `UnexpectedRollbackException: "Transaction silently rolled back because it has been marked as rollback-only"`. I reproduced it: the order was lost because a log line failed. `REQUIRES_NEW` on the audit makes it actually independent, and the order committed.
+</details>
+
+🔍 **Probe 3 (L6): How do you stop this class of bug from coming back?**
+
+<details><summary>🛡️ Defense</summary>
+
+A test shape per class, all runnable without a cluster:
+* a `CyclicBarrier` to force the lost-update interleaving;
+* a pool of 2 and four threads for connection holding;
+* a slow HTTP stub for timeouts, and one that counts requests for side effects before commit;
+* the same request twice for idempotency;
+* Hibernate's statement counter for N+1.
+
+Then make the defaults explicit in configuration, so a reviewer can see them: read timeout, executor queue capacity, `open-in-view`. Each review comment I leave has the finding, the evidence, the fix and the test.
+</details>
+
+---
+
+## Drill 13: "Resilience4j's circuit breaker is lock-free, so it's correct under concurrency" 🧊
+
+🎤 *"State lives in one `AtomicReference`, updated with `getAndUpdate`."*
+
+🔍 **Probe 1: What does the `getAndUpdate` Javadoc ask of the function?**
+
+<details><summary>🛡️ Defense</summary>
+
+That it be side-effect-free, because it "may be re-applied when attempted updates fail due to contention". Resilience4j's updater calls the current state's `preTransitionHook()` and constructs the next state. Constructing an `OpenState` with automatic transition enabled **schedules** its OPEN → HALF_OPEN timer. The hook re-running is harmless; a discarded `OpenState` with a live timer may not be.
+</details>
+
+🔍 **Probe 2: Does the re-application actually happen?**
+
+<details><summary>🛡️ Defense</summary>
+
+I counted `OpenState` constructions against OPEN transitions with a counting interval function, in two kinds of traffic.
+* **Normal failures:** 64 threads failing at once, 200 rounds, gave exactly 200 transitions and 200 states. The `isClosed.compareAndSet` guard lets one thread through.
+* **Racing manual flips** (`transitionToOpenState`/`transitionToClosedState` from 8 threads): about 56,000 transitions built about 165,000 states, so roughly 110,000 discarded states, each with a scheduled timer.
+
+Two runs, same picture.
+</details>
+
+🔍 **Probe 3 (L6): So what? Nothing uses a discarded state.**
+
+<details><summary>🛡️ Defense</summary>
+
+Its timer does. When it fires, the discarded state's own `isOpen` flag is still true, so it calls `transitionToHalfOpenState()` on the state machine, whatever the current state is. I forced a breaker OPEN for ten minutes after such a race, and it was HALF_OPEN within a second. `FORCED_OPEN` and `DISABLED` aren't safe either: `FORCED_OPEN_TO_HALF_OPEN` and `DISABLED_TO_HALF_OPEN` are legal transitions.
+
+The operational rule is to serialize manual transitions: one controller, never a script racing live traffic. The upstream fix is to build the next state outside the updater, or cancel a discarded state's timer. That's the shape of a good library critique: the line, the reproduction, the scope ("not in normal traffic"), and the fix.
+</details>
+
+---
+
+## Drill 14: "`@Cacheable(sync = true)` stops stampedes, so the cache layer is safe" ⚡
+
+🎤 *"Only one thread loads a missing key; the others wait for it."*
+
+🔍 **Probe 1: Where exactly does the loader run?**
+
+<details><summary>🛡️ Defense</summary>
+
+Inside `ConcurrentHashMap.compute`. The captured stack goes `CacheAspectSupport.executeSynchronized` → `CaffeineCache.get(key, loader)` → `BoundedLocalCache.computeIfAbsent` → `ConcurrentHashMap.compute` → your method. Your database call runs while that hash bin is locked. That's what makes same-key callers wait, and it's also why the loader must be short.
+</details>
+
+🔍 **Probe 2: What breaks?**
+
+<details><summary>🛡️ Defense</summary>
+
+A loader that asks the same cache for the same key, directly or through another cached method, fails with `IllegalStateException: Recursive update`, thrown from `ConcurrentHashMap.compute` (line 2007 on JDK 25). The `compute` Javadoc forbids modifying the map during computation. A nested load of a *different* key worked in my run, but it ran inside the outer bin lock. And a slow loader holds up other keys that happen to share its bin, not just its own.
+</details>
+
+🔍 **Probe 3: And plain `@Cacheable`?**
+
+<details><summary>🛡️ Defense</summary>
+
+No coalescing at all. The stack shows no cache frames while the method runs, so ten concurrent misses run the method ten times: the stampede from [6.4](../06-Resilience-Caching/04-Cache-Stampede-Penetration-Avalanche-Invalidation.md). I use `sync = true` for expensive, non-recursive loaders with timeouts, and early refresh or jittered TTLs for hot keys.
+</details>
+
+---
+
+## Drill 15: "spring-kafka retries ten times instantly, then we send to the DLT" ⚡
+
+🎤 *"`FixedBackOff(0, 9)`: no delay, so a bad record costs us milliseconds."*
+
+🔍 **Probe 1: How far apart are those retries?**
+
+<details><summary>🛡️ Defense</summary>
+
+Measured on a caught-up partition, about **515 ms** each: 10 attempts took 4.6 s. The handler seeks back and the record returns through a fresh `poll()`, but the consumer already has its next fetch in flight. The broker holds it for up to `fetch.max.wait.ms` (500 ms), and the client won't send another fetch to that broker while one is pending. With `fetch-max-wait=50ms` the gap fell to ~65 ms; with 20,000 records queued behind the poison, to 15–30 ms. "No back-off" describes the configuration, not the timing.
+</details>
+
+🔍 **Probe 2: Where does the DLT publish run?**
+
+<details><summary>🛡️ Defense</summary>
+
+On the consumer thread, inside the poll loop. The captured stack is `ListenerConsumer.pollAndInvoke` → `invokeErrorHandler` → `DefaultErrorHandler.handleRemaining` → `SeekUtils.seekOrRecover` → `FailedRecordTracker.recovered` → the recoverer. A slow or blocked DLT send stalls the partition and counts against `max.poll.interval.ms`. The DLT is `<topic>-dlt` on the **same partition number**, so it needs at least as many partitions as the source.
+</details>
+
+🔍 **Probe 3 (L6): What do you configure instead?**
+
+<details><summary>🛡️ Defense</summary>
+
+An `ExponentialBackOff` with a maximum elapsed time that fits inside `max.poll.interval.ms`. A `DeadLetterPublishingRecoverer`, with the DLT created alongside the source topic. Non-retryable exceptions for deserialization and validation failures. An alert on the DLT's message rate. And a replay procedure. I don't rely on the default's timing in either direction: it's slow when caught up and fast under backlog.
+</details>
+
+---
+
 ## L5 vs L6 signal
 
 | Topic | L5 answer | L6 answer |
@@ -239,6 +433,11 @@ On Kubernetes they duplicate platform features (Services/DNS for discovery, Conf
 | Rate limiting | Uses a library | Reads the algorithm in code, knows its burst behavior, designs fleet-wide limits |
 | Sagas | Draws boxes | Persisted saga log, pivot step, framework semantic locks and their failure mode |
 | Samples | "It uses Spring Cloud" | A gap list: outbox, idempotency, contracts, shutdown, sizing |
+| Which code | Reads `main` on GitHub | Reads the tag of the jar on the classpath (Boot 4.1.2 → HikariCP 7.0.2, Caffeine 3.2.4) and checks one stack frame against it |
+| Thread dumps | Counts waiting threads | Recognises the pool-exhaustion signature, finds the holders, knows virtual threads are missing from `getAllStackTraces()` |
+| Code review | Lists bugs as found | Ranks by blast radius; evidence, fix and test per finding; names the default that caused it |
+| Library critique | "Well written" or "has bugs" | A line, a reproduction, a scope ("not in normal traffic"), and a fix |
+| Retry timing | "10 instant retries" | Knows the fetch pipeline sets the interval (~0.5 s when caught up) and where the recoverer runs |
 
 ---
 
@@ -248,6 +447,12 @@ On Kubernetes they duplicate platform features (Services/DNS for discovery, Conf
 * Citing repos or classes that don't exist (`jbubernik/…`, `RingBitBuffer` in Resilience4j 2.x).
 * No critique: everything read is "great".
 * No verification: can't say how they'd test their understanding.
+* Quoting a library's `main` branch as the behaviour of the version in production.
+* "The dump shows nothing stuck" on a service running virtual threads.
+* A code review with no ranking, no tests, or no named defaults.
+* `@Cacheable(sync = true)` around a loader that calls other cached methods.
+* Treating "no back-off" as "instant", or as harmless.
+* Scripts that force circuit breakers open concurrently with live traffic.
 
 ---
 
@@ -292,5 +497,46 @@ On Kubernetes they duplicate platform features (Services/DNS for discovery, Conf
 <details><summary>19. Caffeine counters per key and locality?</summary>Depth 4, all within one 64-byte block.</details>
 
 <details><summary>20. Where does Kafka keep per-producer sequence state on the broker?</summary>`ProducerStateManager` (storage module).</details>
+
+<details><summary>21. Which HikariCP and Caffeine versions does the Boot 4.1.2 BOM manage?</summary>HikariCP 7.0.2 and Caffeine 3.2.4.</details>
+
+<details><summary>22. HikariCP 7.0.2 vs 7.1.0 `requite`?</summary>7.1.0 parks whenever the returning thread is virtual; 7.0.2 has no virtual-thread case.</details>
+
+<details><summary>23. Where does a `@Transactional` method take its connection (Hikari auto-commit on)?</summary>`JpaTransactionManager.doBegin` → `HibernateJpaDialect.beginTransaction`. With `auto-commit=false` + `provider_disables_autocommit=true`: at the first SQL.</details>
+
+<details><summary>24. Pool exhaustion in a thread dump?</summary>Threads `TIMED_WAITING` in `ConcurrentBag.borrow` → `SynchronousQueue.poll` (line 163 in 7.0.2), under `doBegin`.</details>
+
+<details><summary>25. Does `Thread.getAllStackTraces()` include virtual threads?</summary>No (Javadoc). The JSON dump (`dumpThreads`, `jcmd Thread.dump_to_file`) "may" include them; it did in the lab.</details>
+
+<details><summary>26. Commit order with Spring + JPA?</summary>`beforeCommit` (774) → flush + commit in `doCommit` (794) → `afterCommit` (835) → `@TransactionalEventListener` in `afterCompletion` (838).</details>
+
+<details><summary>27. Delete, then insert the same unique key, one transaction?</summary>Only the `INSERT` is sent (the ActionQueue runs inserts before deletes) → 23505. Fix: `flush()` after the delete.</details>
+
+<details><summary>28. `@Cacheable(sync = true)` loader asks for the same key?</summary>`IllegalStateException: Recursive update` from `ConcurrentHashMap.compute`.</details>
+
+<details><summary>29. spring-kafka default retries on a caught-up partition: timing?</summary>~515 ms apart (in-flight fetch, `fetch.max.wait.ms` 500); 10 attempts ≈ 4.6 s.</details>
+
+<details><summary>30. Where does `DefaultErrorHandler`'s recoverer run?</summary>On the consumer thread, inside the poll loop: `handleRemaining` → `SeekUtils.seekOrRecover` → `FailedRecordTracker`.</details>
+
+<details><summary>31. Resilience4j `getAndUpdate` race: normal traffic vs manual races?</summary>200/200 transitions vs states in normal traffic; ~3 `OpenState`s per transition under manual races, each with an orphaned OPEN→HALF_OPEN timer.</details>
+
+<details><summary>32. The four blocking classes in a code review?</summary>Side effect before commit; catch-and-continue in a transaction; non-idempotent write under retry; read-modify-write without a version.</details>
+
+---
+
+## Summary
+
+| Round | Drills | What it tests |
+|---|---|---|
+| 1 | 1. A codebase you studied | A non-obvious decision, verified, with a critique |
+| 1 | 2–5. HikariCP, a connection pool, a rate limiter, Caffeine | Data structures and concurrency techniques from source |
+| 1 | 6–7. Saga framework, idempotent consumers | Persistence of saga state, semantic locks, dedup in the same transaction |
+| 1 | 8–9. Modular monolith vs microservices, a sample repo | Boundaries, extraction criteria, the gap list |
+| 2 | 10. Reading GitHub | The version you run vs `main`; checking a frame against the tag |
+| 2 | 11. A thread dump | Pool exhaustion, holders, virtual threads missing from the dump |
+| 2 | 12. A pull request | Ranked findings with evidence, fix and test |
+| 2 | 13. A library critique | Resilience4j's side-effecting updater, measured, with scope and fix |
+| 2 | 14. `@Cacheable(sync)` | The loader inside `ConcurrentHashMap.compute` |
+| 2 | 15. spring-kafka retries | Fetch pipeline timing; recoverer on the consumer thread |
 
 **Next pillar:** [9.1 Reference architecture: end-to-end order platform →](../09-Staff-Capstone/01-Reference-Architecture-End-to-End-Order-Platform.md)

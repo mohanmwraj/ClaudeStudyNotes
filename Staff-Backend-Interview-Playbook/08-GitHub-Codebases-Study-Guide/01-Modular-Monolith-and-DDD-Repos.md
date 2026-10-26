@@ -195,4 +195,83 @@ It models a public library (patrons place books on hold, check them out, holds e
 * "In Java, Spring Modulith makes the same boundaries testable, and its event publication registry is an outbox inside the monolith: at-least-once, so listeners are idempotent."
 * "The library repo models aggregates as decision functions that return `Either<Failure, Events>`, with policies as composable lambdas and states as types. Duplicate holds across aggregates are resolved by an event, which is a deliberate consistency trade-off."
 
+---
+
+## 7. Deep dive: the modular-monolith code at its pins (verified 2026-10-26) 🧊
+
+### 7.1 Pins, and a re-check of every path above
+
+The tables above were checked on 2026-10-25 against each repository's default branch. For Batch 4 every repository was pinned, and all **41 paths cited in this file** were re-checked against the pinned trees. All 41 resolve.
+
+| Repository | Pinned at |
+|---|---|
+| spring-projects/spring-modulith | tag [`2.1.2`](https://github.com/spring-projects/spring-modulith/tree/2.1.2) (the version the kit's labs ran, [5.11](../05-Microservices-Patterns/11-Modular-Monolith-Blueprint-Spring-Modulith-Externalized-Events-Extraction.md)) |
+| ddd-by-examples/library | commit [`5225ff7a0f`](https://github.com/ddd-by-examples/library/tree/5225ff7a0f0c1e0751b91cdd64f925cd001d7555) |
+| kgrzybek/modular-monolith-with-ddd | commit [`91c8ef24b4`](https://github.com/kgrzybek/modular-monolith-with-ddd/tree/91c8ef24b4cb6ef558c95d8267fa07d68c7059f8) |
+
+### 7.2 Spring Modulith's publication lifecycle, in four places in the code
+
+1. **Stored in the publisher's transaction.** [`PersistentApplicationEventMulticaster`](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/PersistentApplicationEventMulticaster.java#L135) finds the transactional listeners for an event and [writes one publication per listener](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/PersistentApplicationEventMulticaster.java#L237) before any listener runs. Because it happens inside the publishing transaction, a rollback discards the publications too. That's the outbox property.
+2. **Delivered after commit, asynchronously, in a new transaction.** The listener annotation is literally three annotations:
+
+```java
+@Async
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@TransactionalEventListener
+```
+
+3. **Tracked around each invocation.** The [completion interceptor](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/CompletionRegisteringAdvisor.java#L188) marks the publication *processing* before the listener runs, [*failed* on an exception](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/CompletionRegisteringAdvisor.java#L209), and [*completed* on success](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/CompletionRegisteringAdvisor.java#L198). A `CompletableFuture` result is tracked when it completes.
+4. **Resubmitted on demand.** [`resubmitIncompletePublications(ResubmissionOptions)`](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/PersistentApplicationEventMulticaster.java#L165) re-invokes publications that never completed. What "completed" does to the row is a [`CompletionMode`](https://github.com/spring-projects/spring-modulith/blob/2.1.2/spring-modulith-events/spring-modulith-events-core/src/main/java/org/springframework/modulith/events/support/CompletionMode.java#L34): `UPDATE`, `DELETE` or `ARCHIVE`.
+
+That answers §2.3's first reading question from the code. If the JVM dies after the commit and before the listener finishes, the publication was stored but never marked completed, so a resubmission runs the listener again. Delivery is at-least-once, and listeners must be idempotent. The kit measured this in [5.11 §4](../05-Microservices-Patterns/11-Modular-Monolith-Blueprint-Spring-Modulith-Externalized-Events-Extraction.md#4-outage-and-restart-drill-verified-) (commit in 14 ms with Kafka down; delivered after restart).
+
+### 7.3 The library's duplicate-hold race, end to end
+
+§4.3 asks where the conflict between two patrons is detected. At the pin, the chain is:
+
+1. The Book side handles `BookPlacedOnHold`. If the book is already on hold, it [raises a duplicate](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/main/java/io/pillopl/library/lending/book/application/PatronEventsHandler.java#L63), unless it's the [same patron](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/main/java/io/pillopl/library/lending/book/application/PatronEventsHandler.java#L68):
+
+```java
+private BookOnHold raiseDuplicateHoldFoundEvent(BookOnHold onHold, BookPlacedOnHold bookPlacedOnHold) {
+    if(onHold.by(new PatronId(bookPlacedOnHold.getPatronId()))) {
+        return onHold;
+    }
+    domainEvents.publish(
+            new BookDuplicateHoldFound(
+                    Instant.now(),
+                    onHold.getByPatron().getPatronId(),
+                    bookPlacedOnHold.getPatronId(),
+```
+
+2. The patron side [handles `BookDuplicateHoldFound`](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/main/java/io/pillopl/library/lending/patron/application/hold/HandleDuplicateHold.java#L29) by issuing a `CancelHoldCommand` for the [**second** patron](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/main/java/io/pillopl/library/lending/patron/application/hold/HandleDuplicateHold.java#L36).
+
+So the consistency model is "first writer at the Book wins, the loser is compensated". For a moment both patrons believe they hold the book. If the business says "never, not even for a second", the decision must move to the Book aggregate, or to a unique constraint on active holds per book, and the Patron's `placeOnHold` becomes a request rather than a decision.
+
+### 7.4 The other two references, pinned
+
+* kgrzybek's [`CheckRule`](https://github.com/kgrzybek/modular-monolith-with-ddd/blob/91c8ef24b4cb6ef558c95d8267fa07d68c7059f8/src/BuildingBlocks/Domain/Entity.cs#L28) (§3.2) is unchanged at the pin.
+* The library's [`ModularArchitectureTest`](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/test/groovy/io/pillopl/library/ModularArchitectureTest.java#L16) is unchanged too: one ArchUnit rule per forbidden dependency.
+* The library's [`placeOnHold`](https://github.com/ddd-by-examples/library/blob/5225ff7a0f0c1e0751b91cdd64f925cd001d7555/src/main/java/io/pillopl/library/lending/patron/model/Patron.java#L48) returns `Either<BookHoldFailed, BookPlacedOnHoldEvents>` as quoted in §4.1.
+
+### 7.5 What I'd change, with the evidence
+
+| Repository | Change | Why |
+|---|---|---|
+| Spring Modulith (as configured in most apps) | Pick a `CompletionMode` and an archive/cleanup job on day one | `UPDATE` keeps every completed publication; the table grows with traffic |
+| Spring Modulith | Alert on publications that stay incomplete or failed beyond N minutes | Resubmission is explicit, so somebody has to notice |
+| ddd-by-examples/library | Make the Book own hold decisions if overlaps are unacceptable | The compensation leaves a window with two holders (§7.3) |
+| kgrzybek | Keep one outbox and one inbox, drop internal commands until needed | Less machinery per module ([§3.4](#34-what-to-critique)) |
+
+## Summary
+
+| Topic | Key point | Section |
+|---|---|---|
+| The brief | `jbubernik/…` doesn't exist; kgrzybek's reference is C# | §1 |
+| Spring Modulith | Packages as verified modules; the publication registry is an outbox inside the monolith | §2 |
+| Publication lifecycle | Stored in the publisher's transaction → `@Async` + `REQUIRES_NEW` + `@TransactionalEventListener` → processing/failed/completed → resubmission | §7.2 |
+| kgrzybek | Business rules as objects (`CheckRule`), outbox/inbox/internal commands per module | §3 |
+| The library | Aggregates as decision functions returning `Either`; policies as lambdas; states as types | §4 |
+| Duplicate holds | Detected at the Book, compensated by cancelling the second patron's hold | §7.3 |
+| Pins | Modulith 2.1.2 and two commits; all 41 paths re-checked | §7.1 |
+
 **Next:** [8.2 Microservices and cloud-native repositories →](02-Microservices-and-Cloud-Native-Repos.md)

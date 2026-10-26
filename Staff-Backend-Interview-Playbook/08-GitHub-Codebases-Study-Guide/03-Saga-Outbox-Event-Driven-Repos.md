@@ -150,7 +150,7 @@ Pair each stop with the experiment in [10.1](../10-Kafka-Production/01-Kafka-Pro
 | Path | What to look for |
 |---|---|
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/KafkaMessageListenerContainer.java` | The poll loop, ack modes, commits, pause/resume, rebalance listener integration |
-| `spring-kafka/src/main/java/org/springframework/kafka/listener/DefaultErrorHandler.java` | Seek-to-current retries; default `FixedBackOff(0, 9)` (verified in [10.2 §4.1](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)) |
+| `spring-kafka/src/main/java/org/springframework/kafka/listener/DefaultErrorHandler.java` | Seek-to-current retries; default `FixedBackOff(0, 9)` (verified in [10.2 §4.1](../10-Kafka-Production/02-Kafka-Consumers-Rebalancing-EOS-Retries-DLQ.md)). Each retry is a fresh poll, ~0.5 s apart on a caught-up partition, and the recoverer runs on the consumer thread ([8.6 §7](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md)) |
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/DeadLetterPublishingRecoverer.java` | DLT naming (`-dlt` in 4.x), header population |
 | `spring-kafka/src/main/java/org/springframework/kafka/retrytopic/RetryTopicConfigurer.java` | How one `@RetryableTopic` becomes several topics and containers |
 | `spring-kafka/src/main/java/org/springframework/kafka/listener/KafkaConsumerBackoffManager.java` | Non-blocking delay = pausing a partition until the record's due time |
@@ -172,5 +172,71 @@ Pair each stop with the experiment in [10.1](../10-Kafka-Production/01-Kafka-Pro
 * "Eventuate implements semantic locks generically: a lock row per target, and commands for a locked target are stashed and handed over on unlock."
 * "Eventuate's duplicate detector and my own `processed_message` table are the same idea: a unique `(consumer, message_id)` insert in the handler's transaction."
 * "Debezium's examples show the outbox, a CDC-driven saga, and cache invalidation from the WAL. The failover-slots example is the operational detail people forget."
+
+---
+
+## 8. Deep dive: the saga, outbox and Kafka code at its pins (verified 2026-10-26) 🧊
+
+The Eventuate repositories have no release tags, so they're pinned to commits: sagas at [`cd327a0c5f`](https://github.com/eventuate-tram/eventuate-tram-sagas/tree/cd327a0c5f986337b23c0b2e51d68b78f7c3857d), core at [`273bf06509`](https://github.com/eventuate-tram/eventuate-tram-core/tree/273bf065091069cc17367a40aab04ebf681df97d), and FTGO at [`558dfc53b1`](https://github.com/microservices-patterns/ftgo-application/tree/558dfc53b11d30a5f1d995c0c6d58d5106c28189). Debezium is pinned at `v3.7.0.Final`, the version [5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md) ran; Kafka at `4.2.2` and spring-kafka at `v4.1.2`. All **35 paths cited in this file** resolve at those pins.
+
+### 8.1 Eventuate's semantic lock, line by line
+
+§1.3 described it; here's where each step lives:
+
+| Step | Code at the pin |
+|---|---|
+| Try to take the lock: insert a row for the target | [`claimLock`](https://github.com/eventuate-tram/eventuate-tram-sagas/blob/cd327a0c5f986337b23c0b2e51d68b78f7c3857d/eventuate-tram-sagas-common/src/main/java/io/eventuate/tram/sagas/common/SagaLockManagerImpl.java#L31) |
+| On conflict, find the owner with `select … for update` | [`selectForUpdate(target)`](https://github.com/eventuate-tram/eventuate-tram-sagas/blob/cd327a0c5f986337b23c0b2e51d68b78f7c3857d/eventuate-tram-sagas-common/src/main/java/io/eventuate/tram/sagas/common/SagaLockManagerImpl.java#L38) |
+| A command for a locked target is parked | [`stashMessage`](https://github.com/eventuate-tram/eventuate-tram-sagas/blob/cd327a0c5f986337b23c0b2e51d68b78f7c3857d/eventuate-tram-sagas-common/src/main/java/io/eventuate/tram/sagas/common/SagaLockManagerImpl.java#L57) |
+| On completion, delete the lock or hand it to the next stashed saga | [`unlock`](https://github.com/eventuate-tram/eventuate-tram-sagas/blob/cd327a0c5f986337b23c0b2e51d68b78f7c3857d/eventuate-tram-sagas-common/src/main/java/io/eventuate/tram/sagas/common/SagaLockManagerImpl.java#L71), [hand-over update](https://github.com/eventuate-tram/eventuate-tram-sagas/blob/cd327a0c5f986337b23c0b2e51d68b78f7c3857d/eventuate-tram-sagas-common/src/main/java/io/eventuate/tram/sagas/common/SagaLockManagerImpl.java#L99) |
+
+### 8.2 Eventuate's deduplication runs in the handler's transaction
+
+§2 claimed the duplicate check and the handler's effects commit together. At the pin, that's explicit:
+
+```java
+public void doWithMessage(SubscriberIdAndMessage subscriberIdAndMessage, Runnable callback) {
+  eventuateTransactionTemplate.executeInTransaction(() -> {
+    if (!isDuplicate(subscriberIdAndMessage.getSubscriberId(), subscriberIdAndMessage.getMessage().getId()))
+      callback.run();
+    return null;
+  });
+}
+```
+
+[`isDuplicate`](https://github.com/eventuate-tram/eventuate-tram-core/blob/273bf065091069cc17367a40aab04ebf681df97d/eventuate-tram-consumer-jdbc/src/main/java/io/eventuate/tram/consumer/jdbc/SqlTableBasedDuplicateMessageDetector.java#L31) inserts `(consumer_id, message_id)` and treats a [duplicate-key exception](https://github.com/eventuate-tram/eventuate-tram-core/blob/273bf065091069cc17367a40aab04ebf681df97d/eventuate-tram-consumer-jdbc/src/main/java/io/eventuate/tram/consumer/jdbc/SqlTableBasedDuplicateMessageDetector.java#L42) as "already processed". The insert and `callback.run()` share one transaction, which is exactly [5.4](../05-Microservices-Patterns/04-Transactional-Outbox-and-Idempotent-Consumer-Complete-Implementation.md)'s `processed_message` design.
+
+### 8.3 Debezium's outbox router defaults (3.7.0)
+
+[`route.by.field`](https://github.com/debezium/debezium/blob/v3.7.0.Final/debezium-connect-plugins/src/main/java/io/debezium/transforms/outbox/EventRouterConfigDefinition.java#L308) defaults to `aggregatetype`, and the topic is [`outbox.event.${routedByValue}`](https://github.com/debezium/debezium/blob/v3.7.0.Final/debezium-connect-plugins/src/main/java/io/debezium/transforms/outbox/EventRouterConfigDefinition.java#L327). An outbox row with `aggregatetype = 'order'` lands on `outbox.event.order` unless you override it. Name topics deliberately before the first event ships; renaming later is a migration for every consumer.
+
+### 8.4 Kafka and spring-kafka: the lines behind Pillar 10's measurements
+
+The four Kafka-side surprises in this kit each have a one-line cause:
+* the 45-second static-member stall;
+* KIP-848's `-2` epoch;
+* spring-kafka's `-0…-N` instance suffix;
+* retries about 500 ms apart.
+
+They're linked and quoted in [8.7 §5](07-Source-Behind-the-Measurements-JDK-PostgreSQL-Redis-Kubernetes-Kafka.md). The listener and recoverer call paths, with frames linked to `v4.1.2`, are in [8.6 §7](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md). Two facts from there change how you read §5's table:
+
+* `DefaultErrorHandler`'s recoverer runs **on the consumer thread**: a DLT publish happens inside the poll loop.
+* The DLT topic is named by `DeadLetterPublishingRecoverer`'s [default resolver](https://github.com/spring-projects/spring-kafka/blob/v4.1.2/spring-kafka/src/main/java/org/springframework/kafka/listener/DeadLetterPublishingRecoverer.java#L76): `<topic>-dlt`, **same partition**, so the DLT needs at least as many partitions as the source topic.
+
+### 8.5 FTGO's pivot, pinned
+
+The pivot step from §1.1 is unchanged at the pin: [`invokeParticipant(accountingService.authorize, …)`](https://github.com/microservices-patterns/ftgo-application/blob/558dfc53b11d30a5f1d995c0c6d58d5106c28189/ftgo-order-service/src/main/java/net/chrisrichardson/ftgo/orderservice/sagas/createorder/CreateOrderSaga.java#L29), with no `withCompensation`.
+
+## Summary
+
+| Topic | Key point | Section |
+|---|---|---|
+| Orchestrated sagas | FTGO's `CreateOrderSaga`: compensatable steps, card authorization as the pivot, then retriable steps | §1.1 |
+| Semantic locks | Eventuate's `saga_lock_table` + `saga_stash_table`: insert, `select … for update`, stash, hand over | §1.3, §8.1 |
+| Idempotent consumer | `received_messages` insert and the handler in one transaction | §2, §8.2 |
+| CDC | Debezium examples: outbox, CDC saga, cache invalidation, failover slots, TOAST | §3 |
+| Outbox routing | Default topic `outbox.event.${aggregatetype}` | §8.3 |
+| Kafka internals | Read along one record: `doSend` → accumulator → sender → broker state → groups | §4 |
+| spring-kafka | Recoverer on the consumer thread; DLT `<topic>-dlt` on the same partition | §5, §8.4 |
 
 **Next:** [8.4 High-performance internals: HikariCP, Resilience4j, Caffeine →](04-High-Performance-Internals-HikariCP-Resilience4j-Caffeine.md)

@@ -1,6 +1,6 @@
 # 9.4 Rapid-Fire Flashcards
 
-> **330 cards.** Pillars 1–8 and 10 are collected verbatim from each pillar's bar-raiser file (so they stay in sync with the evidence), followed by 20 capstone cards. Click a question to reveal the answer.
+> **342 cards.** Pillars 1–8 and 10 are collected verbatim from each pillar's bar-raiser file (so they stay in sync with the evidence), followed by 20 capstone cards. Click a question to reveal the answer.
 >
 > **How to use:** a Leitner box. Five boxes; every card starts in box 1. Review box 1 daily, box 2 every 2 days, box 3 every 4, box 4 weekly, box 5 before the interview. A correct answer moves a card up one box; a miss sends it back to box 1. Say answers **out loud** in one or two sentences, then follow the source link for any card you hesitate on.
 
@@ -632,6 +632,30 @@ Source and context: [08-GitHub-Codebases-Study-Guide bar-raiser file](../08-GitH
 
 <details><summary>20. Where does Kafka keep per-producer sequence state on the broker?</summary>`ProducerStateManager` (storage module).</details>
 
+<details><summary>21. Which HikariCP and Caffeine versions does the Boot 4.1.2 BOM manage?</summary>HikariCP 7.0.2 and Caffeine 3.2.4.</details>
+
+<details><summary>22. HikariCP 7.0.2 vs 7.1.0 `requite`?</summary>7.1.0 parks whenever the returning thread is virtual; 7.0.2 has no virtual-thread case.</details>
+
+<details><summary>23. Where does a `@Transactional` method take its connection (Hikari auto-commit on)?</summary>`JpaTransactionManager.doBegin` → `HibernateJpaDialect.beginTransaction`. With `auto-commit=false` + `provider_disables_autocommit=true`: at the first SQL.</details>
+
+<details><summary>24. Pool exhaustion in a thread dump?</summary>Threads `TIMED_WAITING` in `ConcurrentBag.borrow` → `SynchronousQueue.poll` (line 163 in 7.0.2), under `doBegin`.</details>
+
+<details><summary>25. Does `Thread.getAllStackTraces()` include virtual threads?</summary>No (Javadoc). The JSON dump (`dumpThreads`, `jcmd Thread.dump_to_file`) "may" include them; it did in the lab.</details>
+
+<details><summary>26. Commit order with Spring + JPA?</summary>`beforeCommit` (774) → flush + commit in `doCommit` (794) → `afterCommit` (835) → `@TransactionalEventListener` in `afterCompletion` (838).</details>
+
+<details><summary>27. Delete, then insert the same unique key, one transaction?</summary>Only the `INSERT` is sent (the ActionQueue runs inserts before deletes) → 23505. Fix: `flush()` after the delete.</details>
+
+<details><summary>28. `@Cacheable(sync = true)` loader asks for the same key?</summary>`IllegalStateException: Recursive update` from `ConcurrentHashMap.compute`.</details>
+
+<details><summary>29. spring-kafka default retries on a caught-up partition: timing?</summary>~515 ms apart (in-flight fetch, `fetch.max.wait.ms` 500); 10 attempts ≈ 4.6 s.</details>
+
+<details><summary>30. Where does `DefaultErrorHandler`'s recoverer run?</summary>On the consumer thread, inside the poll loop: `handleRemaining` → `SeekUtils.seekOrRecover` → `FailedRecordTracker`.</details>
+
+<details><summary>31. Resilience4j `getAndUpdate` race: normal traffic vs manual races?</summary>200/200 transitions vs states in normal traffic; ~3 `OpenState`s per transition under manual races, each with an orphaned OPEN→HALF_OPEN timer.</details>
+
+<details><summary>32. The four blocking classes in a code review?</summary>Side effect before commit; catch-and-continue in a transaction; non-idempotent write under retry; read-modify-write without a version.</details>
+
 ---
 
 ## 10. Kafka in production
@@ -648,7 +672,7 @@ Source and context: [10-Kafka-Production bar-raiser file](../10-Kafka-Production
 
 <details><summary>5. Eager vs cooperative vs KIP-848?</summary>Eager revokes all; cooperative revokes only moving partitions (two rounds); KIP-848 is broker-side, incremental, with no group barrier.</details>
 
-<details><summary>6. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts, no delay, then log and skip.</details>
+<details><summary>6. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts with no back-off (≈0.5 s apart when the consumer is caught up), then log and skip.</details>
 
 <details><summary>7. Spring Kafka 4 DLT suffix?</summary>`-dlt` (older versions used `.DLT`).</details>
 

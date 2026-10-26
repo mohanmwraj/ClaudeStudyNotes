@@ -94,7 +94,7 @@ An open transaction. `read_committed` consumers can't read past the **last stabl
 
 <details><summary>🛡️ Defense</summary>
 
-`DefaultErrorHandler` with `FixedBackOff[interval=0, maxAttempts=9]` (read from a fresh 4.1.2 instance): 10 attempts with no delay, then it logs and **skips** the record. That's neither safe nor visible. I configure backoff, a `DeadLetterPublishingRecoverer`, and non-retryable exceptions. If the value can't even be deserialized, `ErrorHandlingDeserializer` turns it into a non-retryable exception that reaches the DLT.
+`DefaultErrorHandler` with `FixedBackOff[interval=0, maxAttempts=9]` (read from a fresh 4.1.2 instance): 10 attempts with no back-off, then it logs and **skips** the record. (Measured, they weren't instant either: ~0.5 s apart on a caught-up partition, waiting for the in-flight fetch, [8.6 §7](../08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md).) That's neither safe nor visible. I configure backoff, a `DeadLetterPublishingRecoverer`, and non-retryable exceptions. If the value can't even be deserialized, `ErrorHandlingDeserializer` turns it into a non-retryable exception that reaches the DLT.
 </details>
 
 🔍 **Probe 2: Blocking retries or retry topics?**
@@ -338,7 +338,7 @@ Then a clean shutdown doesn't help the group at all: a static member's `close()`
 
 <details><summary>5. Eager vs cooperative vs KIP-848?</summary>Eager revokes all; cooperative revokes only moving partitions (two rounds); KIP-848 is broker-side, incremental, with no group barrier.</details>
 
-<details><summary>6. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts, no delay, then log and skip.</details>
+<details><summary>6. `DefaultErrorHandler` default?</summary>`FixedBackOff(0, 9)`: 10 attempts with no back-off (≈0.5 s apart when the consumer is caught up), then log and skip.</details>
 
 <details><summary>7. Spring Kafka 4 DLT suffix?</summary>`-dlt` (older versions used `.DLT`).</details>
 

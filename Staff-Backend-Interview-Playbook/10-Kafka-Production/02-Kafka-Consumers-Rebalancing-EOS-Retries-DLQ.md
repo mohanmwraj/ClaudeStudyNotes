@@ -175,7 +175,7 @@ Why c2 waited *longer* in the cooperative and KIP-848 runs: cooperative needs **
 
 ### 4.1 Two strategies
 
-**Blocking retries** (`DefaultErrorHandler`): the container re-seeks the partition to the failed record and redelivers it, holding up everything behind it on that partition. The default backoff, read from a fresh 4.1.2 handler, is `FixedBackOff[interval=0, maxAttempts=9]`: **10 delivery attempts with no delay**, then log and skip. In production you give it a backoff and a recoverer:
+**Blocking retries** (`DefaultErrorHandler`): the container re-seeks the partition to the failed record and redelivers it, holding up everything behind it on that partition. The default backoff, read from a fresh 4.1.2 handler, is `FixedBackOff[interval=0, maxAttempts=9]`: **10 delivery attempts with no back-off**, then log and skip. (No back-off isn't instant: on a caught-up partition each retry waited ~0.5 s for the consumer's in-flight fetch, [8.6 §7](../08-GitHub-Codebases-Study-Guide/06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md).) In production you give it a backoff and a recoverer:
 
 ```java
 var eh = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(template), new FixedBackOff(1000, 3));  // 1 try + 3 retries
@@ -370,7 +370,7 @@ class ShipmentListener {
 | Auto-commit + async hand-off | Container-managed commits; commit only completed work |
 | 500 records × slow processing per poll | Bounded `max.poll.records`, honest `max.poll.interval.ms`, pause/resume for long work |
 | Eager `RangeAssignor` (the first default) | Cooperative-sticky, or KIP-848 with brokers ≥ 4.0; dynamic members on Deployments, static only with StatefulSet ids ([10.4](04-Consumer-Scaling-Static-Membership-KIP-848-KEDA-Rolling-Deploys.md)) |
-| `DefaultErrorHandler` defaults (10 instant attempts, then log and skip) | Backoff + DLT recoverer + non-retryable classification |
+| `DefaultErrorHandler` defaults (10 attempts with no back-off, then log and skip) | Backoff + DLT recoverer + non-retryable classification |
 | Non-blocking retries for order-sensitive data | Blocking retries (short) → DLT when key order matters |
 | Plain deserializer | `ErrorHandlingDeserializer` so poison pills reach the DLT |
 | DLT with no alert, short retention, no replay | Alerts, long retention, a replay tool, idempotent consumers |
@@ -400,7 +400,7 @@ class ShipmentListener {
 * "`max.poll.interval.ms` is the processing-liveness check. I reproduced a 6-second batch with a 3-second limit: the commit failed, partitions were lost, and the batch ran twice."
 * "Eager rebalancing revoked all six partitions to move three. Cooperative and KIP-848 revoked only the three that moved. The old consumer never stopped."
 * "Blocking retries keep per-key order but stall the partition. In my run `next-1` waited 3.7 seconds. Non-blocking retry topics keep throughput but let `next-1` overtake the poison pill. I choose based on whether order matters."
-* "Spring Kafka's default error handler retries ten times with no delay and then skips. I always configure backoff, a dead-letter recoverer, and non-retryable exceptions. In 4.x the DLT suffix is `-dlt`."
+* "Spring Kafka's default error handler retries ten times with no back-off and then skips. I always configure backoff, a dead-letter recoverer, and non-retryable exceptions. In 4.x the DLT suffix is `-dlt`."
 * "Consumers beyond the partition count are idle, so lag-based autoscaling is capped by partitions."
 
 ---

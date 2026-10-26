@@ -1,6 +1,6 @@
 # 8.4 High-Performance Internals: HikariCP, Resilience4j, Caffeine
 
-> **Verified 2026-10-25.** Excerpts are quoted from each project's default branch on that date: HikariCP `dev` (tags up to `HikariCP-7.1.0`; the labs in this kit used 7.0.2), Resilience4j `master` (2.4.0 jars verified with `javap` in [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)), Caffeine `master` (3.3.1 jar verified in [6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)). All three are Apache-2.0 licensed; excerpts are short and attributed.
+> **Verified 2026-10-25.** Excerpts are quoted from each project's default branch on that date: HikariCP `dev` (tags up to `HikariCP-7.1.0`; the labs in this kit used 7.0.2), Resilience4j `master` (2.4.0 jars verified with `javap` in [6.1](../06-Resilience-Caching/01-Resilience4j-Circuit-Breaker-Internals-Sliding-Windows.md)), Caffeine `master` (3.3.1 jar verified in [6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md)). All three are Apache-2.0 licensed; excerpts are short and attributed. **§6 pins all three to the versions Spring Boot 4.1.2 actually ships** (HikariCP 7.0.2, Caffeine 3.2.4) and notes where they differ.
 >
 > **Go deeper:** sibling kit [5.1 JDBC & HikariCP](../../Java-Backend-Master-Reference/05-Persistence-JPA-Hibernate/01-JDBC-HikariCP-Connection-Pooling.md), [3.3 lock-free CAS](../../Java-Backend-Master-Reference/03-Concurrency-Loom/03-Lock-Free-CAS-Atomics.md), [1.3 object layout & mechanical sympathy](../../Java-Backend-Master-Reference/01-JVM-Internals/03-Object-Layout-Mechanical-Sympathy.md).
 
@@ -124,7 +124,7 @@ public void requite(final T bagEntry)
 
 * If someone is waiting, the returner **hands the connection directly** to them. That's fairness under pressure.
 * If the entry was already grabbed by a scanning thread (state no longer `NOT_IN_USE`), stop.
-* On the `dev` branch the spin backs off with `parkNanos(10 µs)` **whenever the returning thread is virtual**; platform threads mostly `Thread.yield()` and only park periodically. (The code shows the switch, not the reasoning; a reasonable reading is that a short park is a more predictable back-off for a virtual thread than a yield to its scheduler.)
+* On the `dev` branch the spin backs off with `parkNanos(10 µs)` **whenever the returning thread is virtual**; platform threads mostly `Thread.yield()` and only park periodically. **This branch first shipped in HikariCP 7.1.0**; 7.0.2, which Boot 4.1.2 manages, has no virtual-thread case (§6.1). (The code shows the switch, not the reasoning; a reasonable reading is that a short park is a more predictable back-off for a virtual thread than a yield to its scheduler.)
 * Otherwise, remember the connection in this thread's list (at most 16 entries; weak references when HikariCP is loaded by a non-system class loader, to avoid leaks in app servers).
 
 ### 1.4 `FastList`: a list shaped to one access pattern
@@ -190,7 +190,7 @@ private void stateTransition(State newState,
 }
 ```
 
-A good code-review question: `AtomicReference.getAndUpdate`'s Javadoc says the function **"should be side-effect-free, since it may be re-applied when attempted updates fail due to contention among threads."** This updater calls `preTransitionHook()` and builds a new state (which can schedule tasks). What happens if two threads race to transition at the same moment? Reasoning through that, and where the design accepts it, is exactly the kind of depth a bar-raiser enjoys.
+A good code-review question: `AtomicReference.getAndUpdate`'s Javadoc says the function **"should be side-effect-free, since it may be re-applied when attempted updates fail due to contention among threads."** This updater calls `preTransitionHook()` and builds a new state (which can schedule tasks). What happens if two threads race to transition at the same moment? Reasoning through that, and where the design accepts it, is exactly the kind of depth a bar-raiser enjoys. §6.2 measured it: in normal traffic a guard prevents it, but under racing manual transitions the updater ran about three times per transition and left orphaned timers, one of which flipped a forced-open breaker to HALF_OPEN.
 
 ### 2.2 The count-based window
 
@@ -362,5 +362,69 @@ void maintenance(@Nullable Runnable task) {
 * "It also jitters `maxLifetime` by up to 25 % so connections created together don't all reconnect together, the same trick as TTL jitter in caches."
 * "Resilience4j's breaker state is one `AtomicReference`, and the window keeps running totals in a circular array, so recording is O(1). The rate limiter's `calculateNextState` shows it's a fixed window, not a token bucket."
 * "Caffeine's sketch packs sixteen 4-bit counters per `long`, keeps a key's counters in one cache line, and ages them with one shift and mask. Reads drop bookkeeping when buffers are full rather than wait."
+
+---
+
+## 6. Deep dive: the versions you run, and a critique measured (verified 2026-10-26) 🧊
+
+§1–§3 quoted each project's default branch. This section pins them to what Spring Boot 4.1.2 actually puts on the classpath and re-checks the claims. All **11 paths in §4** resolve at the pins.
+
+### 6.1 HikariCP: Boot ships 7.0.2, and its `requite` has no virtual-thread branch
+
+The Boot 4.1.2 BOM manages **HikariCP 7.0.2**. §1.3 quoted the `dev` branch, where `requite` parks whenever the returning thread is virtual. That branch first shipped in **7.1.0**:
+
+| Version | `requite`'s back-off condition |
+|---|---|
+| [7.0.2](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-7.0.2/src/main/java/com/zaxxer/hikari/util/ConcurrentBag.java#L195) (what Boot 4.1.2 runs) | `(i & 0xff) == 0xff \|\| (waiting > 1 && i % waiting == 0)`, otherwise `Thread.yield()` |
+| [7.1.0](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-7.1.0/src/main/java/com/zaxxer/hikari/util/ConcurrentBag.java#L225) | `isVirtualThread \|\| (i & 0xff) == 0xff \|\| …`, after [`isCurrentThreadVirtual()`](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-7.1.0/src/main/java/com/zaxxer/hikari/util/ConcurrentBag.java#L220) |
+
+The rest of §1 holds at 7.0.2. The three tiers, the 500 ms alive-bypass window and the lifetime jitter are all there. The borrow's third tier showed up in a real thread dump at [`ConcurrentBag.borrow` line 163](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-7.0.2/src/main/java/com/zaxxer/hikari/util/ConcurrentBag.java#L163), which is `handoffQueue.poll` ([8.6 §4](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md)). If you run virtual threads with Boot 4.1.2 and want the 7.1.0 back-off, override `hikaricp.version`.
+
+### 6.2 Resilience4j's side-effecting `getAndUpdate`: the critique in §2.1, measured
+
+§2.1 asked what happens when two threads race to transition. The facts at `v2.4.0`:
+
+* `stateTransition` builds the next state **inside** the [`getAndUpdate` updater](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java#L313), which the JDK may re-run when the CAS fails.
+* Building an `OpenState` with automatic transition enabled [**schedules** its OPEN → HALF_OPEN task](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java#L708) in the constructor.
+* A discarded `OpenState` is never made current, so nothing [cancels its task](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java#L800). When the task fires, the discarded state's own flag is still true, so it [calls `transitionToHalfOpenState()`](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java#L807) on the state machine.
+* Normal failure recording is protected by a guard: only the thread that wins [`isClosed.compareAndSet(true, false)`](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java#L647) transitions.
+
+So the experiment counted `OpenState` constructions (a counting `waitIntervalFunctionInOpenState`) against OPEN transitions, in two kinds of traffic, run twice:
+
+```text
+realistic: 200 rounds x 64 threads failing at once -> transitions to OPEN: 200, OpenState objects built: 200
+synthetic: 8 threads x 20,000 manual CLOSED<->OPEN flips -> transitions to OPEN: 56010, OpenState objects built: 165436,
+           extra (discarded) OpenStates, each with a scheduled OPEN->HALF_OPEN task: 109426, rejected transitions: 0
+consequence: 2497 discarded OpenStates (300 ms timers); breaker then forced OPEN for 10 min -> state after 1000 ms: HALF_OPEN,
+           HALF_OPEN transitions since: 1
+```
+
+The second run gave the same picture: 200/200, then 55,192 transitions against 168,157 constructions, then HALF_OPEN again.
+
+* **In normal traffic it doesn't happen.** 64 threads failing at the same moment produced exactly one OPEN transition per round, because the guard serializes them.
+* **With racing manual transitions it does.** The updater ran about three times per successful transition, and each discarded `OpenState` left a live timer.
+* **The consequence is real.** After the race, an operator forcing the breaker OPEN for ten minutes saw it go HALF_OPEN within a second, flipped by an orphaned timer from a state that never existed.
+
+When does this matter in production? When something calls the transition API concurrently with traffic or with the automatic timer: an admin endpoint, a script that forces breakers open during an incident, or two instances of automation.
+
+The mitigation is to serialize manual transitions: one controller, one thread, never a loop racing live traffic. Don't count on `FORCED_OPEN` or `DISABLED` to protect a breaker from an orphaned timer: [`FORCED_OPEN_TO_HALF_OPEN`](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java#L889) and [`DISABLED_TO_HALF_OPEN`](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java#L894) are legal transitions, so a stray task can move either state to HALF_OPEN.
+
+The upstream fix is to build the next state outside the updater, or to cancel a discarded state's timer. That's the critique, with a reproduction.
+
+### 6.3 Caffeine: Boot ships 3.2.4
+
+The BOM manages **Caffeine 3.2.4**; §3 and [6.3](../06-Resilience-Caching/03-Caching-Caffeine-W-TinyLFU-and-Redis-Lettuce-L1-L2.md) read 3.3.1. The admission rule quoted in §3.2 is identical in both ([3.2.4](https://github.com/ben-manes/caffeine/blob/v3.2.4/caffeine/src/main/java/com/github/benmanes/caffeine/cache/BoundedLocalCache.java#L890), [3.3.1](https://github.com/ben-manes/caffeine/blob/v3.3.1/caffeine/src/main/java/com/github/benmanes/caffeine/cache/BoundedLocalCache.java#L229)). The `@Cacheable(sync = true)` frames in [8.6 §6](06-Framework-Internals-by-Stack-Trace-Spring-Hibernate-HikariCP-Caffeine-Kafka.md) are 3.2.4's, and they show the loader running inside `ConcurrentHashMap.compute`, where a same-key recursive load throws `Recursive update`.
+
+## Summary
+
+| Topic | Key point | Section |
+|---|---|---|
+| Techniques | Thread-local first, CAS on a state word, immutable states, lossy buffers, batched maintenance, jitter | §0 |
+| HikariCP | Borrow = CAS on an entry's state; three tiers; fair hand-off; 500 ms alive bypass; lifetime jitter | §1 |
+| Version you run | Boot 4.1.2 → HikariCP 7.0.2: no virtual-thread back-off in `requite` (7.1.0 has it) | §6.1 |
+| Resilience4j | One `AtomicReference` per breaker; O(1) count window; the rate limiter is a fixed window | §2 |
+| `getAndUpdate` critique | 200/200 in normal traffic; ~3 constructions per transition under manual races; an orphaned timer flipped a forced-open breaker | §6.2 |
+| Caffeine | 4-bit sketch in one cache line, aging by shift and mask, hash-flooding defence, lossy read buffer | §3 |
+| Caffeine version | Boot ships 3.2.4; admission identical to 3.3.1 | §6.3 |
 
 **Next:** [8.5 Code-reading plan and bar-raiser drill-downs →](05-Code-Reading-Plan-and-Bar-Raiser-Drill-Downs.md)
