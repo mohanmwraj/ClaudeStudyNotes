@@ -58,7 +58,7 @@
 | One `AtomicLong` CAS loop | exact, 136 ms, **1.85 M retries** | exact, 99 ms, 1.81 M | exact, 97 ms, 1.98 M |
 | **16 padded CAS buckets** + stealing + collapse | exact, **40 ms**, 154 k retries | exact, **29 ms**, 111 k | exact, **38 ms**, 56 k |
 
-**`LongAdder` is a trap for inventory.** It's the fastest *counter*, but it has no conditional decrement, so "check then add" oversells. Striping has to be striping of **CAS-guarded buckets**.
+**`LongAdder` is a trap for inventory.** It's the fastest *counter*, but it has no conditional decrement, so "check then add" oversells. It oversold in 5 of 6 runs (published + gate rerun); the GCC gate rerun happened to oversell 0, so a clean run is no evidence of correctness. Striping has to be striping of **CAS-guarded buckets**.
 
 **Bucket selection matters (measured on the way here).** The first harness used `home = thread id`: 8 threads on 16 buckets. Half the buckets were reachable only by stealing, every thread stole in the same direction, and they **herded** onto the same buckets. Striping was then no faster than one CAS (GCC 91 ms, 1.78 M retries). Hashing the *customer* to a bucket spreads load the way real traffic does, and gives 29–40 ms with 12–35× fewer retries.
 
@@ -1383,7 +1383,7 @@ SELF-TEST OK
 
 **Why it fails:** every buyer CASes one cache line. 1.8–2.0 M failed CASes to sell 2 M units, slower than the mutex in two of three builds.
 
-**L7 defence:** "Split the stock into K padded CAS buckets, with the customer hashed to a bucket, stealing when it's empty, and a collapse-to-one slow path for the last units. Measured 29–40 ms vs ~100 ms. And no `LongAdder`: it can't do a conditional decrement, and oversold in every run."
+**L7 defence:** "Split the stock into K padded CAS buckets, with the customer hashed to a bucket, stealing when it's empty, and a collapse-to-one slow path for the last units. Measured 29–40 ms vs ~100 ms. And no `LongAdder`: it can't do a conditional decrement, and oversold in 5 of 6 runs across the three builds (the published runs plus the gate rerun). The sixth run got lucky, which is the point: a passing run proves nothing."
 </details>
 
 <details>

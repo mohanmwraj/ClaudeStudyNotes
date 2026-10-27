@@ -968,7 +968,7 @@ SELF-TEST OK
 
 - David Harel, "Statecharts: A Visual Formalism for Complex Systems", *Science of Computer Programming* 1987. <https://doi.org/10.1016/0167-6423(87)90035-9>
 - Chris Richardson, "Pattern: Transactional outbox". <https://microservices.io/patterns/data/transactional-outbox.html>
-- Jakarta Persistence `@Version` (optimistic locking). <https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/version>
+- Jakarta Persistence `@Version` (optimistic locking). <https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/Version.html>
 - Martin Fowler, "Event Sourcing". <https://martinfowler.com/eaaDev/EventSourcing.html>
 - cppreference: `std::chrono::system_clock` (precision is implementation-defined). <https://en.cppreference.com/w/cpp/chrono/system_clock>
 - In this KB: [01.2 Sealed ADTs](../01-First-Principles-L7-Rubric-and-Modern-Java-OOP/02-solid-composition-and-data-oriented-java21-sealed-records.md) · [01.3 Clocks and CAS](../01-First-Principles-L7-Rubric-and-Modern-Java-OOP/03-concurrency-primitives-cas-stampedlock-striping-and-clock-injection.md) · [02.2 Strategy and specification](02-strategy-chain-of-responsibility-decorator-and-specification-dsl.md)
