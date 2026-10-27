@@ -12,8 +12,8 @@
 > | `mvcc_isolation_sim.py` | Read Committed, Snapshot Isolation and SSI against the classic anomalies |
 >
 > **Forward links:**
-> - Folder 02 (`02-Storage-Engines-Replication-and-Sharding-Internals/`): replication and NewSQL internals.
-> - Folder 03 (`03-Consensus-Coordination-and-Distributed-Transactions/`): consensus, clocks, transactions.
+> - Folder 02 ([`02-Storage-Engines-Replication-and-Sharding-Internals/`](../02-Storage-Engines-Replication-and-Sharding-Internals/)): replication and NewSQL internals.
+> - Folder 03 ([`03-Consensus-Coordination-and-Distributed-Transactions/`](../03-Consensus-Coordination-and-Distributed-Transactions/)): consensus, clocks, transactions.
 
 ---
 

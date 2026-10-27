@@ -40,24 +40,24 @@ moves.
 | Operation | Typical (server class) | Measured here | Why it matters for design |
 |---|---|---|---|
 | CPU cycle @ 3–4 GHz | 0.25–0.33 ns | — | The unit of everything below |
-| L1d hit | ~1 ns (4–5 cycles) | **1.2 ns** | Tight loops, hot structs |
-| L2 hit | ~3–5 ns (~14 cycles) | **3.2–4.5 ns** | Per-core working sets ≤ 1–2 MB |
-| L3 hit | ~10–20 ns (laptop); 20–40 ns on large server meshes | **13.6–17 ns** | Shared, sliced; NUMA-like within a socket |
-| Atomic increment, uncontended | ~5–10 ns | **6.2 ns** | Every lock and refcount |
+| L1d hit | ~1 ns (4–5 cycles) | **1.2–1.4 ns** | Tight loops, hot structs |
+| L2 hit | ~3–5 ns (~14 cycles) | **3.2–4.6 ns** | Per-core working sets ≤ 1–2 MB |
+| L3 hit | ~10–20 ns (laptop); 20–40 ns on large server meshes | **12.8–15.4 ns** (2 MB working set) | Shared, sliced; NUMA-like within a socket |
+| Atomic increment, uncontended | ~5–10 ns | **6.2–7.8 ns** | Every lock and refcount |
 | Atomic on a contended line (cross-core) | ~50–150 ns | **60–131 ns** | Global counters, hot locks, false sharing |
-| DRAM random load (local NUMA) | ~80–120 ns | **111 ns** | Pointer chasing: B-tree nodes, hash chains |
+| DRAM random load (local NUMA) | ~80–120 ns | **110–120 ns** | Pointer chasing: B-tree nodes, hash chains |
 | DRAM random load (remote NUMA) | ~130–200 ns | — | Cross-socket; pin threads near memory |
-| memcpy 1 MB (one core) | ~50–100 µs | **~106 µs** (9.5 GB/s) | Copies are not free at 100 Gbps |
-| AES-256-GCM 1 MB (one core) | ~0.1–0.2 ms | **~0.16 ms** (6.1 GB/s) | TLS everywhere is cheap |
-| SHA-256 1 MB (one core, SHA-NI) | ~0.5–0.7 ms | **~0.61 ms** (1.6 GB/s) | Content addressing costs a core per GB/s |
-| Loopback TCP round trip | ~10–30 µs (Linux) | **35 µs** (Windows) | Sidecars and local proxies cost this per hop |
+| memcpy 1 MB (one core) | ~50–100 µs | **~105–155 µs** (6.5–9.5 GB/s) | Copies are not free at 100 Gbps |
+| AES-256-GCM 1 MB (one core) | ~0.1–0.2 ms | **~0.16–0.19 ms** (5.3–6.1 GB/s) | TLS everywhere is cheap |
+| SHA-256 1 MB (one core, SHA-NI) | ~0.5–0.7 ms | **~0.6–0.8 ms** (1.2–1.7 GB/s) | Content addressing costs a core per GB/s |
+| Loopback TCP round trip | ~10–30 µs (Linux) | **35–37 µs** (Windows) | Sidecars and local proxies cost this per hop |
 | Same-rack RTT, kernel TCP | ~10–50 µs | — | The floor of an RPC |
 | RDMA one-sided read | ~2–5 µs | — | Kernel bypass, zero copy (FaRM, eRPC) |
 | Same-AZ RTT, cloud VMs | ~50–250 µs ⚠ | — | Placement groups help; noisy neighbors hurt |
 | NVMe 4 KB random read (TLC, QD1) | ~50–100 µs | — | One B-tree page miss |
 | NVMe write into the drive's cache | ~10–20 µs | — | Fast until the cache fills |
 | fsync, enterprise SSD with power-loss protection (PLP) | ~20–100 µs ⚠ | — | WAL commit floor in a datacenter |
-| fsync, consumer SSD (no PLP) | ~0.5–5 ms; tail ≫ | **p50 0.8–1.1 ms, p99 1.5–102 ms** | Why laptops are terrible database benchmarks |
+| fsync, consumer SSD (no PLP) | ~0.5–5 ms; tail ≫ | **p50 0.8–1.1 ms, p99 1.5–2 ms (one run: 102 ms)** | Why laptops are terrible database benchmarks |
 | Cross-AZ RTT | ~0.5–2 ms | — | The cost of synchronous zonal replication |
 | Network block storage (EBS-class) I/O | ~0.25–1+ ms ⚠ | — | Every I/O is a network round trip |
 | HDD seek + half rotation (7,200 rpm) | ~8–12 ms | — | 100–200 random IOPS per spindle |
@@ -73,10 +73,10 @@ local one.
 ```
 log10(ns)   0      1      2      3      4      5      6      7      8      9
             │──────│──────│──────│──────│──────│──────│──────│──────│──────│
-L1  1.2 ns  █
+L1  1.3 ns  █
 L2  4 ns    ██
 L3  15 ns   ███
-DRAM 111 ns ████
+DRAM 115 ns ████
 contended   ████   (60-131 ns)
 loopback RTT        ███████████   35 µs
 NVMe read                ████████████   ~80 µs
@@ -222,7 +222,7 @@ public final class LatencyLadder {
             double ns = nsPerHop(sz);
             if (sz == 16 << 10) l1 = ns;
             if (sz == 512 << 10) l2 = ns;
-            if (sz == 4 << 20) l3 = ns;
+            if (sz == 2 << 20) l3 = ns;                     // 4 MB is sensitive to other processes sharing L3
             if (sz == 128 << 20) dram = ns;
             String label = sz >= 1 << 20 ? (sz >> 20) + " MB" : (sz >> 10) + " KB";
             System.out.printf("%12s %10.2f%n", label, ns);
@@ -275,7 +275,7 @@ public final class LatencyLadder {
 
         // invariants, not exact values: the ladder must be monotone across levels and the effects must be visible
         if (!(l1 < l2 && l2 < l3 && l3 < dram)) throw new AssertionError("latency ladder not monotone");
-        if (dram < 5 * l3) throw new AssertionError("DRAM should be >5x the L3 latency");
+        if (dram < 4 * l3) throw new AssertionError("DRAM should be >4x the L3 latency");
         if (dram / gatherNs < 3) throw new AssertionError("expected MLP >= 3");
         if (falseShare < 1.3 * padded) throw new AssertionError("false sharing should cost visibly more than padded");
         System.out.printf("%nsummary: L1 %.1f ns, L2 %.1f ns, L3 %.1f ns, DRAM %.0f ns; DRAM/L1 = %.0fx (sink %d)%n",
@@ -285,42 +285,42 @@ public final class LatencyLadder {
 }
 ```
 
-Output (one measured run; values vary ±10–20% run to run, and the invariants are asserted):
+Output (one measured run; values vary run to run, by up to ~30% on a warm laptop, and the invariants are asserted). The prose quotes ranges across five runs:
 
 ```text
 == 1. dependent-load latency (random single cycle over 64 B lines, best of 3)
  working set    ns/load
-       16 KB       1.16
-       32 KB       1.17
-       64 KB       3.23
-      128 KB       3.23
-      256 KB       3.26
-      512 KB       4.11
-        1 MB       4.53
-        2 MB      13.60
-        4 MB      17.00
-        8 MB      47.22
-       16 MB     101.90
-       32 MB     105.90
-       64 MB     108.51
-      128 MB     110.56
+       16 KB       1.37
+       32 KB       1.24
+       64 KB       3.49
+      128 KB       3.41
+      256 KB       3.46
+      512 KB       4.45
+        1 MB       4.61
+        2 MB      13.27
+        4 MB      43.22
+        8 MB     109.25
+       16 MB     111.33
+       32 MB     112.48
+       64 MB     117.35
+      128 MB     119.87
 
 == 2. memory-level parallelism over the same 128 MB of random lines
-dependent loads  : 110.56 ns/load
-independent loads:   8.98 ns/load  -> effective MLP ~ 12.3 misses in flight
+dependent loads  : 119.87 ns/load
+independent loads:  10.69 ns/load  -> effective MLP ~ 11.2 misses in flight
 
 == 3. bandwidth (single thread)
-sequential sum of 128 MB      :  23.53 GB/s
-1 int per 64 B line (stride)  :  20.87 GB/s of lines moved,  1.30 GB/s useful (3.07 ns/int)
-arraycopy 128 MB (read+write) :  19.13 GB/s moved
+sequential sum of 128 MB      :  16.02 GB/s
+1 int per 64 B line (stride)  :  17.11 GB/s of lines moved,  1.07 GB/s useful (3.74 ns/int)
+arraycopy 128 MB (read+write) :  14.18 GB/s moved
 
 == 4. coherence: cost of an atomic increment
-1 thread, uncontended               :   6.20 ns/op
-4 threads, one shared counter       : 131.16 ns/op per thread
-4 threads, own counters, same line  :  60.24 ns/op per thread (false sharing)
-4 threads, own counters, 128 B apart:  20.21 ns/op per thread
+1 thread, uncontended               :   7.82 ns/op
+4 threads, one shared counter       :  95.74 ns/op per thread
+4 threads, own counters, same line  :  72.24 ns/op per thread (false sharing)
+4 threads, own counters, 128 B apart:  25.28 ns/op per thread
 
-summary: L1 1.2 ns, L2 4.1 ns, L3 17.0 ns, DRAM 111 ns; DRAM/L1 = 96x (sink 0)
+summary: L1 1.4 ns, L2 4.4 ns, L3 13.3 ns, DRAM 120 ns; DRAM/L1 = 87x (sink 0)
 self-test: all invariants hold
 ```
 
@@ -328,15 +328,15 @@ Reading the ladder:
 
 | Working set | ns/load | Level | Interpretation |
 |---|---|---|---|
-| 16–32 KB | 1.2 | L1d (48 KB) | 4–5 cycles at turbo |
-| 64 KB – 1 MB | 3.2–4.5 | L2 (1.25 MB) | ~3× L1 |
-| 2–4 MB | 13–17 | L3 | ~4× L2 |
-| 8 MB | 36–47 | L3 + TLB misses | 2,048 STLB entries × 4 KB pages = 8 MB of reach ⚠; past it, every hop adds a page walk |
-| 16–128 MB | 102–111 | DRAM (+ page walks) | ~95× L1 |
+| 16–32 KB | 1.2–1.4 | L1d (48 KB) | 4–5 cycles at turbo |
+| 64 KB – 1 MB | 3.2–4.6 | L2 (1.25 MB) | ~3× L1 |
+| 2–4 MB | 13–17 | L3 | ~4× L2. The 4 MB point is sensitive to other processes sharing the 12 MB L3: one gate run measured 50 ns there, so the listing anchors "L3" at 2 MB |
+| 8 MB | 36–109 | L3 + TLB misses | 2,048 STLB entries × 4 KB pages = 8 MB of reach ⚠; past it, every hop adds a page walk |
+| 16–128 MB | 102–120 | DRAM (+ page walks) | ~85–95× L1 |
 
 Three design consequences:
 
-1. **The 95× DRAM/L1 gap is why data layout beats algorithmic cleverness at the bottom of every storage engine.**
+1. **The ~90× DRAM/L1 gap is why data layout beats algorithmic cleverness at the bottom of every storage engine.**
    - A B+tree with 16 KB nodes reads ~log₁₀₀₀(N) nodes, and each node visit is a few DRAM misses.
    - A binary tree reads log₂(N) nodes, each a miss: ~30 dependent misses for a billion keys, or ~3 µs.
    - This is why in-memory indexes use wide nodes: B-trees, ART, Masstree, Bw-tree.
@@ -353,8 +353,8 @@ Three design consequences:
 
 ### 2.2 Little's law for memory: why independent loads win
 
-The same 128 MB of random lines, read with *independent* loads, costs **9.0 ns per load instead of 111 ns**. The
-core keeps about **12 misses in flight**, roughly the number of L1 fill buffers.
+The same 128 MB of random lines, read with *independent* loads, costs **9–11 ns per load instead of 110–120 ns**.
+The core keeps about **11–12 misses in flight**, roughly the number of L1 fill buffers.
 
 Little's law applied to the memory system:
 
@@ -362,11 +362,11 @@ $$\text{bandwidth} = \frac{\text{lines in flight} \times 64\,\text{B}}{\text{lat
 
 | Access pattern | In flight | Latency | Bandwidth |
 |---|---|---|---|
-| Dependent chase | 1 line | 111 ns | 0.58 GB/s |
-| Independent random | 12.3 lines | 111 ns | ~7 GB/s |
-| Sequential with hardware prefetch | ~41 lines | 111 ns | 23.5 GB/s (measured) |
+| Dependent chase | 1 line | ~115 ns | 0.56 GB/s |
+| Independent random | 11–12 lines | ~115 ns | ~6–7 GB/s |
+| Sequential with hardware prefetch | ~29–41 lines | ~115 ns | 16–23.5 GB/s (measured) |
 
-The sequential row works backwards from the measurement: 23.5 GB/s × 111 ns / 64 B ≈ 41 lines. That is the L2
+The sequential row works backwards from the measurement: 23.5 GB/s × 111 ns / 64 B ≈ 41 lines in the best run. That is the L2
 streamer's outstanding-request queue at work.
 
 This is why:
@@ -385,9 +385,9 @@ This is why:
 
 | Measurement | Value |
 |---|---|
-| Sequential read, one thread | 23.5 GB/s, vs 51.2 GB/s theoretical for dual-channel DDR4-3200 |
-| `arraycopy` | 19.1 GB/s moved (read + write) |
-| One int per 64 B line | 20.9 GB/s of *lines* but only **1.3 GB/s useful** |
+| Sequential read, one thread | 16–23.5 GB/s, vs 51.2 GB/s theoretical for dual-channel DDR4-3200 |
+| `arraycopy` | 14–19 GB/s moved (read + write) |
+| One int per 64 B line | 17–21 GB/s of *lines* but only **1.1–1.3 GB/s useful** |
 
 The last row is the cache-line tax. You pay for 64 bytes to use 4.
 
@@ -407,12 +407,12 @@ This tax is the physics behind:
 
 ### 2.4 Coherence: the hidden cost of sharing
 
-| Pattern | ns/op per thread | Ratio |
+| Pattern | ns/op per thread (across runs) | Ratio |
 |---|---|---|
-| One thread, uncontended atomic | 6.2 | 1× |
-| 4 threads, own counters, 128 B apart | 20.2 | 3× (memory-ordering and pipeline effects) |
-| 4 threads, own counters, **same cache line** (false sharing) | 60.2 | 10× |
-| 4 threads, one shared counter | 131 | 21× |
+| One thread, uncontended atomic | 6.2–7.8 | 1× |
+| 4 threads, own counters, 128 B apart | 20–25 | ~3× (memory-ordering and pipeline effects) |
+| 4 threads, own counters, **same cache line** (false sharing) | 60–99 | ~10–13× |
+| 4 threads, one shared counter | 96–131 | ~12–21× |
 
 On a contended line, every increment moves the 64-byte line between cores through the coherence protocol (MESIF on
 Intel). Design consequences:
@@ -435,7 +435,7 @@ Intel). Design consequences:
 | Thread context switch | ~1–5 µs direct; more with cache/TLB refill | Why thread-per-request tops out; virtual threads and async I/O |
 | Page fault (minor) | ~0.5–1 µs | First touch of fresh memory |
 | Process fork of a large-RSS process | ms to 100s of ms | Redis BGSAVE latency spikes; CoW page duplication |
-| JIT warm-up | seconds | An earlier, un-warmed draft of `IoCostProbe` measured AES-GCM at **83 MB/s**, against **6.1 GB/s** once the record loop was JIT-compiled and the intrinsic engaged: 70×. Benchmark warm, and capacity-plan for cold starts |
+| JIT warm-up | seconds | An earlier, un-warmed draft of `IoCostProbe` measured AES-GCM at **83 MB/s**, against **5.3–6.1 GB/s** once the record loop was JIT-compiled and the intrinsic engaged: 70×. Benchmark warm, and capacity-plan for cold starts |
 
 ---
 
@@ -770,7 +770,7 @@ The L7 reading:
   2. Align placement so the FTL WAF approaches 1: FDP, ZNS, or simply large sequential files with whole-file deletes.
   3. Add OP.
   4. Buy endurance (TLC over QLC) only for the write-hot tier.
-- The B+tree-vs-LSM debate in Folder 02 (`02-Storage-Engines-Replication-and-Sharding-Internals/`) is incomplete
+- The B+tree-vs-LSM debate in Folder 02 ([`02-Storage-Engines-Replication-and-Sharding-Internals/`](../02-Storage-Engines-Replication-and-Sharding-Internals/)) is incomplete
   without this product. An LSM's large sequential writes are FTL-friendly (FTL WAF ≈ 1), but its own WAF is 10–30×.
   A B-tree's in-place random page writes cost less at the application layer but drive FTL GC.
 
@@ -1033,24 +1033,24 @@ Output (one measured run; note the fsync p99):
 
 ```text
 == 1. durability
-4 KB append, page cache only : p50     13.4 us  p99     95.9 us
-4 KB append + fsync          : p50   1086.2 us  p99 101976.1 us  -> 921 commits/s serial
-group commit, 64 x 128 B     :     23.5 us per record -> 42,522 records/s
+4 KB append, page cache only : p50     13.9 us  p99     82.0 us
+4 KB append + fsync          : p50    821.6 us  p99   1918.2 us  -> 1,217 commits/s serial
+group commit, 64 x 128 B     :     14.1 us per record -> 71,172 records/s
 
 == 2. loopback network
-loopback TCP 1-byte RTT      : p50     35.0 us  p99     75.9 us
-loopback TCP connect+close   : p50    381.4 us  p99    518.2 us
+loopback TCP 1-byte RTT      : p50     36.9 us  p99    105.3 us
+loopback TCP connect+close   : p50    406.7 us  p99    926.5 us
 
 == 3. CPU cost per byte
 single core, 64 MB of log lines       MB/s
-memcpy (System.arraycopy)            9459
-CRC32C                              20567
-CRC32                               20244
-SHA-256                              1627
-AES-256-GCM encrypt                  6139
-Deflate level 1                       189   ratio 4.8x
-Inflate (of level 1)                  719   (MB/s of output)
-Deflate level 6                        69   ratio 6.2x
+memcpy (System.arraycopy)            6510
+CRC32C                              15525
+CRC32                               13100
+SHA-256                              1233
+AES-256-GCM encrypt                  5284
+Deflate level 1                       142   ratio 4.8x
+Inflate (of level 1)                  714   (MB/s of output)
+Deflate level 6                        57   ratio 6.2x
 
 self-test: all invariants hold (sink 0)
 ```
@@ -1058,17 +1058,17 @@ self-test: all invariants hold (sink 0)
 Interpretation:
 
 - **A buffered write is a memcpy into the page cache:** ~13 µs including the JVM and syscall. It is not durable.
-- **fsync on a consumer drive costs ~1 ms at p50.** The tail is wild. In this run the p99 was **102 ms**. An earlier
-  run on the same machine measured p99 = 1.5 ms. The QLC drive's SLC cache and DRAM-less FTL flush map updates
+- **fsync on a consumer drive costs ~0.8–1.1 ms at p50.** The tail is wild. Across five runs the p99 was 1.5–2 ms in
+  four and **102 ms** in one. The QLC drive's SLC cache and DRAM-less FTL flush map updates
   unpredictably.
   - Enterprise drives with **power-loss protection (PLP)** have capacitors that make their write cache durable. They
     can acknowledge a flush in tens of microseconds, roughly 10–50× faster at p50 and far tighter at p99.
   - **Never benchmark a database on a laptop and extrapolate commit latency.**
 - **Group commit decouples throughput from fsync latency.**
-  - Throughput = batch size ÷ fsync latency: 921 serial commits/s becomes **42,522 records/s** at 64 records per
-    flush.
+  - Throughput = batch size ÷ fsync latency: ~920–1,240 serial commits/s becomes **42,500–71,200 records/s** at 64
+    records per flush (46–58×).
   - The cost is latency: each commit waits for its batch.
-  - By Little's law, at 42.5k/s and ~1.5 ms per batch, you need ~64 concurrent committers to fill the batches. This is
+  - By Little's law, at ~42–71k/s and ~1–1.5 ms per batch, you need ~64 concurrent committers to fill the batches. This is
     why databases with group commit (Postgres `commit_delay`, InnoDB, Kafka's batched log flush, every Raft
     implementation) scale with concurrency and look slow single-threaded.
 - **The fsync contract is subtle, and getting it wrong has lost real data.**
@@ -1098,7 +1098,7 @@ Interpretation:
   - A small segment repairs in seconds, which keeps the double-fault window tiny.
   - The paper reports roughly 35× the transactions with ~7.7× fewer I/Os per transaction than mirrored MySQL on its
     benchmark (⚠ verify the exact figures).
-  - Full treatment in Folder 02 file 04 (`02-Storage-Engines-Replication-and-Sharding-Internals/`).
+  - Full treatment in Folder 02 file 04 ([`02-Storage-Engines-Replication-and-Sharding-Internals/`](../02-Storage-Engines-Replication-and-Sharding-Internals/)).
 
 ---
 
@@ -1503,7 +1503,7 @@ wire):
 | 100G | **148.8 Mpps** | **6.7** | **20** | 8.13 Mpps | 123 |
 | 400G | 595 Mpps | 1.7 | 5 | 32.5 Mpps | 31 |
 
-A DRAM miss (111 ns) is 16 packet-times at 100G with small packets. Per-packet costs in the kernel are therefore the
+A DRAM miss (~115 ns) is ~17 packet-times at 100G with small packets. Per-packet costs in the kernel are therefore the
 bottleneck for small-packet workloads: interrupts, skb allocation, syscalls, copies. The options:
 
 | Technique | Mechanism | Typical gain ⚠ | Cost / risk |
@@ -1527,12 +1527,12 @@ Real uses:
   kernel gave you for free.
 - It pays when per-packet CPU *is* the product: load balancers, DDoS scrubbers, caches serving millions of tiny
   requests, trading systems.
-- It rarely pays for a CRUD service, where the 111 ns DRAM misses in your business logic dwarf the packet path.
+- It rarely pays for a CRUD service, where the ~115 ns DRAM misses in your business logic dwarf the packet path.
 
 ### 4.8 Loopback and service-mesh hops
 
-The measured loopback round trip on this machine is **35 µs** at p50 (76 µs at p99) for a 1-byte TCP ping-pong.
-Connection setup and teardown is **381 µs**.
+The measured loopback round trip on this machine is **35–37 µs** at p50 (76–105 µs at p99) for a 1-byte TCP
+ping-pong. Connection setup and teardown is **370–410 µs**.
 
 A service mesh puts two proxies in each call, each traversing a loopback-style hop plus user-space proxy processing.
 That is tens to hundreds of microseconds per hop. It is invisible for a 50 ms request, and dominant for a 500 µs
@@ -1544,17 +1544,18 @@ cache lookup. Two consequences:
 
 ## 5. CPU cost per byte: is compression, encryption or checksumming "free"?
 
-From the `IoCostProbe` output (one core, 64 MB of realistic log lines):
+From the `IoCostProbe` runs (one core, 64 MB of realistic log lines). Ranges span the embedded run (a warm laptop)
+and the fastest run:
 
 | Work | MB/s per core | Cores per 10 GB/s | Verdict |
 |---|---|---|---|
-| CRC32C (hardware instruction) | 20,567 | 0.5 | Free. Checksum every block, frame and page; there is no excuse |
-| memcpy | 9,459 | 1.1 | Not free at 100 Gbps: zero-copy (`sendfile`, `splice`, kTLS) matters |
-| AES-256-GCM (AES-NI/VAES) | 6,139 | 1.6 | Nearly free. Encrypt everything in transit and at rest |
-| SHA-256 (SHA-NI) | 1,627 | 6 | A real cost at storage-ingest scale (content-addressed dedup) |
-| Inflate (zlib) | 719 | 14 | Decompression on the read path is a CPU line item |
-| Deflate level 1 (4.8× ratio) | 189 | 53 | Expensive. Prefer LZ4/zstd for hot paths |
-| Deflate level 6 (6.2× ratio) | 69 | 145 | Archival only |
+| CRC32C (hardware instruction) | 15,500–20,600 | 0.5–0.6 | Free. Checksum every block, frame and page; there is no excuse |
+| memcpy | 6,500–9,500 | 1.1–1.5 | Not free at 100 Gbps: zero-copy (`sendfile`, `splice`, kTLS) matters |
+| AES-256-GCM (AES-NI/VAES) | 5,300–6,100 | 1.6–1.9 | Nearly free. Encrypt everything in transit and at rest |
+| SHA-256 (SHA-NI) | 1,200–1,660 | 6–8 | A real cost at storage-ingest scale (content-addressed dedup) |
+| Inflate (zlib) | 710–760 | 13–14 | Decompression on the read path is a CPU line item |
+| Deflate level 1 (4.8× ratio) | 140–190 | 53–70 | Expensive. Prefer LZ4/zstd for hot paths |
+| Deflate level 6 (6.2× ratio) | 57–72 | 140–175 | Archival only |
 
 LZ4 and zstd are not in the JDK, so they were not measured here. Their published benchmarks put LZ4 at ~700+ MB/s
 compression and multiple GB/s decompression per core, and zstd level 1 at ~500 MB/s compression and ~1.5 GB/s
@@ -2126,13 +2127,13 @@ demand**. Two consequences:
 
 ```
 LATENCY                                   THROUGHPUT / CAPACITY
-L1 1 ns · L2 4 ns · L3 15 ns              DRAM: ~20 GB/s per core seq; 400-800 GB/s per socket
+L1 1 ns · L2 4 ns · L3 13-15 ns           DRAM: ~16-24 GB/s per core seq; 400-800 GB/s per socket
 DRAM 100 ns (remote NUMA 150+)            NVMe: 500k-1.5M IOPS, 3-14 GB/s; IOPS = QD / latency
 contended atomic 50-150 ns                HDD: 100-200 IOPS, ~250 MB/s
 syscall 0.1-0.5 us · ctx switch 1-5 us    1 Gbps = 125 MB/s = 10.8 TB/day
 loopback RTT 10-35 us                     100G line rate: 148.8 Mpps @64B (6.7 ns/pkt), 8.1 Mpps @1518B
-same-AZ RTT 50-250 us · RDMA 2-5 us       one core: CRC32C 20 GB/s, AES-GCM 6 GB/s, SHA-256 1.6 GB/s,
-NVMe read 50-100 us                                 memcpy ~10 GB/s, zlib-1 0.2 GB/s
+same-AZ RTT 50-250 us · RDMA 2-5 us       one core: CRC32C 15-20 GB/s, AES-GCM 5-6 GB/s, SHA-256 1.2-1.6 GB/s,
+NVMe read 50-100 us                                 memcpy 6-10 GB/s, zlib-1 0.14-0.19 GB/s
 fsync: 20-100 us (PLP) / ms (consumer)    Mathis: 20 Mbps per flow at 72 ms & 1e-4 loss
 cross-AZ 0.5-2 ms                         BDP 10G x 72 ms = 90 MB; 6 MiB window -> 699 Mbps
 US coast-coast 65 ms · NY-London 72 ms    TCP+TLS1.3 = 2 RTT; QUIC = 1 (0-RTT replayable)
