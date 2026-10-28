@@ -97,7 +97,7 @@ GCC 16.2 + libstdc++ (one run):
 bucket_count after growth: 13 29 59 127 257 541 1109 2357 5087  (max_load_factor 1)
 std::hash<int>{}(12345) = 12345, std::hash<std::uint64_t>{}(1ull << 40) = 1099511627776
 buckets=20753 longest chain: spread keys 1, keys = i * bucket_count 20000
-lookup: spread keys 3.0 ns, colliding keys 38236.8 ns (hits 20000 / 20000)
+lookup: spread keys 2.4 ns, colliding keys 38635.8 ns (hits 20000 / 20000)
 ```
 
 Clang 21.1 + libc++ (one run):
@@ -106,7 +106,7 @@ Clang 21.1 + libc++ (one run):
 bucket_count after growth: 2 5 11 23 47 97 197 397 797 1597 3203 6421  (max_load_factor 1)
 std::hash<int>{}(12345) = 12345, std::hash<std::uint64_t>{}(1ull << 40) = 1099511627776
 buckets=20011 longest chain: spread keys 1, keys = i * bucket_count 20000
-lookup: spread keys 5.0 ns, colliding keys 38164.9 ns (hits 20000 / 20000)
+lookup: spread keys 5.0 ns, colliding keys 39243.3 ns (hits 20000 / 20000)
 ```
 
 * **Bucket counts are primes in both libraries, with different sequences:** libstdc++ jumps 13 → 29 → 59 … (it
@@ -251,8 +251,8 @@ GCC 16.2 (one run):
 
 ```text
 1M uint64 keys, random-order lookups (one run):
-  hits  : SwissSet  21.6 ns   unordered_set  48.2 ns
-  misses: SwissSet  13.2 ns   unordered_set  53.2 ns
+  hits  : SwissSet  23.2 ns   unordered_set  49.6 ns
+  misses: SwissSet  11.9 ns   unordered_set  57.3 ns
   memory: SwissSet 18 MB (1 control byte + 8 key bytes per slot); size=1000000
 ```
 
@@ -260,8 +260,8 @@ Clang 21.1 (one run):
 
 ```text
 1M uint64 keys, random-order lookups (one run):
-  hits  : SwissSet  23.5 ns   unordered_set  69.4 ns
-  misses: SwissSet  14.0 ns   unordered_set  94.3 ns
+  hits  : SwissSet  26.3 ns   unordered_set  77.4 ns
+  misses: SwissSet  18.4 ns   unordered_set 104.5 ns
   memory: SwissSet 18 MB (1 control byte + 8 key bytes per slot); size=1000000
 ```
 
@@ -338,17 +338,17 @@ int main() {
 GCC 16.2 + libstdc++ (one run):
 
 ```text
-n=     1000: map   36.9  flat_map   39.5  sorted vector   37.8  unordered_map    8.5  ns/lookup
-n=   100000: map  141.4  flat_map   73.4  sorted vector   72.7  unordered_map   16.3  ns/lookup
-n=  1000000: map  616.0  flat_map  112.3  sorted vector  117.7  unordered_map   39.7  ns/lookup
+n=     1000: map   40.6  flat_map   44.8  sorted vector   44.1  unordered_map    9.7  ns/lookup
+n=   100000: map  217.4  flat_map   70.7  sorted vector   75.2  unordered_map   16.6  ns/lookup
+n=  1000000: map  710.8  flat_map  112.3  sorted vector  127.2  unordered_map   41.4  ns/lookup
 ```
 
 Clang 21.1 + libc++ (one run):
 
 ```text
-n=     1000: map   25.4  flat_map   12.2  sorted vector   10.6  unordered_map    8.4  ns/lookup
-n=   100000: map   80.6  flat_map   37.7  sorted vector   36.2  unordered_map   14.8  ns/lookup
-n=  1000000: map  358.8  flat_map   92.5  sorted vector   74.9  unordered_map   43.6  ns/lookup
+n=     1000: map   27.2  flat_map   14.3  sorted vector   11.4  unordered_map    8.8  ns/lookup
+n=   100000: map   88.7  flat_map   38.1  sorted vector   39.3  unordered_map   14.3  ns/lookup
+n=  1000000: map  410.0  flat_map  100.4  sorted vector   84.7  unordered_map   42.9  ns/lookup
 ```
 
 * **At 10⁶ elements `std::map` costs 384–684 ns per lookup**: ~20 levels of pointer chasing, each a likely cache

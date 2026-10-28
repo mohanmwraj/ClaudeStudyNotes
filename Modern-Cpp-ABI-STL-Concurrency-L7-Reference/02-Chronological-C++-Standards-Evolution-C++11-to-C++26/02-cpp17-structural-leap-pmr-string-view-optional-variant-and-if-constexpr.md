@@ -107,8 +107,8 @@ GCC 16.2 + libstdc++ (one run):
 
 ```text
 200 rounds x 2000 strings of 48 chars (sink 38400000):
-  std::vector<std::string>               43.8 ms   heap allocations: 402400
-  pmr::vector<pmr::string> on arena        5.3 ms   heap allocations: 0
+  std::vector<std::string>               30.7 ms   heap allocations: 402400
+  pmr::vector<pmr::string> on arena        3.0 ms   heap allocations: 0
 sizeof(std::string)=32 sizeof(std::pmr::string)=40  (the allocator pointer is per object)
 ```
 
@@ -116,8 +116,8 @@ Clang 21.1 + libc++ (one run):
 
 ```text
 200 rounds x 2000 strings of 48 chars (sink 38400000):
-  std::vector<std::string>               25.4 ms   heap allocations: 402400
-  pmr::vector<pmr::string> on arena        3.7 ms   heap allocations: 0
+  std::vector<std::string>               27.7 ms   heap allocations: 402400
+  pmr::vector<pmr::string> on arena        4.1 ms   heap allocations: 0
 sizeof(std::string)=24 sizeof(std::pmr::string)=32  (the allocator pointer is per object)
 ```
 

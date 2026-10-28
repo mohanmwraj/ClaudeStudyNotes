@@ -309,10 +309,10 @@ constructor 157–172 ms):
 
 ```text
 1M ascending keys into std::map<int,int> (one run, sizes 4000000):
-  emplace(k, v)                 136.7 ms
-  emplace_hint(end(), k, v)      79.6 ms
-  emplace_hint(begin(), k, v)   150.3 ms  (wrong hint)
-  map(sorted.begin(), end())    153.4 ms
+  emplace(k, v)                 152.1 ms
+  emplace_hint(end(), k, v)      89.2 ms
+  emplace_hint(begin(), k, v)   158.0 ms  (wrong hint)
+  map(sorted.begin(), end())    157.3 ms
 ```
 
 Clang 21.1 + libc++ (one run; over 3 runs: plain 123–151 ms, `end()` hint 128–146 ms, wrong hint 139–147 ms,
@@ -320,10 +320,10 @@ range constructor 123–131 ms):
 
 ```text
 1M ascending keys into std::map<int,int> (one run, sizes 4000000):
-  emplace(k, v)                 122.3 ms
-  emplace_hint(end(), k, v)     126.0 ms
-  emplace_hint(begin(), k, v)   137.3 ms  (wrong hint)
-  map(sorted.begin(), end())    123.4 ms
+  emplace(k, v)                 132.8 ms
+  emplace_hint(end(), k, v)     134.3 ms
+  emplace_hint(begin(), k, v)   148.0 ms  (wrong hint)
+  map(sorted.begin(), end())    131.8 ms
 ```
 
 * `emplace_hint(pos, ...)` is amortized O(1) when the new element belongs immediately **before** `pos`. For ascending

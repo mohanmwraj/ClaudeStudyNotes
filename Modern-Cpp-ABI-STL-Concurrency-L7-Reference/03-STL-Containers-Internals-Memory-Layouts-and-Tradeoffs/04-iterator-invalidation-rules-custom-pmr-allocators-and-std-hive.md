@@ -279,6 +279,7 @@ default pool_options: max_blocks_per_chunk=1048576 largest_required_pool_block=1
 ```cpp
 // hive_sketch.cpp - the idea behind C++26 std::hive (P0447): stable addresses, O(1) erase, slot reuse, skipping
 // A teaching sketch (fixed block size, bool skip flags); plf::hive is the full reference implementation.
+#include <cstdint>
 #include <chrono>
 #include <cstddef>
 #include <list>
@@ -347,22 +348,22 @@ public:
 };
 
 int main() {
-    MiniHive<long> h;
-    std::vector<MiniHive<long>::Handle> handles;
-    for (long i = 0; i < 1000; ++i) handles.push_back(h.insert(i));
-    long* keep = handles[999].ptr;
+    MiniHive<std::int64_t> h;
+    std::vector<MiniHive<std::int64_t>::Handle> handles;
+    for (std::int64_t i = 0; i < 1000; ++i) handles.push_back(h.insert(i));
+    std::int64_t* keep = handles[999].ptr;
     for (std::size_t i = 0; i < 1000; i += 2) h.erase(handles[i]);       // erase every other element
-    for (long i = 0; i < 500; ++i) h.insert(10'000 + i);                  // refills the erased slots
+    for (std::int64_t i = 0; i < 500; ++i) h.insert(10'000 + i);                  // refills the erased slots
     std::println("size={} blocks={} (no growth: erased slots were reused); kept pointer still reads {}", h.size(),
                  h.blocks(), *keep);
 
     // Iteration speed after heavy churn vs std::list (one run).
-    constexpr long kN = 1'000'000;
-    MiniHive<long> big;
-    std::list<long> lst;
-    std::vector<MiniHive<long>::Handle> hp;
-    std::vector<std::list<long>::iterator> lp;
-    for (long i = 0; i < kN; ++i) {
+    constexpr std::int64_t kN = 1'000'000;
+    MiniHive<std::int64_t> big;
+    std::list<std::int64_t> lst;
+    std::vector<MiniHive<std::int64_t>::Handle> hp;
+    std::vector<std::list<std::int64_t>::iterator> lp;
+    for (std::int64_t i = 0; i < kN; ++i) {
         hp.push_back(big.insert(i));
         lp.push_back(lst.insert(lst.end(), i));
     }
@@ -372,12 +373,12 @@ int main() {
     }
     auto time = [](auto&& body) {
         auto t0 = std::chrono::steady_clock::now();
-        long s = body();
+        std::int64_t s = body();
         auto t1 = std::chrono::steady_clock::now();
         return std::pair{s, std::chrono::duration<double, std::milli>(t1 - t0).count()};
     };
-    auto [sh, th] = time([&] { long s = 0; big.for_each([&](long v) { s += v; }); return s; });
-    auto [sl, tl] = time([&] { long s = 0; for (long v : lst) s += v; return s; });
+    auto [sh, th] = time([&] { std::int64_t s = 0; big.for_each([&](std::int64_t v) { s += v; }); return s; });
+    auto [sl, tl] = time([&] { std::int64_t s = 0; for (std::int64_t v : lst) s += v; return s; });
     std::println("iterate {} live elements: MiniHive {:.2f} ms, std::list {:.2f} ms (sums equal: {})", big.size(), th, tl,
                  sh == sl);
 }
@@ -387,19 +388,19 @@ GCC 16.2 (one run):
 
 ```text
 size=1000 blocks=16 (no growth: erased slots were reused); kept pointer still reads 999
-iterate 666666 live elements: MiniHive 1.15 ms, std::list 6.06 ms (sums equal: true)
+iterate 666666 live elements: MiniHive 1.70 ms, std::list 9.25 ms (sums equal: true)
 ```
 
 Clang 21.1 (one run):
 
 ```text
 size=1000 blocks=16 (no growth: erased slots were reused); kept pointer still reads 999
-iterate 666666 live elements: MiniHive 0.74 ms, std::list 7.25 ms (sums equal: true)
+iterate 666666 live elements: MiniHive 1.08 ms, std::list 7.77 ms (sums equal: true)
 ```
 
 * After erasing 500 of 1,000 elements and inserting 500 new ones, the sketch still has 16 blocks: erased slots were
   reused. The pointer to element 999 never moved.
-* Iterating 666,666 live elements after erasing every third one: **0.7–1.1 ms vs 6.9–8.5 ms for `std::list`**,
+* Iterating 666,666 live elements after erasing every third one: **0.7–1.7 ms vs 6.9–9.3 ms for `std::list`** (ranges over runs),
   because blocks are contiguous and the skip check is a predictable branch.
 * What the real `std::hive` adds (plf::hive is the reference implementation, P0447 the specification): growing block
   capacities, a "jump-counting" skipfield that skips runs of erased slots in O(1) instead of one flag at a time,

@@ -10,7 +10,7 @@
 | # | Listing | What it proves | Verified by |
 |---|---|---|---|
 | 2.14 | `deducing_this.cpp` | one accessor for all value categories, CRTP without templates, recursive lambdas, **by-value `self` in registers** | run + asm |
-| 2.15 | `expected_cost.cpp` | `std::expected` monadic API; error path ~4–9 ns vs **1.9–3 µs per thrown exception** | run, both compilers (timed) |
+| 2.15 | `expected_cost.cpp` | `std::expected` monadic API; error path ~4–10 ns vs **1.9–3.1 µs per thrown exception** | run, both compilers (timed) |
 | 2.16 | `mdspan_demo.cpp` | static vs dynamic extents in the index arithmetic; layouts; how a 24-byte `mdspan` is passed | run + asm |
 | 2.17 | `reflection.cpp` | C++26 reflection running: enum→string, generic field printer, `offset_of` | GCC 16.2 `-freflection` run; Clang 21 has no `<meta>` |
 | 2.18 | `contracts.cpp` | `pre`/`post`/`contract_assert` under `observe`, `ignore` and `enforce`; custom violation handler | GCC 16.2 runs ×3 |
@@ -369,6 +369,7 @@ _Z8call_val5Pair2:                 // call_val(Pair2)
 
 ```cpp
 // expected_cost.cpp - C++23 std::expected vs exceptions: the error path measured, the monadic API shown
+#include <cstdint>
 #include <charconv>
 #include <chrono>
 #include <expected>
@@ -409,7 +410,7 @@ std::expected<int, ParseError> parse_port(std::string_view s) {
 template <class F>
 double bench_ns(const std::vector<std::string>& in, F f) {
     auto t0 = std::chrono::steady_clock::now();
-    long sink = 0;
+    std::int64_t sink = 0;
     for (int r = 0; r < 20; ++r)
         for (const auto& s : in) sink += f(s);
     auto t1 = std::chrono::steady_clock::now();
@@ -440,24 +441,24 @@ GCC 16.2 (one run):
 
 ```text
 parse_port("8080")=8080 parse_port("99999") error=2 parse_port("x") error=1
-   0% bad inputs: expected     4.4 ns/call   exceptions     12.3 ns/call
-   1% bad inputs: expected     4.5 ns/call   exceptions     32.7 ns/call
-  10% bad inputs: expected     4.4 ns/call   exceptions    233.7 ns/call
-  50% bad inputs: expected     3.5 ns/call   exceptions   1172.0 ns/call
+   0% bad inputs: expected     4.5 ns/call   exceptions     11.6 ns/call
+   1% bad inputs: expected     4.6 ns/call   exceptions     35.8 ns/call
+  10% bad inputs: expected     4.7 ns/call   exceptions    235.0 ns/call
+  50% bad inputs: expected     3.7 ns/call   exceptions   1106.6 ns/call
 ```
 
 Clang 21.1 (one run):
 
 ```text
 parse_port("8080")=8080 parse_port("99999") error=2 parse_port("x") error=1
-   0% bad inputs: expected     9.4 ns/call   exceptions     10.2 ns/call
-   1% bad inputs: expected     9.3 ns/call   exceptions     37.8 ns/call
-  10% bad inputs: expected     8.9 ns/call   exceptions    285.7 ns/call
-  50% bad inputs: expected     7.0 ns/call   exceptions   1461.8 ns/call
+   0% bad inputs: expected     9.7 ns/call   exceptions     10.6 ns/call
+   1% bad inputs: expected     9.4 ns/call   exceptions     40.2 ns/call
+  10% bad inputs: expected     9.8 ns/call   exceptions    304.1 ns/call
+  50% bad inputs: expected     7.9 ns/call   exceptions   1562.0 ns/call
 ```
 
 The exception column is linear in the failure rate. From the 50% row, each thrown and caught exception costs about
-**(954 − 4) / 0.5 ≈ 1.9 µs** on GCC and **(1493 − 7) / 0.5 ≈ 3.0 µs** on Clang. That covers allocating the
+**(1107 − 4) / 0.5 ≈ 2.2 µs** on GCC and **(1562 − 8) / 0.5 ≈ 3.1 µs** on Clang in the run shown (1.9 µs and 3.0 µs in an earlier run). That covers allocating the
 exception, two-phase unwinding through the tables, `catch` matching (RTTI, Folder 01) and destruction. The
 `expected` error path costs the same as the success path. At 0% failure both are within a few nanoseconds of each
 other: the Itanium zero-cost model really is close to free when nothing throws (Folder 01, file 02, §1.6).
@@ -905,7 +906,7 @@ allocations against a promise/future chain.
 
 | Subtle buggy way | Production-hardened way |
 |---|---|
-| `throw` on malformed client input in a request parser | return `std::expected<T, ParseError>`; 1.9–3 µs per exception is a DoS lever |
+| `throw` on malformed client input in a request parser | return `std::expected<T, ParseError>`; 1.9–3.1 µs per exception is a DoS lever |
 | `expected` everywhere, including OOM and invariant violations | exceptions (or termination) for the truly exceptional; contracts for programming errors |
 | `.value()` on an `expected` without checking | `and_then`/`transform`/`or_else`, or check `has_value()`; `.value()` throws `bad_expected_access` |
 | `assert()` that disappears in release builds | `contract_assert` with an explicit evaluation semantic per build (where available) |
@@ -941,7 +942,7 @@ that degrades to hand-written code.
 **L5 textbook answer.** "Yes, exceptions are slow. `expected` is zero-overhead."
 
 **Why L5 breaks.** Exceptions are *not* slow when nothing throws: at 0% failure the two styles were within a few
-ns (Listing 2.15). They are slow *per throw*: 1.9–3 µs here. And `expected` is not free either: it widens return
+ns (Listing 2.15). They are slow *per throw*: 1.9–3.1 µs here. And `expected` is not free either: it widens return
 types, every caller must propagate (or the error is silently ignored), and it does not work through constructors
 or operators.
 
