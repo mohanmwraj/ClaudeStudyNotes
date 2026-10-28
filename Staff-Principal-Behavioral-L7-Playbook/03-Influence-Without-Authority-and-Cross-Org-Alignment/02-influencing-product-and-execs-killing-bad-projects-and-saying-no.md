@@ -153,7 +153,7 @@ The L7 move is to **change the roadmap without a fight**: when the trade-off is 
 
 #### How an L5 tells it
 
-> "Our org was building a custom vector search engine, and I thought it was a waste because the managed database had added vector search. I brought it up in a few architecture reviews and showed some benchmarks. Eventually leadership cancelled the project, and the team moved to other work. We switched to the managed option, and it worked fine."
+> "Our org was building a custom vector search engine, and I thought it was a waste because the managed database had added vector search. I brought it up in a few architecture reviews and showed some benchmarks. Eventually leadership canceled the project, and the team moved to other work. We switched to the managed option, and it worked fine."
 
 **What the committee extracts:** raised doubts in public forums; no ownership of the decision; no sponsor handling; no people plan; no numbers. **L5.**
 
@@ -199,7 +199,7 @@ The L7 move is to **change the roadmap without a fight**: when the trade-off is 
 
 ### 6.3 Changing a product roadmap with engineering evidence (composite: checkout reliability vs a loyalty feature)
 
-**The facts (composite):** the product org wants to spend the next quarter on a loyalty feature. The candidate believes checkout's retry behaviour causes duplicate charges and abandoned carts at a meaningful rate.
+**The facts (composite):** the product org wants to spend the next quarter on a loyalty feature. The candidate believes checkout's retry behavior causes duplicate charges and abandoned carts at a meaningful rate.
 
 #### How an L5 tells it
 

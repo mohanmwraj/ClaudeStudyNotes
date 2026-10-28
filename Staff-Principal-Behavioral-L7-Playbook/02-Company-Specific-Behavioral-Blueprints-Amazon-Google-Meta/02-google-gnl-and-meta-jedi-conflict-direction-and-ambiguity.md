@@ -43,7 +43,7 @@ The decision mechanics, from Google's public descriptions and practitioners:
 | **User focus** | "Describe a decision you made for users that cost your team." | A UX fix | Traded a team or org metric for a user outcome, and made the case upward |
 | **Doing the right thing** | "Tell me about raising a concern that wasn't your job." | Flagged a bug | Found an ethical, privacy or safety gap no one owned and drove it to closure |
 | **Collaboration and inclusion** | "How did you make sure quieter voices shaped a decision?" | Asked for input in a meeting | Changed how the forum decides (written pre-reads, rotating reviewers) |
-| **Feedback** | "Tell me about difficult feedback you received." | Accepted it | Changed an operating behaviour, with evidence that it changed |
+| **Feedback** | "Tell me about difficult feedback you received." | Accepted it | Changed an operating behavior, with evidence that it changed |
 
 Two Google-specific emphases:
 - **"Focus on the user and all else will follow"** is the first item in Google's published philosophy. Behavioral stories that never reach an end user read as internally focused.
@@ -210,7 +210,7 @@ Folder 04 goes deep on the RFC and decision mechanics. For Google and Meta the b
 
 #### How an L5 tells it
 
-> "Leadership was worried about our ML training costs. My manager asked me to look into it. I analysed the GPU usage on our team, found some jobs that were over-provisioned, and right-sized them. That saved about 15% of our team's GPU spend."
+> "Leadership was worried about our ML training costs. My manager asked me to look into it. I analyzed the GPU usage on our team, found some jobs that were over-provisioned, and right-sized them. That saved about 15% of our team's GPU spend."
 
 **What the committee extracts:** a handed problem, solved for one team. **L5.**
 

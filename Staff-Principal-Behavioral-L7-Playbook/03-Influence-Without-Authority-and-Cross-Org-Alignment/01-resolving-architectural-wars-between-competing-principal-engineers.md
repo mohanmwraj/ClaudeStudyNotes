@@ -103,7 +103,7 @@ Common frameworks make decision rights explicit:
 
 At L7, the evidence interviewers want is that **you noticed the vacuum and fixed it**, sometimes by making yourself the decider, often by getting someone else named.
 
-| | L5 behaviour | L6 behaviour | L7 behaviour |
+| | L5 behavior | L6 behavior | L7 behavior |
 |---|---|---|---|
 | **Who decides?** | Assumes their manager does | Asks who decides | Gets the decider named, and the criteria agreed, before the debate restarts |
 | **The debate** | Argues for their design | Writes a comparison | Untangles facts, values, scope, interests and identity, and applies the right tool to each |
@@ -238,7 +238,7 @@ You've been asked, formally or informally, to settle a war between two other sen
 | 1 | "Who designed the benchmark?" | Fairness | "I did" | "Both teams jointly" |
 | 2 | "What workload?" | Rigor | Synthetic | Replayed production traffic |
 | 3 | "When were the thresholds set?" | Pre-registration | After | Before, and signed by both |
-| 4 | "What if the result had favoured him on everything?" | Commitment | "It wouldn't" | "Then his design, and I'd have committed" |
+| 4 | "What if the result had favored him on everything?" | Commitment | "It wouldn't" | "Then his design, and I'd have committed" |
 | 5 | "What did the bake-off not measure?" | Limits | Nothing | Long-term operational cost, team learning curve |
 
 ### Chain D · Decision rights

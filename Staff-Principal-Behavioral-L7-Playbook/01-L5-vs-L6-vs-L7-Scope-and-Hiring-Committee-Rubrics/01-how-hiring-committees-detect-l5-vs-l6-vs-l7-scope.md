@@ -78,7 +78,7 @@ Interviewers rarely use these names, but every probe maps to one of them.
 | **Ambiguity** | Clear spec | Clear goal, unclear path | Unclear goal inside a known area | Unclear area: decides what the problem *is* and whether it matters |
 | **Blast radius** | A feature | A service or pipeline | Several teams' systems | An org, a platform, a business line |
 | **Time horizon** | Weeks | A quarter | 6–18 months | Multi-year direction with near-term proof points |
-| **Influence mechanism** | Code | Design docs, code review, mentoring | RFCs, consensus across sceptical tech leads, cross-team execution | Strategy and roadmap change, exec alignment, standards adopted by many teams, org design input |
+| **Influence mechanism** | Code | Design docs, code review, mentoring | RFCs, consensus across skeptical tech leads, cross-team execution | Strategy and roadmap change, exec alignment, standards adopted by many teams, org design input |
 | **Impact unit** | Tickets, features | Service SLOs, delivery | Org-level technical metrics (P99, cost, velocity, incident rate) | Business outcomes (revenue protected, cost, risk, time-to-market) **plus** a capability that keeps paying |
 | **Leverage** | Own output | Own output + a junior or two | Other teams' output | Owners created: L5/L6s who now run domains; mechanisms that work without you |
 
@@ -96,7 +96,7 @@ Here are the canonical one-line summaries at each level, annotated with what the
 |---|---|---|---|---|
 | **L4** | "I was given a ticket/spec and implemented the feature cleanly." | *given, implemented* | Executes well-defined work | Why the work mattered; any decision; anything beyond the ticket |
 | **L5** | "I owned a complex microservice/pipeline end-to-end, mentored junior devs, and delivered on time." | *owned, mentored, delivered* | Reliable owner of a team-scoped system | A problem they found; influence outside the team; an org-level outcome |
-| **L6** | "I noticed 3 teams were hitting the same data-ingestion bottleneck, authored an RFC comparing 3 architectures, built consensus across sceptical tech leads, led the cross-team migration, and reduced org-wide P99 latency by 65%." | *noticed, authored, built consensus, led* | Finds cross-team problems; decides between real alternatives; moves peers without authority; delivers an org metric | The business stakes; changing what leaders fund; people and mechanisms that outlast the project |
+| **L6** | "I noticed 3 teams were hitting the same data-ingestion bottleneck, authored an RFC comparing 3 architectures, built consensus across skeptical tech leads, led the cross-team migration, and reduced org-wide P99 latency by 65%." | *noticed, authored, built consensus, led* | Finds cross-team problems; decides between real alternatives; moves peers without authority; delivers an org metric | The business stakes; changing what leaders fund; people and mechanisms that outlast the project |
 | **L7** | "I identified that our multi-year platform architecture would hit a hard scaling/cost wall within 12 months and threaten a $50M business line. I aligned VP/Director stakeholders to pivot the roadmap, established a cellular platform architecture adopted by 8 teams, mentored L5/L6 engineers into domain owners, and saved $4M/year in cloud TCO while cutting onboarding from 6 weeks to 3 days." | *identified (before it hurt), threaten (business translation), aligned VPs, pivot the roadmap, established (a standard), mentored into owners* | Foresight; translates technology into business risk; changes strategy; sets standards others adopt; grows owners; delivers money **and** capability | (At L8: multiple orgs or the company, industry influence) |
 
 ### 4.1 Markers that read as real, and markers that read as inflation
@@ -191,7 +191,7 @@ Same project, same person. The second packet gets an L5 offer.
 > - a shared ingestion service with per-team sinks;
 > - standards only.
 >
-> I recommended the shared service. The pricing TL was the sceptic: he worried that replay during backfills would blow his compute budget. I built a replay prototype against a week of his traffic, which showed the cost was 30% of his estimate, and we agreed pricing would migrate last.
+> I recommended the shared service. The pricing TL was the skeptic: he worried that replay during backfills would blow his compute budget. I built a replay prototype against a week of his traffic, which showed the cost was 30% of his estimate, and we agreed pricing would migrate last.
 >
 > I led the migration across all three teams over two quarters. Org-wide P99 ingest-to-queryable latency dropped 65%, oversell incidents went from about six a month to under one, and we decommissioned two clusters."
 
@@ -199,7 +199,7 @@ Same project, same person. The second packet gets an L5 offer.
 
 #### How an L7 tells it
 
-> "Twelve months before the marketplace launch, I modelled what seller onboarding would do to our event volume: roughly ten times. I found that all three ingestion pipelines would breach the inventory-accuracy commitment we were about to put in seller contracts. That exposure was about $X M a year in penalties and oversell refunds, and it put the launch itself at risk. Nobody owned that question, because each team's pipeline looked fine against its own roadmap.
+> "Twelve months before the marketplace launch, I modeled what seller onboarding would do to our event volume: roughly ten times. I found that all three ingestion pipelines would breach the inventory-accuracy commitment we were about to put in seller contracts. That exposure was about $X M a year in penalties and oversell refunds, and it put the launch itself at risk. Nobody owned that question, because each team's pipeline looked fine against its own roadmap.
 >
 > I wrote a six-page proposal framing it as a launch risk, not a platform rewrite. I compared three paths:
 > - scaling the three pipelines independently;
@@ -210,7 +210,7 @@ Same project, same person. The second packet gets an L5 offer.
 >
 > The hard part was the roadmap. Funding the platform meant delaying a pricing feature the VP of Product wanted for Q2. I sat down with her and the VP of Engineering with the risk model and a phased plan: the first cell would carry the existing inventory traffic within six weeks, as a proof point. They moved two quarters of that feature's capacity to the platform.
 >
-> The pricing TL was the strongest sceptic, on replay cost. I built a replay prototype on his real traffic that cut his cost estimate by 70%, and I agreed his team would migrate last, after the cutover tooling had been proven on inventory.
+> The pricing TL was the strongest skeptic, on replay cost. I built a replay prototype on his real traffic that cut his cost estimate by 70%, and I agreed his team would migrate last, after the cutover tooling had been proven on inventory.
 >
 > I set the event contract as the org standard, and asked two L5s to own the cell router and the schema registry. I coached both through their first design reviews with the architecture council.
 >
@@ -298,7 +298,7 @@ Each chain is a sequence one interviewer might run on a single story. For each p
 
 ## 9. Position honestly: a strong L6 beats a collapsed L7
 
-Interviewers probe for 20 minutes per story. An inflated story collapses somewhere between probe 2 and probe 4, and the writeup then says **credibility concern**. That is worse than any down-level: it turns into a no-hire, and it colours every other interview in the debrief.
+Interviewers probe for 20 minutes per story. An inflated story collapses somewhere between probe 2 and probe 4, and the writeup then says **credibility concern**. That is worse than any down-level: it turns into a no-hire, and it colors every other interview in the debrief.
 
 **If your real scope is L6, target L6 and saturate it with evidence.** One L7-shaped story inside an otherwise excellent L6 packet often leads to the conversation "is this person ready for L7 within a year?". That's a good place to negotiate from.
 

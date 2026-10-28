@@ -94,7 +94,7 @@ Before the long push, make sure nothing new starts on the old system: a CI check
 
 ### 3.5 A public scoreboard
 
-A dashboard showing every team's migration status changes behaviour without a mandate. Nobody wants to be the last red row in the quarterly review. Use it as information, not as shame: pair it with an offer of help for every red row.
+A dashboard showing every team's migration status changes behavior without a mandate. Nobody wants to be the last red row in the quarterly review. Use it as information, not as shame: pair it with an offer of help for every red row.
 
 ### 3.6 Finish: the platform migrates the long tail
 

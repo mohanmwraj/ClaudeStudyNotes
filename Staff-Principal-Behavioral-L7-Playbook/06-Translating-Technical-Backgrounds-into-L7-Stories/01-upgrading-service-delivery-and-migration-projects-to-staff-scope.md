@@ -43,7 +43,7 @@ The goal is to tell the work at its **true** size. The line:
 
 | Honest upgrade (reframing what was true) | Inflation (claiming what wasn't) |
 |---|---|
-| "The migration retired $X M of licence and hardware cost" (it did; you just never said it) | Quoting a company-wide saving your project contributed a fraction of |
+| "The migration retired $X M of license and hardware cost" (it did; you just never said it) | Quoting a company-wide saving your project contributed a fraction of |
 | "I sequenced the cutover to protect the store-opening window" (you did) | "I led the migration" when you led one workstream |
 | "The business owner wanted a big-bang cutover; I argued for incremental routing, and she agreed" | Claiming a decision that your manager or architect made |
 | "The reconciliation tool I built became the standard for the next three migrations" | Implying reuse that didn't happen |
@@ -146,7 +146,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 ### 7.1 A legacy-to-cloud migration (composite: an on-premises order system for a retailer)
 
 **The facts (composite):**
-- A retailer's order-capture system runs on-premises on a commercial database, with a hardware lease and database licence renewal 18 months out.
+- A retailer's order-capture system runs on-premises on a commercial database, with a hardware lease and database license renewal 18 months out.
 - It serves e-commerce and 1,200 stores.
 - The candidate was the technical lead for the data and cutover workstream, one of three workstreams.
 
@@ -158,7 +158,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 
 #### How an L7 tells it
 
-> "Our order-capture system for e-commerce and 1,200 stores ran on-premises, and the hardware lease and database licence both renewed in 18 months, at about $X M over the next term. If the migration missed that date, we'd pay for both. If it caused an outage, stores couldn't take orders. I was technical lead for the data and cutover workstream, which was the highest-risk of the three.
+> "Our order-capture system for e-commerce and 1,200 stores ran on-premises, and the hardware lease and database license both renewed in 18 months, at about $X M over the next term. If the migration missed that date, we'd pay for both. If it caused an outage, stores couldn't take orders. I was technical lead for the data and cutover workstream, which was the highest-risk of the three.
 >
 > The original plan was a big-bang cutover over a long weekend. I argued against it, because a failed cutover meant rolling back a database that had already taken new orders. I proposed a strangler approach instead: a facade in front of the order APIs that could route by endpoint and by store, so we'd move traffic in slices. The program director's concern was the timeline: incremental is slower. I showed her that the slices could run in parallel with the other workstreams, and that the critical path was the data sync either way. She agreed.
 >
@@ -166,7 +166,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 >
 > We cut over by cohort: ten pilot stores first, then by region, avoiding the trading calendar's peak weeks. The business owner, operations, security and the audit team each signed off per phase, and the reconciliation reports became the audit evidence that no orders were lost. Every cohort had a rollback that we tested before it moved.
 >
-> We finished two months before the renewal date, with no order-capture outage, so the lease and licence weren't renewed. The reconciliation tool and the cohort playbook were reused for the next two migrations, inventory and pricing, and an engineer I'd paired with on the reconciler led the inventory one."
+> We finished two months before the renewal date, with no order-capture outage, so the lease and license weren't renewed. The reconciliation tool and the cohort playbook were reused for the next two migrations, inventory and pricing, and an engineer I'd paired with on the reconciler led the inventory one."
 
 **What the committee extracts:** the business stake and deadline; precise role; argued and won the strangler approach against a big-bang plan, answering a real concern; zero-downtime depth; reconciliation found a real defect; cohort cutover around the business calendar; multi-stakeholder sign-off, with audit evidence; outcome in money and risk; reuse and a grown owner. **L7, told honestly from a workstream-lead role.**
 
@@ -184,7 +184,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 
 > "I led a six-person team at a services company, building an inventory feed from a retail client to its marketplace partners. The client's spec was a nightly batch file. In discovery, I asked the client's e-commerce director what the integration was for, and the real goal was reducing overselling on marketplaces, which was costing them penalty fees and seller-rating drops. A nightly file couldn't fix that: most oversells happened on fast-moving items whose stock changed several times a day.
 >
-> That put me in an awkward position. We were contracted for the batch file, and the client's lead architect had designed it. I didn't go around him. I showed him the data first: from their own order history, 80% of oversells were on about 5% of items, all of which sold out within hours. I proposed keeping the nightly file for the full catalogue and adding an event-driven delta feed for the fast-moving 5%, within the same budget, by dropping two low-value reporting features from the scope.
+> That put me in an awkward position. We were contracted for the batch file, and the client's lead architect had designed it. I didn't go around him. I showed him the data first: from their own order history, 80% of oversells were on about 5% of items, all of which sold out within hours. I proposed keeping the nightly file for the full catalog and adding an event-driven delta feed for the fast-moving 5%, within the same budget, by dropping two low-value reporting features from the scope.
 >
 > He agreed, on one condition I thought was right: the delta feed had to degrade to the nightly file if it failed, so partners never saw stale data presented as current. We changed the statement of work together, and he presented it to the director as his architecture, which it mostly was.
 >
@@ -233,7 +233,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 
 | # | Probe | Tests | Passenger | Owner |
 |---|---|---|---|---|
-| 1 | "How did data stay in sync?" | Depth | "We migrated it" | Change data capture, with the lag and failure behaviour |
+| 1 | "How did data stay in sync?" | Depth | "We migrated it" | Change data capture, with the lag and failure behavior |
 | 2 | "How did you know the new system was correct?" | Verification | "Testing" | Shadow reads and reconciliation |
 | 3 | "What did reconciliation find?" | Reality | Nothing | The time-zone defect, 3% of store orders |
 | 4 | "What was your rollback, and was it tested?" | Reversibility | "We had a plan" | Tested per cohort |
@@ -243,7 +243,7 @@ The three upgrades: **the class, not the instance; the blast radius, not just th
 
 | # | Probe | Tests | Passenger | Owner |
 |---|---|---|---|---|
-| 1 | "Why did this migration matter to the business?" | Translation | "Modernization" | The lease and licence renewal; store order capture |
+| 1 | "Why did this migration matter to the business?" | Translation | "Modernization" | The lease and license renewal; store order capture |
 | 2 | "What did it save or protect?" | Quantification | Unsure | The renewal cost avoided; no outage |
 | 3 | "What would a failed cutover have cost?" | Risk | Unsure | A day of store orders |
 

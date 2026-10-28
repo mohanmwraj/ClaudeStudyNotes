@@ -105,7 +105,7 @@ A familiar failure of postmortem culture: dozens of action items, a third of the
 | Too many items, all equal | Three or fewer high-priority items per COE, ranked |
 | No owner, or an owner who has moved on | A named owner and a date; reassignment on team change |
 | Competes with the roadmap | High-priority items treated as planned work, tracked in the same system |
-| Nobody checks | A monthly review of open COE actions by engineering leadership, with the ageing list visible |
+| Nobody checks | A monthly review of open COE actions by engineering leadership, with the aging list visible |
 
 ---
 
@@ -129,10 +129,10 @@ For a senior engineer, the forums that matter are **incident reviews, design rev
 | **Causal analysis** | Multiple causal chains, including detection, mitigation and blast radius; reaches system properties | A sound root cause beyond the trigger | Stops at the trigger | Stops at "human error" |
 | **Blamelessness** | Protected the person closest to the failure; held the system's designers (often themselves) accountable | Ran a blameless review | Mentions blamelessness | Names a person as the cause |
 | **Remediation level** | Action items at hierarchy levels 1–3, with evidence they work | Some engineered fixes | Monitoring and process | Training only |
-| **Propagation** | The lesson became an org-wide guardrail protecting teams that never had the incident | Applied to neighbouring teams | Own team only | Not propagated |
+| **Propagation** | The lesson became an org-wide guardrail protecting teams that never had the incident | Applied to neighboring teams | Own team only | Not propagated |
 | **Patterns** | Found a recurring class across COEs and treated it as one problem | Noticed repeats | Treats each incident separately | None |
 | **Follow-through** | Action items closed, with a mechanism that keeps them closing | Closed own items | Some open | Abandoned |
-| **Safety** | Changed how a forum works so people report problems earlier | Supportive behaviour | Neutral | Punitive |
+| **Safety** | Changed how a forum works so people report problems earlier | Supportive behavior | Neutral | Punitive |
 
 ---
 
@@ -246,7 +246,7 @@ For a senior engineer, the forums that matter are **incident reviews, design rev
 |---|---|---|---|---|
 | 1 | "How do you know people report problems early?" | Measurement | "They seem to" | Time from first signal to report; near-miss reports |
 | 2 | "What did you change about the forum?" | Structural change | Nothing | Pre-reads, facilitation, juniors' time |
-| 3 | "Tell me about a time someone brought you bad news." | Behaviour | Generic | A specific reaction, and its effect |
+| 3 | "Tell me about a time someone brought you bad news." | Behavior | Generic | A specific reaction, and its effect |
 | 4 | "When did you last say 'I was wrong' in a review?" | Going first | Can't recall | A specific occasion |
 
 ---

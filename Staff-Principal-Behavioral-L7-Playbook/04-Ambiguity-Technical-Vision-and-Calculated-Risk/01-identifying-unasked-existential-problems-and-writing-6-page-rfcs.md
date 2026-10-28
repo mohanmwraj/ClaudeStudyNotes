@@ -114,7 +114,7 @@ Add one line that most documents omit: **what would change our recommendation.**
 
 | Failure | What the reader concludes |
 |---|---|
-| **Solution first** (the document opens with the design) | The author decided before analysing |
+| **Solution first** (the document opens with the design) | The author decided before analyzing |
 | **Strawman alternatives** (two obviously bad options next to the chosen one) | The comparison can't be trusted |
 | **No "do nothing" option** | Hasn't sized the cost of inaction |
 | **No cost section** | Hasn't thought about what it displaces |
@@ -191,7 +191,7 @@ Add one line that most documents omit: **what would change our recommendation.**
 > "I was reading our cloud bill by unit rather than by service, and found that infrastructure cost per order had grown 30% a year for three years while revenue per order was flat. Every team's growth was individually justified, so nobody saw the aggregate. At that rate, infrastructure would consume our whole contribution margin in about six quarters. I had finance check the projection, and they agreed with the shape, though their range was wider than mine.
 >
 > I wrote a six-page narrative for the CFO's staff and the VP of Engineering. It opened with the decision I wanted: set a cost-per-order target as an engineering-wide goal, and fund a six-month program to meet it. It compared three options:
-> - an across-the-board cut, which finance favoured but which would have hit reliability work;
+> - an across-the-board cut, which finance favored but which would have hit reliability work;
 > - per-team budgets, which would have made the problem everyone's and so nobody's;
 > - a unit-cost target with the three largest drivers fixed centrally.
 >

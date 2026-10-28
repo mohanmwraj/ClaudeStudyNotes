@@ -1,6 +1,6 @@
 # 01.2 · The Four Staff/Principal Archetypes, and Framing Your Narrative
 
-> **Folder 01 · File 2 of 3.** Every committee eventually asks, out loud or in its head: *what kind of Staff or Principal engineer is this, and do we need that kind?* A loop with six excellent but unrelated stories leaves the committee to answer that for you. A loop where every story reinforces one recognisable identity, with deliberate range around it, makes the answer easy.
+> **Folder 01 · File 2 of 3.** Every committee eventually asks, out loud or in its head: *what kind of Staff or Principal engineer is this, and do we need that kind?* A loop with six excellent but unrelated stories leaves the committee to answer that for you. A loop where every story reinforces one recognizable identity, with deliberate range around it, makes the answer easy.
 >
 > This file covers:
 > - Will Larson's four archetypes (Tech Lead, Architect, Solver, Right Hand) as interview evidence;
@@ -15,7 +15,7 @@
 
 ## 1. Why archetypes matter in an interview
 
-Larson's observation is that "Staff engineer" is not one job. Organisations need several distinct shapes of senior IC leadership, and people who succeed at that level usually fit one shape primarily.
+Larson's observation is that "Staff engineer" is not one job. Organizations need several distinct shapes of senior IC leadership, and people who succeed at that level usually fit one shape primarily.
 
 For interviews this has three consequences:
 
@@ -30,7 +30,7 @@ For interviews this has three consequences:
 | **Tech Lead** | Guides the approach and execution of one team or a small cluster of teams, in close partnership with their manager(s) | Delivery across teams under ambiguity; technical decisions that unblocked execution; a team that got better; scope cut decisively | Product orgs; programs with several teams and a deadline | **Manager-lite**: coordination without technical decisions; "I ran the standups" |
 | **Architect** | Owns the direction, quality and approach of a critical technical area across teams, combining deep technical knowledge with org-level leadership | A multi-year direction that got adopted and built; standards and contracts; trade-offs explained; designs that aged well | Platform and infrastructure orgs; core domains (payments, identity, data) | **Ivory tower**: designs that weren't built; "I defined the vision"; no adoption numbers |
 | **Solver** | Digs into arbitrarily complex problems and finds a path; some stay in one area, others move hotspot to hotspot as leadership directs | Hard problems nobody else could crack; depth on demand; root causes across layers; the fix generalised into a mechanism | Reliability, performance, scaling crises, migrations gone wrong | **Hero**: brilliant firefights with no lasting mechanism; the org depends on them |
-| **Right Hand** | Extends an executive's attention, borrowing their scope and authority to run complex organisations; adds leadership bandwidth | Org-wide programs; decisions made on the executive's behalf; operating cadence; problems found across many teams | Large orgs, often an internal promotion rather than an external hire | **Proxy**: authority borrowed, judgment unshown; "the VP asked me to" |
+| **Right Hand** | Extends an executive's attention, borrowing their scope and authority to run complex organizations; adds leadership bandwidth | Org-wide programs; decisions made on the executive's behalf; operating cadence; problems found across many teams | Large orgs, often an internal promotion rather than an external hire | **Proxy**: authority borrowed, judgment unshown; "the VP asked me to" |
 
 **Most strong candidates are a primary archetype with a secondary.** Common blends:
 - Architect + Solver (the platform principal who also gets pulled into the worst incidents);
@@ -49,7 +49,7 @@ Tanya Reilly frames Staff work as three pillars. They map almost exactly onto wh
 
 Two more of Reilly's ideas are directly usable in interviews.
 
-**Her "maps" of the organisation.** She describes knowing where you are, what the terrain looks like (the politics, the hidden constraints), and where the treasure is (the goal worth reaching). In interview terms, an L7 story shows you **understood the terrain before you moved**:
+**Her "maps" of the organization.** She describes knowing where you are, what the terrain looks like (the politics, the hidden constraints), and where the treasure is (the goal worth reaching). In interview terms, an L7 story shows you **understood the terrain before you moved**:
 - who owned what;
 - whose roadmap the work would collide with;
 - which executive cared about which risk;
@@ -59,7 +59,7 @@ Two more of Reilly's ideas are directly usable in interviews.
 
 | Glue work told as coordination (reads as down-level) | The same work told as Staff leverage |
 |---|---|
-| "I organised the cross-team syncs and wrote the docs." | "Three teams kept breaking each other's schemas. I designed a contract-test gate in CI and wrote the migration guide. Breaking changes went from about two a week to zero, and I stopped needing the syncs." |
+| "I organized the cross-team syncs and wrote the docs." | "Three teams kept breaking each other's schemas. I designed a contract-test gate in CI and wrote the migration guide. Breaking changes went from about two a week to zero, and I stopped needing the syncs." |
 | "I onboarded new engineers." | "Onboarding took six weeks because the local environment needed tribal knowledge. I built the dev-environment template and the first-week project path. New engineers now ship to production in week one." |
 
 ## 4. Archetype and company fit (practitioner observation ⚠)
@@ -72,7 +72,7 @@ These are tendencies, not rules. Teams within each company vary more than compan
 | **Google** (L6/L7) | Tech Lead, Architect | Design-doc culture; technical leadership through consensus; navigating ambiguity; Googleyness (collaboration, humility) |
 | **Meta** (E6/E7) | Tech Lead across a team of teams, Solver | Driving results and velocity; unblocking; direction in ambiguity; growth from feedback |
 | **Stripe** | Solver, Architect | Rigor and craft; user impact; clear writing; meticulousness |
-| **Netflix** | Solver, Architect with strong autonomy | Judgment with context, not control; candour; high talent density |
+| **Netflix** | Solver, Architect with strong autonomy | Judgment with context, not control; candor; high talent density |
 | **Uber** | Tech Lead, Solver | Execution at scale; operational ownership; customer-obsessed trade-offs |
 
 **Right Hand** is the archetype least often hired from outside. If it's your primary, lead with the *decisions and problems* inside the programs you ran, so you read as an Architect or Solver who also operates at executive altitude, not as a delegate.

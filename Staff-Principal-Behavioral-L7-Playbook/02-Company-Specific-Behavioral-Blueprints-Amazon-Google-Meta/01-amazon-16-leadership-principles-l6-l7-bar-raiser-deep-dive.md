@@ -63,7 +63,7 @@ Amazon runs on written mechanisms. Naming the right artifact signals you've oper
 |---|---|---|
 | **Six-pager / narrative** | A prose memo read silently at the start of a meeting | "I wrote the six-pager that framed it as a launch risk" |
 | **PR/FAQ** | Working Backwards: the press release and FAQ written before building | Think Big and Customer Obsession stories |
-| **Mechanism** | A complete process (tool + adoption + audit) that makes good behaviour the default; the contrast is "good intentions" | Every L7 Learning-and-leverage beat |
+| **Mechanism** | A complete process (tool + adoption + audit) that makes good behavior the default; the contrast is "good intentions" | Every L7 Learning-and-leverage beat |
 | **Tenets** | Short, ordered principles a team uses to decide trade-offs | "I wrote the three tenets the platform team still uses to reject requests" |
 | **COE (Correction of Error)** | Amazon's postmortem format: impact, timeline, five whys, actions | Failure stories (Folder 05) |
 | **Input vs output metrics** | Inputs are controllable (selection, latency, defect rate); outputs follow (revenue) | Deliver Results at L7: you moved an *input* the business review tracks |
@@ -130,7 +130,7 @@ Short quotations are from Amazon's published principles; the evidence columns ar
 | **Think Big** ("create and communicate a bold direction") | A good idea for my team | A multi-year direction others adopted and funded | Vision with no first step (ivory tower, §4.3) |
 | **Bias for Action** ("many decisions are reversible") | Moved fast on a fix | Separated one-way from two-way doors and set the pace accordingly | Speed on an irreversible decision |
 | **Frugality** ("no extra points for growing headcount") | Saved cost in my service | Delivered a big outcome with constrained resources; retired systems to fund new ones | Cost cutting that created risk |
-| **Earn Trust** ("vocally self-critical") | Good working relationships | Rebuilt trust with a sceptical org; publicly owned your own mistake | Only stories where you look good |
+| **Earn Trust** ("vocally self-critical") | Good working relationships | Rebuilt trust with a skeptical org; publicly owned your own mistake | Only stories where you look good |
 | **Dive Deep** ("skeptical when metrics and anecdote differ") | Debugged a hard problem | Found that a trusted metric was misleading; audited the system behind a dashboard | Depth with no consequence for decisions |
 | **Have Backbone; Disagree and Commit** | Pushed back on a design in review | Challenged a senior leader with data, and committed wholly when you lost (§4.2) | Backbone only against peers or juniors |
 | **Deliver Results** | Shipped on time | Moved a business input metric through real setbacks | Output ("shipped") instead of outcome |

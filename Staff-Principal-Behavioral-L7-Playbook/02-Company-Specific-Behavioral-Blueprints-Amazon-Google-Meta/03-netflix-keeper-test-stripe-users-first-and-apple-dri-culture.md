@@ -79,9 +79,9 @@ Stripe's careers site lists six:
 
 ### 3.2 What "users first" means for an engineer's story
 
-Stripe's users are **developers and businesses**, and Stripe's product is largely an API. That has an engineering consequence most candidates miss: **an API is a one-way door.** Once businesses integrate against a behaviour, changing it breaks their money flows.
+Stripe's users are **developers and businesses**, and Stripe's product is largely an API. That has an engineering consequence most candidates miss: **an API is a one-way door.** Once businesses integrate against a behavior, changing it breaks their money flows.
 
-Stripe's engineering blog has described its answer: date-based API versions pinned per account, with compatibility layers that transform responses for older versions. New behaviour ships without breaking integrations that were written years ago.
+Stripe's engineering blog has described its answer: date-based API versions pinned per account, with compatibility layers that transform responses for older versions. New behavior ships without breaking integrations that were written years ago.
 
 A Stripe-calibrated L7 story therefore shows:
 - **The user's cost of your change**, measured from their side: integration work, broken webhooks, reconciliation failures.
@@ -139,7 +139,7 @@ Take one composite: **you led the move of a payments-adjacent service to a multi
 | **Meta** | Scope (teams, engineers, partners) and how fast you moved | The biggest blocker and how you removed it | Direct disagreement, respectfully resolved; velocity |
 | **Netflix** | The judgment call you captained, and the dissent you farmed before making it | The decision memo and its strongest dissent | Informed captain: you decided, others' dissent shaped it |
 | **Stripe** | The users' cost (businesses' failed payments, integration effort) and what you absorbed internally to remove it | The compatibility and migration path for clients | Users first versus internal convenience |
-| **Apple** | Your DRI ownership of the availability budget and the quality bar you refused to lower | The detailed technical design: replication, latency budget, failure behaviour | Collaborative debate across functions, won on expertise |
+| **Apple** | Your DRI ownership of the availability budget and the quality bar you refused to lower | The detailed technical design: replication, latency budget, failure behavior | Collaborative debate across functions, won on expertise |
 
 **Exercise:** take your flagship story (Folder 08, story 1) and write the first two sentences six times. If all six are the same, you're not calibrating.
 
@@ -201,7 +201,7 @@ Take one composite: **you led the move of a payments-adjacent service to a multi
 >
 > I argued that users first meant we should absorb the cost. I proposed per-object ordered delivery: events for the same object arrive in order, and an event carries the object's current state so a business can act idempotently on its latest version. That meant real internal work, a partitioned delivery pipeline keyed by object, and some extra delivery latency for high-churn objects.
 >
-> The objection from the delivery team was fair: ordered delivery means one slow endpoint can delay a business's other events. We solved it together by scoping ordering per object rather than per account, so a slow object only delays itself. To avoid breaking anyone, the new behaviour shipped behind a new API version; existing accounts kept their pinned behaviour until they chose to upgrade.
+> The objection from the delivery team was fair: ordered delivery means one slow endpoint can delay a business's other events. We solved it together by scoping ordering per object rather than per account, so a slow object only delays itself. To avoid breaking anyone, the new behavior shipped behind a new API version; existing accounts kept their pinned behavior until they chose to upgrade.
 >
 > I measured success from the business side: duplicate-fulfilment tickets fell 70% for upgraded accounts within two quarters. The integration-review checklist our solutions engineers use now checks ordering assumptions as a standard item."
 
@@ -268,7 +268,7 @@ Take one composite: **you led the move of a payments-adjacent service to a multi
 | 1 | "What did this cost users?" | Users first | Doesn't know | Measured integration and ticket cost |
 | 2 | "What did it cost you internally?" | Trade-off | "Not much" | The pipeline work, the latency for high-churn objects |
 | 3 | "Why not just document it?" | Judgment | "That's what we did" | Why docs push the cost onto every business |
-| 4 | "How did you avoid breaking existing integrations?" | API permanence | "We announced it" | Versioning; accounts kept pinned behaviour |
+| 4 | "How did you avoid breaking existing integrations?" | API permanence | "We announced it" | Versioning; accounts kept pinned behavior |
 | 5 | "How did you measure success?" | Rigor | Internal metric | A metric on the user's side |
 
 ### Chain C · Apple: "Go three levels down"
@@ -278,7 +278,7 @@ Take one composite: **you led the move of a payments-adjacent service to a multi
 | 1 | "Where exactly did the 120 ms go?" | Detail | "The feature was heavy" | "90 ms was synchronous thumbnail decode before first frame" |
 | 2 | "How did you measure on the oldest device?" | Method | "We profiled" | The tool, the device, the trace points, the variance |
 | 3 | "Why did the budget matter more than the feature?" | Judgment | "Performance is important" | The engagement data on old devices |
-| 4 | "What did you give the other team?" | DRI behaviour | Nothing | Two engineers and a prototype |
+| 4 | "What did you give the other team?" | DRI behavior | Nothing | Two engineers and a prototype |
 | 5 | "How do you stop it next time?" | Mechanism | "Communication" | Nightly per-feature launch attribution |
 
 ### Chain D · Cross-company: "Why here?"
@@ -286,7 +286,7 @@ Take one composite: **you led the move of a payments-adjacent service to a multi
 | # | Probe | Tests | Weak | Strong |
 |---|---|---|---|---|
 | 1 | "What about our culture would be hardest for you?" | Self-awareness | "Nothing" | An honest tension, e.g. "I'm used to consensus; here I'd be the named decider more often" |
-| 2 | "Describe a time your style didn't fit the culture you were in." | Adaptability | Blames the culture | What you changed in your own behaviour |
+| 2 | "Describe a time your style didn't fit the culture you were in." | Adaptability | Blames the culture | What you changed in your own behavior |
 | 3 | "How would your best story be different if it happened here?" | Calibration | Same story | Names the different decider, rigor and fear |
 | 4 | "What would you change about how we work?" | Courage and candor | Flattery | One thoughtful, specific observation from public material |
 

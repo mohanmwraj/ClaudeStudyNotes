@@ -231,7 +231,7 @@ Interviewers zoom into decisions to test authorship. A prepared zoom-in turns th
 >
 > **[R]** Freshness p95 on the volatile tier went from 24 hours to 4 minutes. Finance's holdout on 10% of SKUs attributed roughly 60–70% of the estimated margin gap as recovered. Batch compute fell about 30%, because the volatile tier left the nightly job. The price-event contract is now the standard; promotions and markdowns are built on it.
 >
-> **[L]** My first instinct, stream everything, optimised for my team's operations. I learned to start from what each consumer needs to be true, and I now build the comparator before the new system. Ravi owns the streaming tier now and led the markdown integration."
+> **[L]** My first instinct, stream everything, optimized for my team's operations. I learned to start from what each consumer needs to be true, and I now build the comparator before the new system. Ravi owns the streaming tier now and led the markdown integration."
 
 **Beat-by-beat annotation:**
 
@@ -255,7 +255,7 @@ Failure stories use the same beats with a different emphasis. The *Trade-off* be
 
 #### How an L7 tells it
 
-> "I approved a schema-evolution policy that let producers add required fields under 'backward-compatible'. Three weeks later it broke the finance close: two consumers deserialised with old readers and silently dropped records. The quarter-end report was 0.8% short until we caught it. The policy was my call. I'd optimised for producer velocity, and I hadn't modelled readers that were pinned to old versions.
+> "I approved a schema-evolution policy that let producers add required fields under 'backward-compatible'. Three weeks later it broke the finance close: two consumers deserialised with old readers and silently dropped records. The quarter-end report was 0.8% short until we caught it. The policy was my call. I'd optimized for producer velocity, and I hadn't modeled readers that were pinned to old versions.
 >
 > I ran the recovery: froze schema changes, replayed the affected partitions from the retained log, and reconciled with finance before the filing deadline. The systemic fix was a compatibility gate in CI that checks every change against every *registered* reader version, not just the latest, plus a reader-version inventory owned by the platform team. It has blocked eleven unsafe changes since. What I changed in myself: I write the failure modes of a policy before I approve it, and I ask who isn't in the room."
 
@@ -278,7 +278,7 @@ Each probe below is the natural next question when that beat is weak, and the na
 | Beat | Probe 1 | Probe 2 | Probe 3 | Probe 4 | What a passenger reveals |
 |---|---|---|---|---|---|
 | **C** | "How did you first notice this?" | "How did you get to $X M? Who checked it?" | "Why hadn't anyone fixed it before?" | "What would have happened in a year without it?" | Can't explain discovery; the number came from someone else |
-| **T** | "Why not the 15-minute batch?" | "What would have made full streaming the right call?" | "What did tiering cost you?" | "Which option would your sceptics have picked?" | Alternatives are strawmen; no cost; no criteria |
+| **T** | "Why not the 15-minute batch?" | "What would have made full streaming the right call?" | "What did tiering cost you?" | "Which option would your skeptics have picked?" | Alternatives are strawmen; no cost; no criteria |
 | **O** | "Who was the hardest person to convince?" | "What exactly did they say?" | "Were they right about anything?" | "What did you give up?" | No named person; friction resolved by authority |
 | **A** | "What did you personally do in week two?" | "Who built the comparator, and what did you do?" | "What almost went wrong?" | "What would you have done if the gate never passed?" | Vague on own actions; no setback; credit absorbed |
 | **R** | "How was the margin attributed?" | "What else changed that quarter?" | "What did it cost to run?" | "Who uses the contract now?" | Number without method; no capability |

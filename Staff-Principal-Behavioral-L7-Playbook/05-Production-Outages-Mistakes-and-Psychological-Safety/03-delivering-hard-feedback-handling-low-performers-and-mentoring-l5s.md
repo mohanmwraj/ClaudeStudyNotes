@@ -19,10 +19,10 @@
 
 | Model | Core idea | Use it for |
 |---|---|---|
-| **SBI** (Center for Creative Leadership): Situation, Behavior, Impact | Describe a specific situation, the observable behaviour, and its impact. CCL extends it to SBII, adding an inquiry into the person's intent. | Making feedback specific and non-judgmental |
+| **SBI** (Center for Creative Leadership): Situation, Behavior, Impact | Describe a specific situation, the observable behavior, and its impact. CCL extends it to SBII, adding an inquiry into the person's intent. | Making feedback specific and non-judgmental |
 | **Radical Candor** (Kim Scott, 2017) | Care personally *and* challenge directly. Without caring, it's obnoxious aggression; without challenging, it's ruinous empathy. | The stance: why you give feedback at all |
 
-An SBI example: "In yesterday's design review (situation), you rewrote Priya's proposal on the whiteboard before she'd finished presenting (behaviour). She didn't speak again, and we didn't hear her reasons for the queue design, which I think were good (impact). What were you aiming for at that point? (intent)"
+An SBI example: "In yesterday's design review (situation), you rewrote Priya's proposal on the whiteboard before she'd finished presenting (behavior). She didn't speak again, and we didn't hear her reasons for the queue design, which I think were good (impact). What were you aiming for at that point? (intent)"
 
 ### 1.2 Feedback across levels
 
@@ -34,7 +34,7 @@ An SBI example: "In yesterday's design review (situation), you rewrote Priya's p
 | **Upward to managers and directors** | Risk to you | Frame around shared goals; bring data; offer it privately |
 | **About someone to their manager** | Can feel like going around them | Give it to the person first; tell them you'll share it with their manager if it continues; never as a surprise |
 
-The common thread: **say it to the person first.** Feedback that reaches someone through their manager, or through a review, when you could have said it directly is a candour failure (02.3, Netflix).
+The common thread: **say it to the person first.** Feedback that reaches someone through their manager, or through a review, when you could have said it directly is a candor failure (02.3, Netflix).
 
 ---
 
@@ -42,7 +42,7 @@ The common thread: **say it to the person first.** Feedback that reaches someone
 
 ### 2.1 The role boundary
 
-The manager owns performance management: expectations in the formal sense, reviews, improvement plans and exits. The senior IC owns **the outcome of the work they lead**, and often has better information about the day-to-day work than the manager does. The L7 behaviour is a **partnership**: you observe, diagnose and support; you share what you see with the manager, transparently; you don't run a shadow performance process.
+The manager owns performance management: expectations in the formal sense, reviews, improvement plans and exits. The senior IC owns **the outcome of the work they lead**, and often has better information about the day-to-day work than the manager does. The L7 behavior is a **partnership**: you observe, diagnose and support; you share what you see with the manager, transparently; you don't run a shadow performance process.
 
 ### 2.2 Diagnose before acting
 
@@ -68,7 +68,7 @@ The most common senior-IC failure in this area: you quietly do the struggling pe
 
 ### 2.4 When it doesn't work out
 
-Not every story ends with improvement. An honest story where the person moved to a role that suited them better, or left, can be **strong**, if you handled it with candour and care, and kept the manager in the loop throughout. Interviewers trust a candidate more if they can tell one story where things didn't get better.
+Not every story ends with improvement. An honest story where the person moved to a role that suited them better, or left, can be **strong**, if you handled it with candor and care, and kept the manager in the loop throughout. Interviewers trust a candidate more if they can tell one story where things didn't get better.
 
 ---
 
@@ -108,12 +108,12 @@ Most senior engineers mentor. Far fewer sponsor, and **sponsorship is what grows
 
 | Signal | Strong Hire at L7 | Hire at L6 | Down-level to L5 | No hire |
 |---|---|---|---|---|
-| **Feedback** | Direct, specific feedback to a peer or more senior engineer that changed behaviour; received hard feedback and changed | Clear feedback to engineers across teams | Feedback to juniors only | Avoids, or routes through others |
+| **Feedback** | Direct, specific feedback to a peer or more senior engineer that changed behavior; received hard feedback and changed | Clear feedback to engineers across teams | Feedback to juniors only | Avoids, or routes through others |
 | **Low performance** | Diagnosed the cause; partnered transparently with the manager; adjusted context; honest outcome even if not positive | Supported the person and involved the manager | Absorbed the work | Went around the manager, or complained |
 | **Role boundary** | Clear on what the manager owns and what they own; never a shadow process | Mostly clear | Blurry | Acted as manager without the role |
 | **Sponsorship** | Grew L5s into owners of Staff-scope problems; promotions with specific evidence | Mentored engineers across teams | Mentored on own team | None |
 | **Leverage** | People they grew are now growing others | Some named outcomes | Generic | None |
-| **Empathy and candour** | Both, visibly in the same story | Balanced | One without the other | Neither |
+| **Empathy and candor** | Both, visibly in the same story | Balanced | One without the other | Neither |
 
 ---
 
@@ -127,7 +127,7 @@ Most senior engineers mentor. Far fewer sponsor, and **sponsorship is what grows
 
 > "There was a senior engineer whose code reviews were really harsh, and some juniors were upset. I mentioned it to our manager, who talked to him. His reviews got a bit better after that."
 
-**What the committee extracts:** feedback routed through the manager. **L5, and a candour concern.**
+**What the committee extracts:** feedback routed through the manager. **L5, and a candor concern.**
 
 #### How an L7 tells it
 
@@ -135,11 +135,11 @@ Most senior engineers mentor. Far fewer sponsor, and **sponsorship is what grows
 >
 > I talked to him directly, privately, with specifics. I described one review: on a junior's first pull request, he'd left 40 comments, with no distinction between blocking issues and preferences, and one read 'Did you even run this?'. I told him the impact: she hadn't opened a pull request in his area since, and turnaround in his area had doubled. Then I asked what he'd been aiming for.
 >
-> His answer changed my picture. He'd been burned by two production incidents that came from changes nobody reviewed carefully, and he believed being exhaustive was the only safe option. That was a real concern, so we worked on it together, not just on his tone. We agreed a review convention for the team: comments labelled 'blocking' or 'suggestion', a limit of one round of style comments on a first PR, and a checklist that captured the things he always looked for, so other reviewers could catch them too.
+> His answer changed my picture. He'd been burned by two production incidents that came from changes nobody reviewed carefully, and he believed being exhaustive was the only safe option. That was a real concern, so we worked on it together, not just on his tone. We agreed a review convention for the team: comments labeled 'blocking' or 'suggestion', a limit of one round of style comments on a first PR, and a checklist that captured the things he always looked for, so other reviewers could catch them too.
 >
-> He adopted it, and he went further than I'd asked: he started pairing with new engineers on their first change in his area. Within a quarter, review turnaround in his area went from the slowest in the org to about median. The junior engineer who'd stopped submitting there became the second reviewer for that code. The labelling convention spread to the rest of the org. Daniel and I talk about reviews regularly; he's the person who told me last year that my own design docs were too long."
+> He adopted it, and he went further than I'd asked: he started pairing with new engineers on their first change in his area. Within a quarter, review turnaround in his area went from the slowest in the org to about median. The junior engineer who'd stopped submitting there became the second reviewer for that code. The labeling convention spread to the rest of the org. Daniel and I talk about reviews regularly; he's the person who told me last year that my own design docs were too long."
 
-**What the committee extracts:** direct, private, specific (SBI with intent); used data; discovered a legitimate underlying concern; solved the concern, not just the behaviour; structural fix; measurable outcome; feedback is now two-way. **L7 candour with empathy.**
+**What the committee extracts:** direct, private, specific (SBI with intent); used data; discovered a legitimate underlying concern; solved the concern, not just the behavior; structural fix; measurable outcome; feedback is now two-way. **L7 candor with empathy.**
 
 ### 5.2 Low performance on a project you lead (composite: a mismatch of context)
 
@@ -191,8 +191,8 @@ Most senior engineers mentor. Far fewer sponsor, and **sponsorship is what grows
 
 | # | Probe | Tests | Passenger | Owner |
 |---|---|---|---|---|
-| 1 | "Who did you tell first?" | Candour | "My manager" | "Him, privately" |
-| 2 | "What exactly did you say?" | Specificity | Vague | The situation, behaviour, impact and question |
+| 1 | "Who did you tell first?" | Candor | "My manager" | "Him, privately" |
+| 2 | "What exactly did you say?" | Specificity | Vague | The situation, behavior, impact and question |
 | 3 | "How did he react?" | Honesty | "He accepted it" | His real reaction, including the concern behind it |
 | 4 | "What did you learn from him?" | Two-way | Nothing | His underlying concern about incidents |
 | 5 | "Has he given you feedback since?" | Relationship | No | A specific example |
@@ -252,4 +252,4 @@ Most senior engineers mentor. Far fewer sponsor, and **sponsorship is what grows
 - Kim Scott, *Radical Candor* (St. Martin's Press, 2017). <https://www.radicalcandor.com/our-approach/>
 - Tanya Reilly, *The Staff Engineer's Path* (O'Reilly, 2022; ISBN 978-1-098-11873-0): the "leveling up" pillar, and sponsorship. Author's page: <https://www.noidea.dog/staff>
 - Will Larson, *Staff Engineer*: the guides on mentorship and sponsorship. <https://staffeng.com/book>
-- In this KB: [01.2 Reilly's three pillars](../01-L5-vs-L6-vs-L7-Scope-and-Hiring-Committee-Rubrics/02-the-four-staff-principal-archetypes-and-framing-your-narrative.md) · [02.1 Hire and Develop the Best](../02-Company-Specific-Behavioral-Blueprints-Amazon-Google-Meta/01-amazon-16-leadership-principles-l6-l7-bar-raiser-deep-dive.md) · [02.3 Netflix candour](../02-Company-Specific-Behavioral-Blueprints-Amazon-Google-Meta/03-netflix-keeper-test-stripe-users-first-and-apple-dri-culture.md) · Folder 07 Q21–30 covers mentorship, hiring and org-design questions.
+- In this KB: [01.2 Reilly's three pillars](../01-L5-vs-L6-vs-L7-Scope-and-Hiring-Committee-Rubrics/02-the-four-staff-principal-archetypes-and-framing-your-narrative.md) · [02.1 Hire and Develop the Best](../02-Company-Specific-Behavioral-Blueprints-Amazon-Google-Meta/01-amazon-16-leadership-principles-l6-l7-bar-raiser-deep-dive.md) · [02.3 Netflix candor](../02-Company-Specific-Behavioral-Blueprints-Amazon-Google-Meta/03-netflix-keeper-test-stripe-users-first-and-apple-dri-culture.md) · Folder 07 Q21–30 covers mentorship, hiring and org-design questions.

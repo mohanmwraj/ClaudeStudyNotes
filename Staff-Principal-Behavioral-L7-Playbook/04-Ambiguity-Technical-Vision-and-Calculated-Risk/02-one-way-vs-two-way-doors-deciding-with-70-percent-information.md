@@ -4,7 +4,7 @@
 >
 > This file covers:
 > - Bezos's Type 1 and Type 2 decisions, and why reversibility is a cost, not a binary;
-> - an engineering catalogue of one-way and two-way doors;
+> - an engineering catalog of one-way and two-way doors;
 > - converting one-way doors into two-way doors;
 > - the 70% rule operationalized: cost of delay, buying information, tripwires;
 > - calculated risk: expected value, ruin, pre-mortems and decision records;
@@ -36,7 +36,7 @@ That gives a spectrum, and two questions an L7 asks of every decision:
 
 ---
 
-## 2. An engineering catalogue of doors
+## 2. An engineering catalog of doors
 
 | Usually one-way (or expensive to reverse) | Why | Usually two-way | Why |
 |---|---|---|---|
@@ -76,7 +76,7 @@ Each costs something: engineering time, duplicated infrastructure, slower full r
 
 ## 4. The 70% rule, operationalized
 
-"Decide with 70%" is not a licence to guess. It's a discipline with four steps:
+"Decide with 70%" is not a license to guess. It's a discipline with four steps:
 
 | Step | Question | Example |
 |---|---|---|
@@ -153,7 +153,7 @@ Amazon's Bias for Action principle ends: "We value calculated risk taking." The 
 
 > "Three weeks before launching a partner API that 2,000 partners would integrate in its first year, I reviewed the contract and found that our order IDs encoded the region and a sequence number. Partners would store those IDs in their own databases, and some would parse them. That made the ID format a one-way door: once partners depended on it, we could never move an order between regions or change our sharding without breaking them.
 >
-> The launch team's view was reasonable: the date was committed to two launch partners, and 'we'll fix it in v2' had worked for other changes. My argument was about which parts of the launch were reversible. Almost everything was: endpoints could be versioned, fields could be added, behaviour could be flagged. The ID format was not.
+> The launch team's view was reasonable: the date was committed to two launch partners, and 'we'll fix it in v2' had worked for other changes. My argument was about which parts of the launch were reversible. Almost everything was: endpoints could be versioned, fields could be added, behavior could be flagged. The ID format was not.
 >
 > So I proposed slowing down only that part. We'd issue opaque IDs, random and with no meaning, mapped to internal IDs in a lookup service. That took two engineers about two weeks, and would cost a small amount of read latency. I also wrote the identifier rules into the API style guide: external identifiers are opaque, documented as such, and must never be parsed.
 >

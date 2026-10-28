@@ -42,7 +42,7 @@
 | **Org alignment** | Who you had to work with during and after | "I took the COE to the VP and the five client-library teams." |
 | **Action** | First hour, then the systemic fix | "I made the call to disable retries fleet-wide in minute 12; then I redesigned the policy." |
 | **Result** | Evidence it hasn't recurred | "No retry-amplification incident since, across 300 services." |
-| **Learning and leverage** | What changed in your judgment, and the mechanism others now use | "I now model the failure behaviour of any default I ship to many teams." |
+| **Learning and leverage** | What changed in your judgment, and the mechanism others now use | "I now model the failure behavior of any default I ship to many teams." |
 
 The beat candidates skip is **why it seemed right at the time**. Without it, the failure reads as carelessness. With it, the failure reads as a reasonable decision whose risk you now understand better, and that's what a committee wants to know you've learned.
 
@@ -142,13 +142,13 @@ The right register is **matter-of-fact**: what happened, what it cost, what was 
 
 > "We had an outage when our payment provider slowed down. There were a lot of retries happening which made things worse. The team worked on it and we eventually got things stable. Afterwards we reduced the retry counts in some services and added more monitoring. It was a good learning experience about retries."
 
-**What the committee extracts:** "we had an outage" with no ownership; unclear role; instance-level fix; generic lesson. **L5, and possibly a candour concern if the design was theirs.**
+**What the committee extracts:** "we had an outage" with no ownership; unclear role; instance-level fix; generic lesson. **L5, and possibly a candor concern if the design was theirs.**
 
 #### How an L7 tells it
 
 > "A retry policy I designed turned a payment-provider slowdown into a 47-minute checkout outage. About 180,000 checkouts failed, roughly $X M in orders, and our largest merchant escalated to our CEO.
 >
-> Two years earlier, I'd set the default retry policy in our shared HTTP client: three retries, short backoff, no jitter, on any 5xx. It seemed right at the time, because our providers' errors were almost always transient, and the default cut checkout failures noticeably. What I hadn't modelled was what happens when a dependency is slow rather than failing: 300 services each retrying three times tripled its load just when it had the least capacity.
+> Two years earlier, I'd set the default retry policy in our shared HTTP client: three retries, short backoff, no jitter, on any 5xx. It seemed right at the time, because our providers' errors were almost always transient, and the default cut checkout failures noticeably. What I hadn't modeled was what happens when a dependency is slow rather than failing: 300 services each retrying three times tripled its load just when it had the least capacity.
 >
 > I wasn't the incident commander; I joined as technical lead at minute 6. By minute 12 I was confident the retries were sustaining the overload, so I recommended disabling client retries fleet-wide through our config system. That was risky: it would surface every transient error to users. I said so in the channel, the IC agreed, and the provider recovered within four minutes of the change. The rest of the 47 minutes was the provider's own backlog draining.
 >
