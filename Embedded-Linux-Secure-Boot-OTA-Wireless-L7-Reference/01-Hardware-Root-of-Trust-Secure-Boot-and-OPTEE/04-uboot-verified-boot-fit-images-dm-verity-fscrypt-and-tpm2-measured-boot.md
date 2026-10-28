@@ -517,8 +517,9 @@ def check_tree(node, errors, ac=2, sc=1):
                         errors.append(f"{child.path()}: unit address 0x{unit:x} != reg address 0x{addr:x}")
                 except ValueError:
                     pass
-        elif "@" in child.name and not child.name.startswith("&"):
-            errors.append(f"{child.path()}: has a unit address but no reg")
+        elif "@" in child.name and not child.name.startswith("&") and not cells(child.props.get("ranges", [])):
+            # dtc unit_address_vs_reg: a non-empty 'ranges' (a bus such as soc@0) satisfies a unit address too
+            errors.append(f"{child.path()}: has a unit address but no reg or ranges")
         cac = int(cells(child.props["#address-cells"])[0], 0) if "#address-cells" in child.props else 2
         csc = int(cells(child.props["#size-cells"])[0], 0) if "#size-cells" in child.props else 1
         check_tree(child, errors, cac, csc)
