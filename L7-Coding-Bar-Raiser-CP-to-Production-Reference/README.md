@@ -16,7 +16,9 @@ A permanent reference playbook for Staff/Principal (L6/L7) coding rounds, writte
 | [04-Graph-Theory-Network-Flows-and-Connectivity-Invariants](04-Graph-Theory-Network-Flows-and-Connectivity-Invariants/) | 0-1 BFS, Dijkstra, Bellman–Ford, Kahn, Tarjan, DSU with rollback, matching, min-cut | **Done** (2026-10-29): 3 files, 6 listings, gate passed |
 | [05-Dynamic-Programming-State-Reduction-and-Bitmask-Optimizations](05-Dynamic-Programming-State-Reduction-and-Bitmask-Optimizations/) | State design, interval/tree/digit DP, bitmask/SOS, monotonic-queue and D&C DP | **Done** (2026-10-29): 3 files, 6 listings, gate passed |
 | [06-String-Algorithms-Rolling-Hashes-and-Probabilistic-Structures](06-String-Algorithms-Rolling-Hashes-and-Probabilistic-Structures/) | KMP, Z, Manacher, double hashing, Bloom, Count-Min, HyperLogLog, reservoir sampling | **Done** (2026-10-29): 2 files, 4 listings, gate passed |
-| `07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups` | External merge sort, streaming top-K, sharded BFS, thread-safe DSA, 30 hard problems | Pending |
+| [07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups](07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups/) | External merge sort, streaming top-K, sharded BFS, thread-safe DSA, 30 hard problems | **Done** (2026-10-29): 3 files, 6 listings, gate passed |
+
+**All 7 folders are complete (2026-10-29):** 20 files, about 190,000 words, 54 listings (27 Java + 27 C++, every C++ listing built with both GCC and Clang) plus 3 expected-failure builds, and 169 bar-raiser chains. Every folder passed its gate.
 
 ### Folder 01 files
 
@@ -65,6 +67,14 @@ A permanent reference playbook for Staff/Principal (L6/L7) coding rounds, writte
 | [01 — KMP, Z, Manacher, Rabin–Karp](06-String-Algorithms-Rolling-Hashes-and-Probabilistic-Structures/01-kmp-prefix-automaton-z-algorithm-manacher-and-rabin-karp-double-hash.md) | 6.1–6.2 | Thue–Morse breaks 2⁶⁴-overflow hashing for every odd base; mod 2⁶¹−1 with a random base + verification is exact; KMP streams with one int; content-defined chunking keeps 99.6% reuse after a 1-byte insert (fixed chunks 0%) |
 | [02 — Bloom, Count-Min, HyperLogLog, reservoir](06-String-Algorithms-Rolling-Hashes-and-Probabilistic-Structures/02-bloom-filters-count-min-sketch-hyperloglog-and-reservoir-sampling.md) | 6.3–6.4 | FPR 0.0101 vs theory 0.0100 (one-hash bug 0.098); CMS one-sided and within ε·N; HLL ±0.5% in 16 KB; merges exact; reservoir off-by-one χ² 1,146 vs 76.6 |
 
+### Folder 07 files
+
+| File | Listings | Core claims, measured |
+|---|---|---|
+| [01 — external merge sort, streaming top-K, sharded BFS](07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups/01-k-way-external-merge-sort-streaming-top-k-and-sharded-bfs-graph-traversal.md) | 7.1–7.2 | 64 MB sorted on disk with a 4 MB budget: fan-in 4 → 2 passes and 192 MB each way, fan-in 16 → 1 pass and 128 MB, with the same comparison count; output verified by sortedness + count/sum/hash; one-pass top-100; BSP BFS: hash partition cuts 87.5% of edges, row partition 0.34% (256× fewer messages), 2,047 supersteps either way |
+| [02 — turning single-threaded DSA into concurrent structures](07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups/02-turning-single-threaded-dsa-into-thread-safe-concurrent-structures.md) | 7.3–7.4 | 64 lock stripes 3.6–4.5× faster than one lock at the same hit rate (capacity 9,984, not 10,000); a scripted ABA succeeds on a plain CAS in both languages and fails with a stamp or tag; 1.6 M ids conserved under stress; SPSC ring 4.8–12× faster than blocking queues |
+| [03 — 30 hard problems, production Java 21 and C++23](07-External-Memory-Out-of-Core-and-Concurrent-Algorithm-Followups/03-30-faang-l7-hard-coding-problems-with-production-java21-and-cpp23-code.md) | 7.5–7.6 | 30 problems × 1,000 random trials against independent oracles, output byte-identical in Java, GCC and Clang; a 100,000-node chain without recursion; 8 of 9 planted bugs caught, and the one missed (an unverified hash match) is why verification is argued, not tested; Extensions A/B/C for every problem |
+
 ## Conventions
 
 * **Every sample is in Java 21 and C++23.** Java is compiled with `javac --release 21 -Xlint:all -Werror` and run on JDK 25.0.4.1. C++ is compiled with **both** GCC 16.2 (MinGW-w64, libstdc++) and Clang 21.1 (Zig 0.16, libc++) using `-std=c++23 -O2 -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion`.
@@ -103,6 +113,7 @@ A permanent reference playbook for Staff/Principal (L6/L7) coding rounds, writte
 | 04 | 6/6 | 9 steps OK | 0 / 9 / **0** | 3/3, 24 chains | 18/18 |
 | 05 | 6/6 | 9 steps OK | 0 / 9 / **0** | 3/3, 24 chains | 22/22 |
 | 06 | 4/4 | 6 steps OK | 6 / 0 / **0** | 2/2, 16 chains | 22/22 (INRIA PDF checked with curl: Python's CA bundle lacks its chain) |
+| 07 | 6/6 | 9 steps OK | 3 / 6 / **0** | 3/3, 31 chains | 29/29 |
 
 ### Facts measured in Folder 01 (reused by later folders)
 
@@ -124,3 +135,4 @@ A permanent reference playbook for Staff/Principal (L6/L7) coding rounds, writte
 4. **Measured contradictions of folklore are reported as measured.** Examples: the famous sorted-array branch example does not reproduce in C++; branch-free search loses out of cache; concatenate-and-sort beats a heap merge in RAM; thread-local + merge lost to a shared `ConcurrentHashMap<String, LongAdder>`.
 5. **Undefined behaviour is never executed.** C++ versions of racy or overflowing contest code are either evaluated at compile time (`static_assert`, which must diagnose UB) or explicitly marked "not run".
 6. **No JMH / Google Benchmark.** Listings stay self-contained, using best-of-N timing with warm-up. The text says where a real harness is required.
+7. **"FAANG" in Folder 07 File 3's name is the brief's wording.** The 30 problems are public LeetCode problems; nothing claims that a particular company asks them.
