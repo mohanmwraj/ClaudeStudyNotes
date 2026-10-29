@@ -85,11 +85,19 @@ The exam was released in March 2023 and its in-scope service list still names so
   * [Official sample questions (10 questions, PDF)](https://d1.awsstatic.com/training-and-certification/docs-devops-pro/AWS-Certified-DevOps-Engineer-Professional_Sample-Questions.pdf)
   * [AWS Skill Builder exam prep plan for DOP-C02](https://skillbuilder.aws/category/exam-prep/devops-engineer-professional-DOP-C02) (includes the Official Practice Question Set)
 
-## How this repo was checked
+## How this repo was checked (2026-10-29)
 
-* **Exam facts** come from the official exam guide and exam page, fetched on 2026-10-29.
-* **Every URL in every file** was fetched by a link checker and returned HTTP 200.
-* **Every code sample was checked mechanically:** YAML and JSON blocks parse, and CloudFormation templates pass `cfn-lint`.
-* **The question bank is checked by a validator.** It checks the format (4 options for single answer; 5 or more for multiple response; the number of answers matches "Select TWO/THREE"), that every option is explained and has a reference, the domain mix of each mock paper, the balance of correct letters, and near-duplicate stems.
+| Check | Result |
+|---|---|
+| Exam facts | From the official exam guide and exam page, fetched on 2026-10-29 |
+| Relative links and anchors across all 39 Markdown files | **109 / 109 OK** |
+| External URLs (AWS documentation references, including one for every question) | **433 / 433 return HTTP 200** |
+| YAML/JSON code blocks embedded in the notes | **9 / 9 parse** (CloudFormation tags tolerated) |
+| Lab CloudFormation/SAM templates (`*/labs/*.yaml`) | **9 / 9 pass `cfn-lint` 1.59** (one real bug was caught and fixed: `cfn-init` has no `dnf` package manager; `yum` works on AL2023) |
+| Question bank (345 questions) | **ALL OK**: format, keys, per-option explanations, mock domain mix, letter balance, no near-duplicates. Details in [07-Exam-Questions-and-Sample-Papers/README.md](07-Exam-Questions-and-Sample-Papers/README.md) |
 
-The gate results are recorded in [07-Exam-Questions-and-Sample-Papers/README.md](07-Exam-Questions-and-Sample-Papers/README.md).
+**What can't be machine-verified:** whether each question's keyed answer is *the best* answer. Each one was written against the cited AWS page, and the time-sensitive facts were checked on 2026-10-29. Two facts couldn't be confirmed from a live page:
+* The OpsWorks end-of-life date: the FAQ page now returns 404.
+* AWS's 2025 rename of Security Hub: confirmed from AWS announcements only.
+
+**Size:** 39 Markdown files (about 112,000 words), 9 lab templates, 345 original questions.
