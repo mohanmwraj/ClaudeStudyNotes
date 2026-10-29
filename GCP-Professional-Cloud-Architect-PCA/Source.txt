@@ -1,0 +1,39 @@
+Sources:
+
+Certification page
+Current exam guide
+v6.1 exam guide
+Case studies: Altostrat, Cymbal, EHR, KnightMotives
+Agent Platform release notes (rename table)
+Managed Service for Apache Spark release notes
+Knowledge Catalog FAQ
+GKE editions
+Interconnect release notes
+Interconnect 99.99% topologies
+Memcached deprecation
+Cloud Run jobs
+
+https://cloud.google.com/learn/certification/cloud-architect
+
+https://services.google.com/fh/files/misc/professional_cloud_architect_exam_guide_english.pdf
+https://services.google.com/fh/files/misc/v6.1_pca_professional_cloud_architect_exam_guide_english.pdf
+https://services.google.com/fh/files/misc/v6.1_pca_altostrat_media_case_study_english.pdf
+https://services.google.com/fh/files/misc/v6.1_pca_cymbal_retail_case_study_english.pdf
+https://services.google.com/fh/files/misc/v6.1_pca_ehr_healthcare_case_study_english.pdf
+https://services.google.com/fh/files/misc/v6.1_pca_knightmotives_automotive_case_study_english.pdf
+https://docs.cloud.google.com/gemini-enterprise-agent-platform/release-notes
+https://docs.cloud.google.com/managed-spark/docs/release-notes
+https://docs.cloud.google.com/knowledge-catalog/docs/faq
+https://docs.cloud.google.com/kubernetes-engine/enterprise/docs/concepts/gke-editions
+https://docs.cloud.google.com/network-connectivity/docs/interconnect/release-notes
+https://docs.cloud.google.com/network-connectivity/docs/interconnect/tutorials/dedicated-creating-9999-availability
+https://docs.cloud.google.com/memorystore/docs/memcached/deprecation
+https://docs.cloud.google.com/run/docs/create-jobs
+
+
+
+
+
+
+
+
