@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  DOP-C02 lab 03 - Lambda canary deployment (CodeDeploy via SAM DeploymentPreference) that rolls back
+  automatically when a CloudWatch alarm on the live alias's errors fires.
+
+Parameters:
+  FailRate:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 100
+    Description: Percentage of invocations that raise an error (deploy 0 first, then 50 to see a rollback).
+
+Resources:
+  CanaryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: dop-lab-03-fn
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 5
+      Environment:
+        Variables:
+          FAIL_RATE: !Ref FailRate
+      InlineCode: |
+        import os
+        import random
+
+        def handler(event, context):
+            if random.randint(1, 100) <= int(os.environ.get("FAIL_RATE", "0")):
+                raise RuntimeError("injected failure for the canary lab")
+            return {"ok": True, "version": context.function_version}
+      AutoPublishAlias: live
+      AutoPublishAliasAllProperties: true      # publish a new version when configuration changes too
+      DeploymentPreference:
+        Type: Canary10Percent5Minutes
+        Alarms:
+          - !Ref AliasErrorsAlarm
+
+  AliasErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: dop-lab-03-live-alias-errors
+      AlarmDescription: Any error on the live alias during the canary triggers CodeDeploy rollback
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: dop-lab-03-fn
+        - Name: Resource
+          Value: dop-lab-03-fn:live
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  FunctionAlias:
+    Value: dop-lab-03-fn:live

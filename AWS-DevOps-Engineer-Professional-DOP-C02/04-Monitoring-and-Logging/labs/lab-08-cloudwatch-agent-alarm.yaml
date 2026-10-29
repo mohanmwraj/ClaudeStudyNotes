@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 08 - CloudWatch agent installed and configured by State Manager associations (desired state),
+  application log shipped to a log group with retention, metric filter on ERROR, alarm to SNS.
+
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  NotificationEmail:
+    Type: String
+
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  AppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: dop-lab-08
+        - Key: dop-lab
+          Value: lab-08
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          mkdir -p /var/log/app
+          touch /var/log/app/app.log
+          chmod 644 /var/log/app/app.log
+
+  AgentConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: AmazonCloudWatch-dop-lab-08
+      Type: String
+      Description: CloudWatch agent configuration consumed by the ManageAgent association
+      Value: >-
+        {"agent": {"metrics_collection_interval": 60},
+         "metrics": {"namespace": "CWAgent",
+                     "append_dimensions": {"InstanceId": "${aws:InstanceId}"},
+                     "metrics_collected": {"mem": {"measurement": ["mem_used_percent"]},
+                                           "disk": {"measurement": ["used_percent"], "resources": ["/"]}}},
+         "logs": {"logs_collected": {"files": {"collect_list": [
+                   {"file_path": "/var/log/app/app.log",
+                    "log_group_name": "/dop-lab-08/app",
+                    "log_stream_name": "{instance_id}"}]}}}}
+
+  InstallAgentAssociation:
+    Type: AWS::SSM::Association
+    Properties:
+      AssociationName: dop-lab-08-install-cw-agent
+      Name: AWS-ConfigureAWSPackage
+      Parameters:
+        action:
+          - Install
+        name:
+          - AmazonCloudWatchAgent
+      Targets:
+        - Key: tag:dop-lab
+          Values:
+            - lab-08
+
+  ConfigureAgentAssociation:
+    Type: AWS::SSM::Association
+    DependsOn: InstallAgentAssociation
+    Properties:
+      AssociationName: dop-lab-08-configure-cw-agent
+      Name: AmazonCloudWatch-ManageAgent
+      ScheduleExpression: rate(30 minutes)     # desired state: re-applied, so a first-run race self-heals
+      Parameters:
+        action:
+          - configure
+        mode:
+          - ec2
+        optionalConfigurationSource:
+          - ssm
+        optionalConfigurationLocation:
+          - !Ref AgentConfig
+        optionalRestart:
+          - "yes"
+      Targets:
+        - Key: tag:dop-lab
+          Values:
+            - lab-08
+
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /dop-lab-08/app
+      RetentionInDays: 30
+
+  ErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: ERROR
+      MetricTransformations:
+        - MetricNamespace: DopLab08
+          MetricName: AppErrors
+          MetricValue: "1"
+          DefaultValue: 0
+
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Five or more ERROR lines in one minute
+      Namespace: DopLab08
+      MetricName: AppErrors
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+
+Outputs:
+  InstanceId:
+    Value: !Ref AppInstance

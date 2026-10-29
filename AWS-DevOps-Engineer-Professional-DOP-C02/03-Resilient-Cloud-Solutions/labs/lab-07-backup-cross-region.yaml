@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 07 - AWS Backup plan with tag-based selection, lifecycle, and a cross-Region copy action.
+  Create the destination vault in the DR Region first and pass its ARN.
+
+Parameters:
+  DestinationVaultArn:
+    Type: String
+    Description: ARN of a backup vault in another Region (the DR copy target)
+
+Resources:
+  PrimaryVault:
+    Type: AWS::Backup::BackupVault
+    Properties:
+      BackupVaultName: dop-lab-07-primary
+
+  BackupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: backup.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
+
+  DailyPlan:
+    Type: AWS::Backup::BackupPlan
+    Properties:
+      BackupPlan:
+        BackupPlanName: dop-lab-07-daily
+        BackupPlanRule:
+          - RuleName: daily-with-dr-copy
+            TargetBackupVault: !Ref PrimaryVault
+            ScheduleExpression: cron(0 5 * * ? *)
+            StartWindowMinutes: 60
+            CompletionWindowMinutes: 180
+            Lifecycle:
+              DeleteAfterDays: 14
+            CopyActions:
+              - DestinationBackupVaultArn: !Ref DestinationVaultArn
+                Lifecycle:
+                  DeleteAfterDays: 14
+
+  TagSelection:
+    Type: AWS::Backup::BackupSelection
+    Properties:
+      BackupPlanId: !Ref DailyPlan
+      BackupSelection:
+        SelectionName: tagged-dop-lab-07
+        IamRoleArn: !GetAtt BackupRole.Arn
+        ListOfTags:
+          - ConditionType: STRINGEQUALS
+            ConditionKey: backup
+            ConditionValue: dop-lab-07
+
+Outputs:
+  BackupRoleArn:
+    Value: !GetAtt BackupRole.Arn
+  PrimaryVaultName:
+    Value: !Ref PrimaryVault

@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 09 - route GuardDuty findings with severity >= 4 to SNS through EventBridge, using an
+  input transformer for a readable message. Optionally enables GuardDuty in this Region.
+
+Parameters:
+  NotificationEmail:
+    Type: String
+  CreateDetector:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Set to true only if GuardDuty is not yet enabled in this Region
+
+Conditions:
+  MakeDetector: !Equals [!Ref CreateDetector, "true"]
+
+Resources:
+  Detector:
+    Type: AWS::GuardDuty::Detector
+    Condition: MakeDetector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: FIFTEEN_MINUTES
+
+  FindingsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: dop-lab-09-guardduty-findings
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+
+  FindingsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref FindingsTopic
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowEventBridge
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref FindingsTopic
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt FindingsRule.Arn   # confused-deputy protection
+
+  FindingsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: GuardDuty findings of medium severity or higher
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.guardduty
+        detail-type:
+          - GuardDuty Finding
+        detail:
+          severity:
+            - numeric: [">=", 4]
+      Targets:
+        - Id: sns
+          Arn: !Ref FindingsTopic
+          InputTransformer:
+            InputPathsMap:
+              type: $.detail.type
+              severity: $.detail.severity
+              account: $.detail.accountId
+              region: $.region
+            InputTemplate: '"GuardDuty (sev <severity>) <type> in account <account>, region <region>"'
+
+Outputs:
+  TopicArn:
+    Value: !Ref FindingsTopic

@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 06 - Route 53 active-passive failover with an HTTP health check and a CloudWatch alarm on
+  the health check status. Deploy in us-east-1 (Route 53 health-check metrics are published only there).
+
+Parameters:
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+  RecordName:
+    Type: String
+    Description: Fully qualified record name inside the hosted zone, e.g. app.example.com
+  PrimaryEndpoint:
+    Type: String
+    Description: DNS name of the primary web endpoint (must answer HTTP 200 on /)
+  SecondaryEndpoint:
+    Type: String
+    Description: DNS name of the secondary web endpoint
+
+Resources:
+  PrimaryHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTP
+        FullyQualifiedDomainName: !Ref PrimaryEndpoint
+        Port: 80
+        ResourcePath: /
+        RequestInterval: 30
+        FailureThreshold: 3
+      HealthCheckTags:
+        - Key: Name
+          Value: dop-lab-06-primary
+
+  PrimaryRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref RecordName
+      Type: CNAME
+      TTL: "60"
+      SetIdentifier: primary
+      Failover: PRIMARY
+      HealthCheckId: !Ref PrimaryHealthCheck
+      ResourceRecords:
+        - !Ref PrimaryEndpoint
+
+  SecondaryRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref RecordName
+      Type: CNAME
+      TTL: "60"
+      SetIdentifier: secondary
+      Failover: SECONDARY
+      ResourceRecords:
+        - !Ref SecondaryEndpoint
+
+  PrimaryUnhealthyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Primary endpoint failed its Route 53 health check
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref PrimaryHealthCheck
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+
+Outputs:
+  HealthCheckId:
+    Value: !Ref PrimaryHealthCheck

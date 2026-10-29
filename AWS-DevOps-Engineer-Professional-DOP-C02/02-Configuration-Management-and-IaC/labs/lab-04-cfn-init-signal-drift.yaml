@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 04 - EC2 bootstrapped by cfn-init, CreationPolicy waiting for cfn-signal,
+  Session Manager access (no SSH key), used to practise change sets and drift detection.
+
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t3.micro, t3.small]
+  PageText:
+    Type: String
+    Default: version one
+
+Resources:
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lab 04 web server - HTTP only
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT10M
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:                       # cfn-init knows apt, msi, python, rpm, rubygems, yum (yum works on AL2023 via dnf)
+              httpd: []
+          files:
+            /var/www/html/index.html:
+              content: !Sub "<h1>${PageText}</h1>"
+              mode: "000644"
+          services:
+            systemd:
+              httpd:
+                enabled: true
+                ensureRunning: true
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds:
+        - !GetAtt WebSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: dop-lab-04
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServer --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServer --region ${AWS::Region}
+
+Outputs:
+  Url:
+    Value: !Sub http://${WebServer.PublicDnsName}

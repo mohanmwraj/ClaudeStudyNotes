@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DOP-C02 lab 05 - AWS Config managed rule with automatic remediation through an SSM Automation runbook.
+  Prerequisite: AWS Config recording is already enabled in this Region.
+
+Resources:
+  TestBucket:
+    Type: AWS::S3::Bucket            # deliberately created WITHOUT versioning - the rule should fix it
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: lab
+          Value: dop-lab-05
+
+  VersioningRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: dop-lab-05-s3-versioning
+      Description: Detects S3 buckets without versioning (configuration-change trigger)
+      Scope:
+        ComplianceResourceTypes:
+          - AWS::S3::Bucket
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_VERSIONING_ENABLED
+
+  RemediationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ssm.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: enable-bucket-versioning
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketVersioning
+                  - s3:PutBucketVersioning
+                Resource: "*"
+
+  VersioningRemediation:
+    Type: AWS::Config::RemediationConfiguration
+    Properties:
+      ConfigRuleName: !Ref VersioningRule
+      TargetType: SSM_DOCUMENT
+      TargetId: AWS-ConfigureS3BucketVersioning
+      Automatic: true
+      MaximumAutomaticAttempts: 3
+      RetryAttemptSeconds: 60
+      Parameters:
+        BucketName:
+          ResourceValue:
+            Value: RESOURCE_ID
+        VersioningState:
+          StaticValue:
+            Values:
+              - Enabled
+        AutomationAssumeRole:
+          StaticValue:
+            Values:
+              - !GetAtt RemediationRole.Arn
+
+Outputs:
+  TestBucket:
+    Value: !Ref TestBucket
