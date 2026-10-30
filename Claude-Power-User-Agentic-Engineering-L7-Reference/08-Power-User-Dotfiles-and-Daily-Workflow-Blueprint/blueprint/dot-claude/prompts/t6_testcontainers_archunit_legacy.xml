@@ -1,0 +1,50 @@
+<!-- t6_testcontainers_archunit_legacy.xml - characterize legacy code with Testcontainers, freeze its architecture debt with ArchUnit, then refactor -->
+<prompt id="T6" title="Testcontainers integration tests, ArchUnit fences and legacy refactoring">
+  <variables>
+    <var name="legacy_code" kind="data" example="(OrderManager.java, 1,900 lines, and its DAO)">the code to refactor, verbatim</var>
+    <var name="target_architecture" kind="data" example="hexagonal: domain, application, adapter; adapters depend inward only">where the code should end up</var>
+    <var name="known_behaviour" kind="data" example="Production quirks: cancelling a SHIPPED order returns 200 and does nothing; totals round HALF_UP">behaviour that must be preserved, including the odd parts</var>
+    <var name="root_package" kind="param" example="com.acme.orders">package the ArchUnit rules import</var>
+  </variables>
+  <context>
+    <legacy>{{legacy_code}}</legacy>
+    <target>{{target_architecture}}</target>
+    <behaviour>{{known_behaviour}}</behaviour>
+    <platform>Spring Boot 4.1.2 managed Testcontainers 2.0.5 (modules such as testcontainers-postgresql and testcontainers-kafka), @ServiceConnection, JUnit 6.0.3, ArchUnit 1.5.1.</platform>
+  </context>
+  <instructions>
+    <step n="1">Write characterization tests before changing anything: drive the legacy entry points against real PostgreSQL and Kafka in Testcontainers and record current outputs as approved snapshots, quirks included.</step>
+    <step n="2">Write the target architecture as ArchUnit rules over {{root_package}}, then wrap them in FreezingArchRule.freeze so today's violations are recorded and only new ones fail.</step>
+    <step n="3">Refactor in small steps (extract a pure function, introduce a port, move a class); after each step run the characterization tests and the ArchUnit tests, and remove frozen violations as they are fixed.</step>
+    <step n="4">Where a quirk must change, change it in a separate commit with its own test and a note for the owners.</step>
+    <step n="5">Report each step with its test results and the frozen-violation count.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-LEG-1">Characterization tests exist and pass on the unchanged code before the first refactoring commit.</inv>
+    <inv id="INV-LEG-2">Every refactoring commit keeps all characterization tests green; behaviour changes are separate commits.</inv>
+    <inv id="INV-LEG-3">ArchUnit rules encode the target architecture and run frozen; the stored violation count never increases.</inv>
+    <inv id="INV-LEG-4">Integration tests use real PostgreSQL and Kafka containers through @ServiceConnection, never H2 or mocks of the database.</inv>
+    <inv id="INV-LEG-5">Each container image is pinned to a version tag.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No big-bang rewrite and no refactoring before the characterization tests are green.</no>
+    <no>No deleting or editing the frozen-violation store by hand to make a build pass.</no>
+    <no>No snapshot updates without a line in the report saying which behaviour changed and why.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="src/test/java/.../characterization/">characterization tests and approved snapshots</file>
+    <file path="src/test/java/.../architecture/">ArchitectureTest with frozen rules</file>
+    <file path="archunit_store/">the frozen-violation store, committed</file>
+    <report>Per step: what moved, tests run and their results, frozen violations before and after.</report>
+  </output_contract>
+  <verification>
+    <cmd>./mvnw -q verify</cmd>
+    <cmd>git diff --stat archunit_store/</cmd>
+    <check ref="INV-LEG-1">The first commit adds only tests, and they pass.</check>
+    <check ref="INV-LEG-2">The report lists every commit with its characterization result.</check>
+    <check ref="INV-LEG-3">The store diff only removes lines across the refactoring.</check>
+    <check ref="INV-LEG-4">grep finds no H2 dependency and no mocked DataSource in integration tests.</check>
+    <check ref="INV-LEG-5">Every container constructor uses a tagged image name.</check>
+  </verification>
+  <task>Characterize, fence and incrementally refactor the legacy code toward the target architecture, honouring every invariant.</task>
+</prompt>

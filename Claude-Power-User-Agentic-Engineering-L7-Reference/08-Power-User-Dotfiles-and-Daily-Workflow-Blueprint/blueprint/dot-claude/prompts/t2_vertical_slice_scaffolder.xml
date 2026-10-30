@@ -1,0 +1,64 @@
+<!-- t2_vertical_slice_scaffolder.xml - one hexagonal vertical slice (domain, use case, ports, adapters, migration, tests) on Boot 4.1 / Java 21 -->
+<prompt id="T2" title="Hexagonal vertical slice scaffolder">
+  <variables>
+    <var name="base_package" kind="param" example="com.acme.orders">root Java package</var>
+    <var name="base_path" kind="param" example="com/acme/orders">the same package as a source path</var>
+    <var name="slice" kind="param" example="PlaceOrder">use case name, PascalCase</var>
+    <var name="persistence" kind="param" example="jOOQ">jOOQ or Spring Data JPA</var>
+    <var name="spec_excerpt" kind="data" example="SPEC.md 3.2 PlaceOrder: POST /orders with Idempotency-Key; NEW to RESERVED on stock reserved; emits OrderPlaced; INV-3 amount positive.">the SPEC.md section for this slice, verbatim</var>
+    <var name="repo_tree" kind="data" example="src/main/java/com/acme/orders/{domain,application,adapter}/... (output of tree -d src)">current layout, so new code lands where it belongs</var>
+    <var name="existing_conventions" kind="data" example="Records, no Lombok; constructor injection; problem+json errors; Spotless palantir format.">the parts of CLAUDE.md and .claude/rules that apply</var>
+  </variables>
+  <context>
+    <spec>{{spec_excerpt}}</spec>
+    <layout>{{repo_tree}}</layout>
+    <conventions>{{existing_conventions}}</conventions>
+    <platform>Java 21 source level on a JDK 25 runtime; Spring Boot 4.1.2 with its managed versions (Spring Framework 7, HikariCP 7.0.2, jOOQ 3.21.9, Flyway 12.4.0, Testcontainers 2.0.5, JUnit 6.0.3); Resilience4j 2.4.0 (resilience4j-spring-boot4); OpenTelemetry Spring Boot starter 2.33.1.</platform>
+  </context>
+  <instructions>
+    <step n="1">Restate the slice contract from the spec in at most ten lines: inputs, outputs, state change, events, errors, idempotency. If the spec is silent on any of these, stop and ask.</step>
+    <step n="2">Write the domain first: records and sealed result types in {{base_package}}.domain, with the invariants as constructor or method checks and unit tests beside them. No framework imports.</step>
+    <step n="3">Write the application layer: the {{slice}} use case in {{base_package}}.application, an inbound port it implements, and the outbound ports it needs. The use case owns the transaction boundary.</step>
+    <step n="4">Write the adapters: a REST controller that maps to problem details and honours Idempotency-Key; a {{persistence}} repository implementing the persistence port; an outbox writer for the domain events; each outbound HTTP client wrapped in a Resilience4j time limiter and circuit breaker.</step>
+    <step n="5">Write the next Flyway migration (never edit an applied one) and the configuration: virtual threads on, an explicit Hikari pool size with the sizing arithmetic in a comment, OpenTelemetry resource attributes.</step>
+    <step n="6">Write the tests: domain unit tests, a web slice test, a Testcontainers PostgreSQL integration test using @ServiceConnection, and an ArchUnit test for the layer rules.</step>
+    <step n="7">Run the verification commands, fix until they pass, and report.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-HEX-1">Domain classes import nothing from org.springframework, jakarta.persistence, org.jooq or the adapter packages.</inv>
+    <inv id="INV-HEX-2">@Transactional appears only on application-layer public methods called from outside the bean; no self-invocation, no transactions in controllers.</inv>
+    <inv id="INV-HEX-3">Every outbound port has exactly one production adapter and one in-memory test double.</inv>
+    <inv id="INV-HEX-4">The Hikari maximum pool size is set explicitly; with virtual threads the pool, not the thread count, limits database concurrency, so pool size times replica count stays below the database's connection budget.</inv>
+    <inv id="INV-HEX-5">Every outbound network call has a timeout and a circuit breaker; retries only on idempotent calls.</inv>
+    <inv id="INV-HEX-6">Domain events are written to the outbox in the same transaction as the state change, with the W3C traceparent in the event headers.</inv>
+    <inv id="INV-HEX-7">A repeated POST with the same Idempotency-Key returns the original result and changes nothing.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No Lombok, field injection or service locators.</no>
+    <no>No H2 or embedded databases in persistence tests.</no>
+    <no>No new dependency beyond the platform list without asking first.</no>
+    <no>No catch-all exception handlers that log and continue.</no>
+    <no>No synchronized blocks around blocking I/O (on a JDK 21 runtime they pin virtual threads); use ReentrantLock.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="src/main/java/{{base_path}}/domain/">aggregate, value objects, domain events, sealed results</file>
+    <file path="src/main/java/{{base_path}}/application/">{{slice}}UseCase, ports.in, ports.out</file>
+    <file path="src/main/java/{{base_path}}/adapter/">in.web, out.persistence, out.messaging</file>
+    <file path="src/main/resources/db/migration/">V(n+1)__{{slice}}.sql</file>
+    <file path="src/test/java/{{base_path}}/">domain tests, web slice test, Testcontainers IT, ArchitectureTest</file>
+    <report>The commands you ran with their pass/fail summary lines, each invariant with the file and test that enforces it, and any deviation from the spec with the reason.</report>
+  </output_contract>
+  <verification>
+    <cmd>./mvnw -q spotless:check</cmd>
+    <cmd>./mvnw -q verify</cmd>
+    <cmd>./mvnw -q test -Dtest=ArchitectureTest</cmd>
+    <check ref="INV-HEX-1">ArchitectureTest: domain must not depend on Spring, JPA, jOOQ or adapter packages.</check>
+    <check ref="INV-HEX-2">ArchitectureTest: @Transactional methods live only in application classes; grep shows no this-calls to them.</check>
+    <check ref="INV-HEX-3">List each outbound port with its adapter and its test double.</check>
+    <check ref="INV-HEX-4">Quote the pool-size line and its arithmetic.</check>
+    <check ref="INV-HEX-5">List each outbound client with its Resilience4j instance names and timeouts.</check>
+    <check ref="INV-HEX-6">The Testcontainers IT asserts the outbox row and its traceparent exist after the use case commits, and none after a rollback.</check>
+    <check ref="INV-HEX-7">The web or integration test sends the same POST twice and asserts one state change and identical responses.</check>
+  </verification>
+  <task>Implement the {{slice}} vertical slice end to end as specified, satisfying every invariant, then report against the output contract.</task>
+</prompt>

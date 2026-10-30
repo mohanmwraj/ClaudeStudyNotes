@@ -1,0 +1,50 @@
+<!-- t5_adversarial_concurrency.xml - CyclicBarrier race tests that must fail on the buggy code, plus honest JMH benchmarks -->
+<prompt id="T5" title="Adversarial concurrency and load-test harness generator">
+  <variables>
+    <var name="class_under_test" kind="data" example="(InventoryService.java source)">the code to attack, verbatim</var>
+    <var name="domain_invariants" kind="data" example="stock never negative; successful reservations never exceed initial stock; one reservation per idempotency key">what must hold under any interleaving</var>
+    <var name="runtime" kind="param" example="JDK 25, virtual threads for request handling">the JVM and threading model in production</var>
+    <var name="perf_question" kind="param" example="Does the CAS version keep p99 reserve() under 50 us at 16 threads?">what the benchmark must answer</var>
+  </variables>
+  <context>
+    <code>{{class_under_test}}</code>
+    <invariants_under_concurrency>{{domain_invariants}}</invariants_under_concurrency>
+    <platform>JUnit 6.0.3 (Boot 4.1.2 managed), JMH 1.37; production runtime: {{runtime}}.</platform>
+  </context>
+  <instructions>
+    <step n="1">List the shared mutable state and, for each invariant, the interleaving that would break it (thread A reads, thread B reads, A writes, B writes), citing the lines.</step>
+    <step n="2">For each interleaving, write a race test: N threads wait on a CyclicBarrier, are released together, each performs the operation, and after the round the invariant is asserted; repeat for R rounds and count failing rounds.</step>
+    <step n="3">Where the window is too narrow to hit reliably, add a test-only seam in the class (a pause hook between read and write, a no-op in production) and use it to widen the window.</step>
+    <step n="4">Prove each test: run it against the current code and show it fails; then fix the code (atomic compute, CAS loop, lock, or a database constraint) and show it passes the same rounds.</step>
+    <step n="5">Write JMH benchmarks for {{perf_question}}: @State with the right scope, @Threads at the production concurrency, at least two forks, warmup and measurement iterations, Blackhole for results; report the score with its error.</step>
+    <step n="6">Run everything and report.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-CONC-1">Every race test asserts a domain invariant after each round, not merely that no exception was thrown.</inv>
+    <inv id="INV-CONC-2">Every race test is shown to fail against the unfixed code (a test that cannot fail proves nothing).</inv>
+    <inv id="INV-CONC-3">Tests synchronize with barriers and latches; Thread.sleep appears only inside the explicit widening seam.</inv>
+    <inv id="INV-CONC-4">JMH results come from two or more forks with warmup, consume results through Blackhole, and are reported with their error.</inv>
+    <inv id="INV-CONC-5">On a JDK 21 runtime, no synchronized block guards blocking I/O on virtual threads; the JFR event jdk.VirtualThreadPinned is checked in the load test.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No single-run concurrency tests and no tests that pass by luck of scheduling.</no>
+    <no>No System.nanoTime loops instead of JMH for micro-benchmarks.</no>
+    <no>No fixing by adding synchronized everywhere; the fix must be the narrowest that restores the invariant, with its throughput measured.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="src/test/java/.../concurrency/">one race test class per invariant</file>
+    <file path="src/jmh/java/.../">JMH benchmark classes</file>
+    <file path="src/main/java/.../">the fix and the test seam</file>
+    <report>For each race test: failing rounds before the fix (out of R) and after; JMH table with score and error per variant.</report>
+  </output_contract>
+  <verification>
+    <cmd>./mvnw -q test -Dtest='*RaceTest'</cmd>
+    <cmd>./mvnw -q -Pjmh package; java -jar target/benchmarks.jar -f 2 -wi 5 -i 10</cmd>
+    <check ref="INV-CONC-1">Each race test's assertion names the invariant.</check>
+    <check ref="INV-CONC-2">The report shows non-zero failing rounds before the fix for every race test.</check>
+    <check ref="INV-CONC-3">grep finds Thread.sleep only in the seam.</check>
+    <check ref="INV-CONC-4">The JMH output shows two forks and an error column; the report quotes both.</check>
+    <check ref="INV-CONC-5">The load-test JFR recording has no jdk.VirtualThreadPinned events above 20 ms.</check>
+  </verification>
+  <task>Attack the class under test with barrier-released race tests that fail before and pass after your fix, and answer the performance question with JMH.</task>
+</prompt>

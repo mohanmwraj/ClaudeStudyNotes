@@ -1,0 +1,57 @@
+<!-- t4_beam_pipeline_auditor.xml - scaffold or audit an Apache Beam (Java) pipeline for Dataflow: fusion, coders, keys, windows, sinks -->
+<prompt id="T4" title="Apache Beam / Dataflow pipeline scaffolder and fusion/coder auditor">
+  <variables>
+    <var name="mode" kind="param" example="AUDIT">SCAFFOLD a new pipeline or AUDIT an existing one</var>
+    <var name="pipeline_goal" kind="data" example="Read order events from Kafka, 1-minute revenue per store, write to BigQuery; late data up to 10 min.">what the pipeline must compute</var>
+    <var name="pipeline_source" kind="data" example="(the pipeline's Java source, or 'none' in SCAFFOLD mode)">existing code to audit</var>
+    <var name="static_findings" kind="data" example="(output of beam_fusion_coder_audit.py on the source)">the static auditor's findings, so you start from evidence</var>
+    <var name="job_evidence" kind="data" example="Dataflow job graph: stage F3 fused Create+ExpandFn+Enrich, 1 worker busy of 40; GBK hot key store-42">job graph, step timings, worker metrics, errors</var>
+  </variables>
+  <context>
+    <goal>{{pipeline_goal}}</goal>
+    <source>{{pipeline_source}}</source>
+    <static_findings>{{static_findings}}</static_findings>
+    <job_evidence>{{job_evidence}}</job_evidence>
+    <platform>Apache Beam Java SDK 2.77.0, DataflowRunner in production, DirectRunner in tests; Java 21.</platform>
+  </context>
+  <instructions>
+    <step n="1">In AUDIT mode, confirm or reject each static finding against the source and the job evidence, then look for what static analysis cannot see. In SCAFFOLD mode, design the transform graph first and show it as a list of named steps with their PCollection types and coders.</step>
+    <step n="2">Fusion: find every expensive fan-out that follows a small or slow source and would be fused into one stage; break it with Redistribute.arbitrarily() or Reshuffle.viaRandomKey(), placed after the fan-out.</step>
+    <step n="3">Coders: give every PCollection element type an explicit, efficient coder (a schema via @DefaultSchema, or Avro or Proto); keys of GroupByKey, Combine.perKey and stateful DoFns must have deterministic coders.</step>
+    <step n="4">Keys and aggregation: replace GroupByKey-then-sum with Combine.perKey; for skewed keys use withHotKeyFanout; state the key cardinality you assume.</step>
+    <step n="5">Windows and triggers: unbounded inputs get a window, a trigger, allowed lateness and an accumulation mode that match the late-data rule.</step>
+    <step n="6">DoFn lifecycle and sinks: clients created in @Setup and closed in @Teardown, never fields that cannot serialize; sink writes idempotent or exactly-once (BigQuery Storage Write API mode stated).</step>
+    <step n="7">Write DirectRunner tests with TestPipeline and PAssert, including a late-data case with TestStream, run them, and report.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-BEAM-1">No expensive ParDo is fused behind a source that produces few elements; each fan-out over 100x is followed by a redistribution.</inv>
+    <inv id="INV-BEAM-2">No SerializableCoder on any PCollection; every key coder is deterministic.</inv>
+    <inv id="INV-BEAM-3">Every per-key aggregation is a Combine with a combiner, not a GroupByKey followed by a loop.</inv>
+    <inv id="INV-BEAM-4">Every unbounded PCollection reaching a grouping has a non-global window or an explicit trigger, plus allowed lateness.</inv>
+    <inv id="INV-BEAM-5">DoFns hold no non-serializable fields; external clients live in @Setup and @Teardown.</inv>
+    <inv id="INV-BEAM-6">Every sink's delivery semantics (at-least-once or exactly-once) is stated and the downstream consumer tolerates it.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No guessing about the runner's plan: claims about fusion cite the job graph or say they are predictions to check.</no>
+    <no>No GlobalWindow with a default trigger on an unbounded source.</no>
+    <no>No side inputs that grow without bound (a multi-gigabyte View.asMap rebuilt every window).</no>
+    <no>No rewrite of the whole pipeline when the audit finds three local fixes.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="docs/pipeline-audit.md">findings table: id, evidence (source line or job metric), invariant, fix, expected effect, how to measure</file>
+    <file path="src/main/java/.../pipeline/">the changed or new transforms</file>
+    <file path="src/test/java/.../pipeline/">TestPipeline and PAssert tests, a TestStream late-data test</file>
+    <report>Before and after: stage count, the coder of each grouped PCollection, and the test results.</report>
+  </output_contract>
+  <verification>
+    <cmd>./mvnw -q test -Dtest='*PipelineTest'</cmd>
+    <cmd>python beam_fusion_coder_audit.py src/main/java</cmd>
+    <check ref="INV-BEAM-1">List each fan-out with its ratio and the redistribution after it.</check>
+    <check ref="INV-BEAM-2">The static auditor reports no BM02/BM03 finding; a test constructs the pipeline (GroupByKey rejects a non-deterministic key coder at construction).</check>
+    <check ref="INV-BEAM-3">The static auditor reports no BM04 finding.</check>
+    <check ref="INV-BEAM-4">The TestStream test delivers an on-time, a late-within-lateness and a too-late element and asserts the panes.</check>
+    <check ref="INV-BEAM-5">A DirectRunner test runs the pipeline end to end: a DoFn that cannot serialize passes construction and fails only at run().</check>
+    <check ref="INV-BEAM-6">The audit document states each sink's semantics and the consumer's dedup key.</check>
+  </verification>
+  <task>Run the pipeline work in {{mode}} mode for the goal above, honouring every invariant, and deliver the files and report of the output contract.</task>
+</prompt>

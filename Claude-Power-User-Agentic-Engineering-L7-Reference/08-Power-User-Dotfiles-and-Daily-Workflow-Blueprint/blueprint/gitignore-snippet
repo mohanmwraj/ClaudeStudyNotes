@@ -1,0 +1,5 @@
+# Claude Code: personal and generated files stay out of git
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/worktrees/
+.claude/audit/

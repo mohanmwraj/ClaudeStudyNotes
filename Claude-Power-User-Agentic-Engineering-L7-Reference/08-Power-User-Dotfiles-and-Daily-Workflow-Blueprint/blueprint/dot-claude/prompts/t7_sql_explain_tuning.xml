@@ -1,0 +1,48 @@
+<!-- t7_sql_explain_tuning.xml - PostgreSQL query tuning from EXPLAIN (ANALYZE, BUFFERS) evidence, with migration-safe fixes -->
+<prompt id="T7" title="PostgreSQL slow-query diagnosis and tuning from plan evidence">
+  <variables>
+    <var name="query" kind="data" example="SELECT ... FROM orders o JOIN order_lines l ON ... WHERE o.store_id = $1 AND o.created_at >= $2 ORDER BY o.created_at DESC LIMIT 50">the statement as the application sends it, with parameter types</var>
+    <var name="plan_digest" kind="data" example="(output of explain_plan_triage.py on EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON))">the pre-digested plan, not the raw JSON</var>
+    <var name="schema_facts" kind="data" example="orders 48M rows; indexes: pk(id), (customer_id); store_id has 1,200 distinct values; autovacuum last analyze 9 days ago">table sizes, indexes, statistics freshness</var>
+    <var name="slo" kind="param" example="p99 under 40 ms at 300 calls/s">the latency target for this query</var>
+  </variables>
+  <context>
+    <query>{{query}}</query>
+    <plan>{{plan_digest}}</plan>
+    <schema>{{schema_facts}}</schema>
+    <platform>PostgreSQL 17; Flyway 12.4.0 migrations; the application uses prepared statements through the JDBC driver 42.7.14.</platform>
+  </context>
+  <instructions>
+    <step n="1">State the bottleneck in one sentence, citing the plan node and its numbers (actual time, rows, loops, buffers).</step>
+    <step n="2">For every scan and join in the digest, compare estimated with actual rows; a ratio beyond 10x in either direction is a statistics problem to fix before any index.</step>
+    <step n="3">Propose at most three changes, ranked by expected effect, each with the predicate or ordering it serves, its write and storage cost, and the measurement that would confirm it.</step>
+    <step n="4">Write each schema change as a Flyway migration that builds indexes with CREATE INDEX CONCURRENTLY outside a transaction, and each query rewrite with an argument that it returns the same rows, NULLs and duplicates included.</step>
+    <step n="5">Say how to re-measure with the same parameter values, and whether the prepared statement may switch to a generic plan after five executions (plan_cache_mode).</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-SQL-1">Every claim cites a plan node and a number from the digest; nothing is inferred from the query text alone.</inv>
+    <inv id="INV-SQL-2">Misestimates beyond 10x are addressed (ANALYZE, extended statistics, or a statistics target) before an index is proposed for that node.</inv>
+    <inv id="INV-SQL-3">Each proposed index names the exact predicate and sort it serves and its cost on writes.</inv>
+    <inv id="INV-SQL-4">Indexes on live tables are created CONCURRENTLY in a non-transactional migration.</inv>
+    <inv id="INV-SQL-5">Each rewrite is shown to be semantically equivalent.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No index for every column in the WHERE clause.</no>
+    <no>No configuration changes (work_mem, random_page_cost) as the first fix, and never globally for one query.</no>
+    <no>No query hints or extensions the platform does not have.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="docs/perf/">diagnosis note: bottleneck, misestimates, ranked changes, measurements</file>
+    <file path="src/main/resources/db/migration/">non-transactional migration for any new index</file>
+    <report>A table of plan nodes cited (node, metric, value), then the ranked changes with expected and measured effect.</report>
+  </output_contract>
+  <verification>
+    <cmd>python explain_plan_triage.py plan-before.json plan-after.json</cmd>
+    <check ref="INV-SQL-1">Every sentence in the diagnosis that names a cost has a node reference from the digest.</check>
+    <check ref="INV-SQL-2">The digest's misestimate list is empty after the statistics fix, or each remaining item is explained.</check>
+    <check ref="INV-SQL-3">Each index line in the migration has a comment naming the predicate and sort.</check>
+    <check ref="INV-SQL-4">The migration contains CONCURRENTLY and runs outside a transaction.</check>
+    <check ref="INV-SQL-5">An equivalence test runs old and new query on the Testcontainers database and compares results.</check>
+  </verification>
+  <task>Diagnose why this query misses {{slo}} and propose the smallest safe changes that meet it, following every invariant.</task>
+</prompt>

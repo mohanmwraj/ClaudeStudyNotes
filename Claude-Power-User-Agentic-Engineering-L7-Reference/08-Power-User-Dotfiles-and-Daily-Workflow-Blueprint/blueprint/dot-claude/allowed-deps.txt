@@ -1,0 +1,22 @@
+# dependency_guard.py allowlist: new coordinates outside these get an "ask" (a human confirms they exist and are intended)
+# Families managed by the Spring Boot 4.1.2 BOM or used by this blueprint's stack
+org.springframework.boot:*
+org.springframework:*
+org.springframework.kafka:*
+org.springframework.ai:*
+org.apache.kafka:*
+com.zaxxer:HikariCP
+org.postgresql:postgresql
+org.flywaydb:*
+org.jooq:*
+io.github.resilience4j:*
+io.opentelemetry.instrumentation:*
+io.micrometer:*
+org.testcontainers:*
+org.junit.jupiter:*
+org.junit.platform:*
+org.assertj:assertj-core
+com.tngtech.archunit:*
+org.openjdk.jmh:*
+io.modelcontextprotocol.sdk:*
+org.apache.beam:*

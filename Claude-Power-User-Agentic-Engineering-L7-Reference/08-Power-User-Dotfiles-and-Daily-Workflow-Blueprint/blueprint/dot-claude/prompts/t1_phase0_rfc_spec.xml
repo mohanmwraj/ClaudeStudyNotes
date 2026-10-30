@@ -1,0 +1,59 @@
+<!-- t1_phase0_rfc_spec.xml - Phase 0: architecture RFC, SPEC.md, schema, API contract and CLAUDE.md before any code -->
+<prompt id="T1" title="Phase 0 architecture RFC and spec generator">
+  <variables>
+    <var name="service_name" kind="param" example="order-service">kebab-case name of the new service</var>
+    <var name="problem_statement" kind="data" example="Customers place orders that reserve stock and take payment; today a nightly batch double-books stock.">the business problem in the product owner's words</var>
+    <var name="nfrs" kind="data" example="p99 under 150 ms at 2,000 rps; 99.95% monthly; RPO 0, RTO 15 min; EU data residency">non-functional requirements as given</var>
+    <var name="platform_constraints" kind="data" example="Java 21 (runtime JDK 25), Spring Boot 4.1.2, PostgreSQL 17, Kafka 4.2, Kubernetes, OpenTelemetry">technology the team has already chosen</var>
+    <var name="existing_system" kind="data" example="Monolith 'shop-core' owns customers and catalog; exposes REST; publishes nothing.">what exists today and who owns it</var>
+    <var name="max_questions" kind="param" example="6">how many blocking questions Claude may ask before writing</var>
+  </variables>
+  <context>
+    <problem>{{problem_statement}}</problem>
+    <nfrs>{{nfrs}}</nfrs>
+    <platform>{{platform_constraints}}</platform>
+    <existing_system>{{existing_system}}</existing_system>
+  </context>
+  <role>You are the staff engineer writing the design that a review board will approve or reject. You are accountable for every number and every assumption in it.</role>
+  <instructions>
+    <step n="1">Before writing anything, list what you would need to know and cannot infer. If any item blocks a decision, output only a questions block of at most {{max_questions}} numbered questions and stop. Otherwise continue and record non-blocking unknowns as OPEN-Qn.</step>
+    <step n="2">Write the RFC: context, goals, non-goals, at least two real options (one of them a module inside the existing system), the decision with its trade-offs, failure modes and their blast radius, rollout and rollback, and the run cost.</step>
+    <step n="3">Write SPEC.md: invariants with IDs, the aggregate's state machine (every transition with its command or event), the API contract, the domain events, the error model (RFC 9457 problem details), idempotency rules, and the SLOs with their SLIs.</step>
+    <step n="4">Write the first Flyway migration and the OpenAPI 3.1 document so they agree with SPEC.md field for field.</step>
+    <step n="5">Write the new repository's CLAUDE.md: build and test commands, architecture rules, and how to verify a change. Keep it short enough to load on every turn.</step>
+    <step n="6">Run the checks in the verification section and report each result.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-SPEC-1">Every state transition names its trigger, its guard and the event it emits; no transition is implied.</inv>
+    <inv id="INV-SPEC-2">Every mutating operation states its idempotency rule (key, scope, retention) and its concurrency control (version column or lock).</inv>
+    <inv id="INV-SPEC-3">Every table has a primary key; every foreign key has an index in the same migration; every money column is numeric with a currency column.</inv>
+    <inv id="INV-SPEC-4">Every NFR maps to a measurable SLI and to the test or dashboard that measures it.</inv>
+    <inv id="INV-SPEC-5">Nothing is invented: each assumption is labelled ASSUMPTION, each unknown OPEN-Qn, and every number traces to the context or to a stated calculation.</inv>
+    <inv id="INV-SPEC-6">CLAUDE.md is under 150 lines and contains only what applies to every task in the repository.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No application code beyond the migration and the OpenAPI document.</no>
+    <no>No technology outside the platform constraints unless it is listed as a proposed addition with its cost and an alternative.</no>
+    <no>No microservice by default: the RFC must say why a module in the existing system is not enough, or choose it.</no>
+    <no>No generic boilerplate sections; a section with nothing specific to say is omitted.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="docs/rfc/0001-{{service_name}}.md">RFC, sections as in step 2</file>
+    <file path="SPEC.md">specification, sections as in step 3, invariants as INV-n</file>
+    <file path="src/main/resources/db/migration/V1__init.sql">schema</file>
+    <file path="api/openapi.yaml">OpenAPI 3.1 contract</file>
+    <file path="CLAUDE.md">repository memory for Claude Code</file>
+    <report>A table: each check from the verification section, its command or method, and its result. Then the OPEN-Q list.</report>
+  </output_contract>
+  <verification>
+    <cmd>npx @redocly/cli@2.72.1 lint api/openapi.yaml</cmd>
+    <cmd>wc -l CLAUDE.md</cmd>
+    <check ref="INV-SPEC-1">For each state in the state machine, list its outgoing transitions; a state with none must be marked terminal.</check>
+    <check ref="INV-SPEC-2">For each POST/PUT/PATCH/DELETE in openapi.yaml, point to its idempotency and concurrency rule in SPEC.md.</check>
+    <check ref="INV-SPEC-3">For each FOREIGN KEY in V1__init.sql, name the CREATE INDEX that covers it.</check>
+    <check ref="INV-SPEC-4">Print the NFR-to-SLI table; an NFR without an SLI fails the check.</check>
+    <check ref="INV-SPEC-5">grep the RFC and SPEC.md for numbers; each must cite the context or a calculation.</check>
+    <check ref="INV-SPEC-6">The wc -l result is under 150.</check>
+  </verification>
+  <task>Produce the Phase 0 design for {{service_name}} following the instructions, honouring every invariant and anti-goal, in the files of the output contract.</task>
+</prompt>

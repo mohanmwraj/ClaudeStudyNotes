@@ -1,0 +1,61 @@
+<!-- t3_kafka_outbox_idempotent.xml - transactional outbox, relay, idempotent consumer, DLT and saga steps on Spring Kafka 4.1 / Kafka 4.2 -->
+<prompt id="T3" title="High-throughput Kafka with transactional outbox and idempotent consumer">
+  <variables>
+    <var name="aggregate" kind="param" example="Order">aggregate whose state changes publish events</var>
+    <var name="topic" kind="param" example="orders.order-events.v1">topic, following the team's naming rule</var>
+    <var name="consumer_group" kind="param" example="inventory-service">group id of the consuming service</var>
+    <var name="relay" kind="param" example="polling">polling relay, or Debezium outbox event router (CDC)</var>
+    <var name="event_catalog" kind="data" example="OrderPlaced{orderId, lines[], amount, currency}; OrderCancelled{orderId, reason}">events, fields and versions from SPEC.md</var>
+    <var name="throughput" kind="data" example="peak 3,000 events/s, p99 end-to-end under 2 s, 12 partitions">load and latency targets</var>
+    <var name="current_code" kind="data" example="OrderService.place(): orderRepo.save(o); kafkaTemplate.send(topic, o.id(), event);">the code being replaced, verbatim</var>
+  </variables>
+  <context>
+    <events>{{event_catalog}}</events>
+    <load>{{throughput}}</load>
+    <current_code>{{current_code}}</current_code>
+    <platform>Spring Boot 4.1.2 managed versions: Spring Kafka 4.1.2, kafka-clients 4.2.2, PostgreSQL JDBC 42.7.14, Testcontainers 2.0.5. Producer idempotence and acks=all are kafka-clients defaults since 3.0; state them explicitly anyway.</platform>
+  </context>
+  <instructions>
+    <step n="1">Name the failure in the current code: which crash points lose an event, which publish an event for a rolled-back change, and which reorder events.</step>
+    <step n="2">Design the outbox table and its partial index for unpublished rows, and the writer that inserts one outbox row per event inside the same transaction as the {{aggregate}} change. Generate the event id at write time.</step>
+    <step n="3">Implement the {{relay}} relay. For polling: claim a batch with SELECT ... FOR UPDATE SKIP LOCKED ordered by id, publish with key = aggregate id, wait for the broker acknowledgement, then mark the rows published in the same transaction; size the batch and poll interval from the load targets.</step>
+    <step n="4">Implement the consumer in {{consumer_group}}: in one local transaction, insert (consumer_group, event_id) into processed_events and apply the effect; a duplicate key means skip. Acknowledge the offset only after that transaction commits.</step>
+    <step n="5">Add error handling: DefaultErrorHandler with bounded exponential back-off, non-retryable exception classification, and DeadLetterPublishingRecoverer to {{topic}}.DLT with the original headers.</step>
+    <step n="6">If the use case spans services, write the saga as explicit steps with a compensation for each, driven by events, each step idempotent by event id.</step>
+    <step n="7">Write the Testcontainers tests listed in the verification section, run them, and report.</step>
+  </instructions>
+  <invariants>
+    <inv id="INV-OBX-1">No broker send inside a database transaction that also changes state; the only path to Kafka is the outbox.</inv>
+    <inv id="INV-OBX-2">The event id is created when the outbox row is written and never changes across relay retries.</inv>
+    <inv id="INV-OBX-3">The consumer's effect and its processed_events insert commit in one local transaction; the offset is acknowledged after it.</inv>
+    <inv id="INV-OBX-4">The record key is the aggregate id, so all events of one aggregate share a partition and keep their order.</inv>
+    <inv id="INV-OBX-5">Two relay instances running together publish each row at most once per claim (SKIP LOCKED), and a crashed relay's rows are re-claimed.</inv>
+    <inv id="INV-OBX-6">processed_events retention is longer than the longest possible redelivery window (relay outage plus consumer lag plus DLT replay), stated in hours.</inv>
+    <inv id="INV-OBX-7">The traceparent from the originating request travels in the outbox headers to the Kafka record headers.</inv>
+  </invariants>
+  <anti_goals>
+    <no>No exactly-once claims: the delivery is at-least-once and the effect is idempotent; say so in the design.</no>
+    <no>No Kafka transactions as a substitute for the outbox; they do not cover the database write.</no>
+    <no>No unbounded retries and no retrying of deserialization or validation errors.</no>
+    <no>No payload schema change without a new event version.</no>
+  </anti_goals>
+  <output_contract>
+    <file path="src/main/resources/db/migration/">outbox and processed_events migration with indexes</file>
+    <file path="src/main/java/.../adapter/out/messaging/">OutboxWriter, OutboxRelay, KafkaConfig</file>
+    <file path="src/main/java/.../adapter/in/messaging/">idempotent listener, error handler configuration</file>
+    <file path="src/test/java/.../">OutboxIT, IdempotentConsumerIT, RelayConcurrencyIT, OrderingIT</file>
+    <file path="docs/adr/">ADR: outbox and at-least-once delivery, with the retention arithmetic</file>
+    <report>For each invariant, the test that proves it and its result; the measured relay throughput from the test.</report>
+  </output_contract>
+  <verification>
+    <cmd>./mvnw -q verify -Dit.test='Outbox*IT,Idempotent*IT,Relay*IT,Ordering*IT'</cmd>
+    <check ref="INV-OBX-1">OutboxIT: roll back the use case transaction; assert no outbox row and no Kafka record.</check>
+    <check ref="INV-OBX-2">OutboxIT: kill the relay after publish and before mark (test hook); after restart, the duplicate record carries the same event id.</check>
+    <check ref="INV-OBX-3">IdempotentConsumerIT: deliver each event twice and after a consumer crash before ack; the effect is applied once.</check>
+    <check ref="INV-OBX-4">OrderingIT: 1,000 events for 10 aggregates arrive in per-aggregate order.</check>
+    <check ref="INV-OBX-5">RelayConcurrencyIT: two relays on one table; every row published, none twice within one claim cycle.</check>
+    <check ref="INV-OBX-6">The ADR states the window components and the retention, and the cleanup job uses that value.</check>
+    <check ref="INV-OBX-7">OutboxIT: the consumed record's traceparent header equals the request's.</check>
+  </verification>
+  <task>Replace the dual write in the current code with the transactional outbox, relay and idempotent consumer for {{aggregate}} events on {{topic}}, proving every invariant with the tests above.</task>
+</prompt>
