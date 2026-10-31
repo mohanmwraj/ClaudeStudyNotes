@@ -510,7 +510,7 @@ One or two changes, each with *why it wasn't knowable or wasn't affordable then*
 1. **"I would have made `on_missing` policy mandatory at namespace creation from day one."** It existed only after INC-B7. The cost of asking every namespace owner one question at creation is trivial, while the cost of discovering the policy gap in production was a Sev-2.
 2. **"If mesh coverage had been above 95%, I'd have pushed harder on the xDS option."** In month 0 it was 82%; it reached 97% by month 14. The relay tier is now a cost we might not have needed. The decision was right on the information available, and I would revisit it now.
 
-File 02.3 (`03-answering-what-would-you-redesign-today-with-hindsight.md` in Folder 02) treats hindsight in depth.
+File [02.3](../02-The-3-Viable-Options-Tradeoff-Defense-Framework/03-answering-what-would-you-redesign-today-with-hindsight.md) treats hindsight in depth.
 
 ### 7.10 52:00–60:00 · Their questions, then yours
 
