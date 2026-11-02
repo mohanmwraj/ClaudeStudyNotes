@@ -14,7 +14,7 @@ Everything else is labelled as opinion or heuristic.
 
 ## 1. The rating ladder
 
-| Title | Rating | Colour | Kit band tag |
+| Title | Rating | Colour |  Kit band tag |
 |---|---|---|---|
 | Newbie | ≤ 1199 | grey | 🟢 |
 | Pupil | 1200–1399 | green | 🟢 |

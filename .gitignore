@@ -36,3 +36,6 @@ kubeconfig
 test.yaml
 *.test.yaml
 Prompt.txt
+
+# Local-only personal notes (never commit)
+Complex-Trauma-Nervous-System-Recovery-Reference/
