@@ -1,0 +1,3643 @@
+{
+ "source": "META-INF/spring-configuration-metadata.json of Spring Boot 4.1.2 module jars (Maven Central, SHA-1 verified)",
+ "filter": [
+  "management.",
+  "spring.application.",
+  "spring.threads."
+ ],
+ "jars": [
+  {
+   "jar": "spring-boot-4.1.2.jar",
+   "sha1": "747ac0cfd18ae2741029d5dc24ccefedbf4b38a7",
+   "properties": 4
+  },
+  {
+   "jar": "spring-boot-actuator-4.1.2.jar",
+   "sha1": "6e4e90cc4d46d66223e81ee3963007242eba7f24",
+   "properties": 33
+  },
+  {
+   "jar": "spring-boot-actuator-autoconfigure-4.1.2.jar",
+   "sha1": "4339a85544b156e1804a05f9745b4adcdbf5bf4f",
+   "properties": 97
+  },
+  {
+   "jar": "spring-boot-autoconfigure-4.1.2.jar",
+   "sha1": "1f3d78454767e8f2c3056617c10568642c074e45",
+   "properties": 3
+  },
+  {
+   "jar": "spring-boot-health-4.1.2.jar",
+   "sha1": "ccb01535ef99fe300dcbe1bbd3b38be86f2affdc",
+   "properties": 23
+  },
+  {
+   "jar": "spring-boot-jdbc-4.1.2.jar",
+   "sha1": "1b1dc417e00654f265e5a766baadedfd09710cfa",
+   "properties": 2
+  },
+  {
+   "jar": "spring-boot-micrometer-metrics-4.1.2.jar",
+   "sha1": "8df660046ad2da22521360aaf9658800b4b5d742",
+   "properties": 406
+  },
+  {
+   "jar": "spring-boot-micrometer-observation-4.1.2.jar",
+   "sha1": "b3d05286b42aa6882e847ba4c0629b7a05e7bd20",
+   "properties": 5
+  },
+  {
+   "jar": "spring-boot-micrometer-tracing-4.1.2.jar",
+   "sha1": "f2a31c0685520b14ca6f2146279e558df9041f65",
+   "properties": 13
+  },
+  {
+   "jar": "spring-boot-micrometer-tracing-opentelemetry-4.1.2.jar",
+   "sha1": "501e715aed2931e635e77a37bb637a23df6de905",
+   "properties": 32
+  },
+  {
+   "jar": "spring-boot-opentelemetry-4.1.2.jar",
+   "sha1": "e5eed553848d4470a2cab09b09338aa6944a5a83",
+   "properties": 24
+  },
+  {
+   "jar": "spring-boot-tomcat-4.1.2.jar",
+   "sha1": "3a88618489924bdd130e39025ce2d3f2ddcd4624",
+   "properties": 1
+  }
+ ],
+ "properties": {
+  "management.appoptics.metrics.export.api-token": {
+   "type": "java.lang.String"
+  },
+  "management.appoptics.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 500
+  },
+  "management.appoptics.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "5s"
+  },
+  "management.appoptics.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.appoptics.metrics.export.floor-times": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.appoptics.metrics.export.host-tag": {
+   "type": "java.lang.String",
+   "defaultValue": "instance"
+  },
+  "management.appoptics.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.appoptics.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.appoptics.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "https://api.appoptics.com/v1/measurements"
+  },
+  "management.atlas.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.atlas.metrics.export.config-refresh-frequency": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.atlas.metrics.export.config-time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "150s"
+  },
+  "management.atlas.metrics.export.config-uri": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:7101/lwc/api/v1/expressions/local-dev"
+  },
+  "management.atlas.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.atlas.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.atlas.metrics.export.eval-uri": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:7101/lwc/api/v1/evaluate"
+  },
+  "management.atlas.metrics.export.lwc-enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.atlas.metrics.export.lwc-ignore-publish-step": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.atlas.metrics.export.lwc-step": {
+   "type": "java.time.Duration",
+   "defaultValue": "5s"
+  },
+  "management.atlas.metrics.export.meter-time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "15m"
+  },
+  "management.atlas.metrics.export.num-threads": {
+   "type": "java.lang.Integer",
+   "defaultValue": 4
+  },
+  "management.atlas.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.atlas.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.atlas.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:7101/api/v1/publish"
+  },
+  "management.auditevents.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.cloudfoundry.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.cloudfoundry.skip-ssl-validation": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.datadog.metrics.export.api-key": {
+   "type": "java.lang.String"
+  },
+  "management.datadog.metrics.export.application-key": {
+   "type": "java.lang.String"
+  },
+  "management.datadog.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.datadog.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.datadog.metrics.export.descriptions": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.datadog.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.datadog.metrics.export.host-tag": {
+   "type": "java.lang.String",
+   "defaultValue": "instance"
+  },
+  "management.datadog.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.datadog.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.datadog.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "https://api.datadoghq.com"
+  },
+  "management.defaults.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.dynatrace.metrics.export.api-token": {
+   "type": "java.lang.String"
+  },
+  "management.dynatrace.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.dynatrace.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.dynatrace.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.dynatrace.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.dynatrace.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.dynatrace.metrics.export.uri": {
+   "type": "java.lang.String"
+  },
+  "management.dynatrace.metrics.export.v1.device-id": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "reason": "Dynatrace V1 API is deprecated, use the V2 API instead.",
+    "since": "4.1.0"
+   }
+  },
+  "management.dynatrace.metrics.export.v1.group": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "reason": "Dynatrace V1 API is deprecated, use the V2 API instead.",
+    "since": "4.1.0"
+   }
+  },
+  "management.dynatrace.metrics.export.v1.technology-type": {
+   "type": "java.lang.String",
+   "defaultValue": "java",
+   "deprecation": {
+    "reason": "Dynatrace V1 API is deprecated, use the V2 API instead.",
+    "since": "4.1.0"
+   }
+  },
+  "management.dynatrace.metrics.export.v2.default-dimensions": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.dynatrace.metrics.export.v2.enrich-with-dynatrace-metadata": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.dynatrace.metrics.export.v2.export-meter-metadata": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.dynatrace.metrics.export.v2.metric-key-prefix": {
+   "type": "java.lang.String"
+  },
+  "management.dynatrace.metrics.export.v2.use-dynatrace-summary-instruments": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.elastic.metrics.export.api-key-credentials": {
+   "type": "java.lang.String"
+  },
+  "management.elastic.metrics.export.auto-create-index": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.elastic.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.elastic.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.elastic.metrics.export.enable-source": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.elastic.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.elastic.metrics.export.host": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:9200"
+  },
+  "management.elastic.metrics.export.index": {
+   "type": "java.lang.String",
+   "defaultValue": "micrometer-metrics"
+  },
+  "management.elastic.metrics.export.index-date-format": {
+   "type": "java.lang.String",
+   "defaultValue": "yyyy-MM"
+  },
+  "management.elastic.metrics.export.index-date-separator": {
+   "type": "java.lang.String",
+   "defaultValue": "-"
+  },
+  "management.elastic.metrics.export.password": {
+   "type": "java.lang.String"
+  },
+  "management.elastic.metrics.export.pipeline": {
+   "type": "java.lang.String"
+  },
+  "management.elastic.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.elastic.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.elastic.metrics.export.timestamp-field-name": {
+   "type": "java.lang.String",
+   "defaultValue": "@timestamp"
+  },
+  "management.elastic.metrics.export.user-name": {
+   "type": "java.lang.String"
+  },
+  "management.endpoint.auditevents.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.auditevents.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.beans.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.beans.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.conditions.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.conditions.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.configprops.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.configprops.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.configprops.roles": {
+   "type": "java.util.Set<java.lang.String>"
+  },
+  "management.endpoint.configprops.show-values": {
+   "type": "org.springframework.boot.actuate.endpoint.Show",
+   "defaultValue": "never"
+  },
+  "management.endpoint.env.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.env.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.env.roles": {
+   "type": "java.util.Set<java.lang.String>"
+  },
+  "management.endpoint.env.show-values": {
+   "type": "org.springframework.boot.actuate.endpoint.Show",
+   "defaultValue": "never"
+  },
+  "management.endpoint.health.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.health.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.health.group": {
+   "type": "java.util.Map<java.lang.String,org.springframework.boot.health.autoconfigure.actuate.endpoint.HealthEndpointProperties$Group>"
+  },
+  "management.endpoint.health.logging.slow-indicator-threshold": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.endpoint.health.probes.add-additional-paths": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.endpoint.health.probes.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.endpoint.health.roles": {
+   "type": "java.util.Set<java.lang.String>"
+  },
+  "management.endpoint.health.show-components": {
+   "type": "org.springframework.boot.actuate.endpoint.Show"
+  },
+  "management.endpoint.health.show-details": {
+   "type": "org.springframework.boot.actuate.endpoint.Show",
+   "defaultValue": "never"
+  },
+  "management.endpoint.health.status.http-mapping": {
+   "type": "java.util.Map<java.lang.String,java.lang.Integer>"
+  },
+  "management.endpoint.health.status.order": {
+   "type": "java.util.List<java.lang.String>",
+   "defaultValue": [
+    "DOWN",
+    "OUT_OF_SERVICE",
+    "UP",
+    "UNKNOWN"
+   ]
+  },
+  "management.endpoint.health.validate-group-membership": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.endpoint.heapdump.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "none"
+  },
+  "management.endpoint.heapdump.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.httpexchanges.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.httpexchanges.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.info.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.info.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.logfile.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.logfile.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.logfile.external-file": {
+   "type": "java.io.File"
+  },
+  "management.endpoint.loggers.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.loggers.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.mappings.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.mappings.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.metrics.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.metrics.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.prometheus.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.sbom.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.sbom.additional": {
+   "type": "java.util.Map<java.lang.String,org.springframework.boot.actuate.sbom.SbomProperties$Sbom>"
+  },
+  "management.endpoint.sbom.application.location": {
+   "type": "java.lang.String"
+  },
+  "management.endpoint.sbom.application.media-type": {
+   "type": "org.springframework.util.MimeType"
+  },
+  "management.endpoint.sbom.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.scheduledtasks.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.scheduledtasks.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.shutdown.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "none"
+  },
+  "management.endpoint.startup.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.startup.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoint.threaddump.access": {
+   "type": "org.springframework.boot.actuate.endpoint.Access",
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoint.threaddump.cache.time-to-live": {
+   "type": "java.time.Duration",
+   "defaultValue": "0ms"
+  },
+  "management.endpoints.access.default": {
+   "type": "org.springframework.boot.actuate.endpoint.Access"
+  },
+  "management.endpoints.access.max-permitted": {
+   "defaultValue": "unrestricted"
+  },
+  "management.endpoints.enabled-by-default": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "replacement": "management.endpoints.access.default",
+    "since": "3.4.0"
+   }
+  },
+  "management.endpoints.jackson.isolated-json-mapper": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.endpoints.jackson2.isolated-object-mapper": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "reason": "Jackson 3 is preferred.",
+    "since": "4.0.0"
+   }
+  },
+  "management.endpoints.jmx.domain": {
+   "type": "java.lang.String",
+   "defaultValue": "org.springframework.boot"
+  },
+  "management.endpoints.jmx.exposure.exclude": {
+   "type": "java.util.Set<java.lang.String>"
+  },
+  "management.endpoints.jmx.exposure.include": {
+   "type": "java.util.Set<java.lang.String>",
+   "defaultValue": "health"
+  },
+  "management.endpoints.jmx.static-names": {
+   "type": "java.util.Properties"
+  },
+  "management.endpoints.jmx.unique-names": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "spring.jmx.unique-names",
+    "since": "2.1.0"
+   }
+  },
+  "management.endpoints.migrate-legacy-ids": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.endpoints.web.base-path": {
+   "type": "java.lang.String",
+   "defaultValue": "/actuator"
+  },
+  "management.endpoints.web.cors.allow-credentials": {
+   "type": "java.lang.Boolean"
+  },
+  "management.endpoints.web.cors.allowed-headers": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.endpoints.web.cors.allowed-methods": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.endpoints.web.cors.allowed-origin-patterns": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.endpoints.web.cors.allowed-origins": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.endpoints.web.cors.exposed-headers": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.endpoints.web.cors.max-age": {
+   "type": "java.time.Duration",
+   "defaultValue": "1800s"
+  },
+  "management.endpoints.web.discovery.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.endpoints.web.exposure.exclude": {
+   "type": "java.util.Set<java.lang.String>"
+  },
+  "management.endpoints.web.exposure.include": {
+   "type": "java.util.Set<java.lang.String>",
+   "defaultValue": [
+    "health"
+   ]
+  },
+  "management.endpoints.web.path-mapping": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.ganglia.metrics.export.addressing-mode": {
+   "type": "info.ganglia.gmetric4j.gmetric.GMetric$UDPAddressingMode",
+   "defaultValue": "multicast"
+  },
+  "management.ganglia.metrics.export.duration-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "defaultValue": "milliseconds"
+  },
+  "management.ganglia.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.ganglia.metrics.export.host": {
+   "type": "java.lang.String",
+   "defaultValue": "localhost"
+  },
+  "management.ganglia.metrics.export.port": {
+   "type": "java.lang.Integer",
+   "defaultValue": 8649
+  },
+  "management.ganglia.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.ganglia.metrics.export.time-to-live": {
+   "type": "java.lang.Integer",
+   "defaultValue": 1
+  },
+  "management.graphite.metrics.export.duration-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "defaultValue": "milliseconds"
+  },
+  "management.graphite.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.graphite.metrics.export.graphite-tags-enabled": {
+   "type": "java.lang.Boolean"
+  },
+  "management.graphite.metrics.export.host": {
+   "type": "java.lang.String",
+   "defaultValue": "localhost"
+  },
+  "management.graphite.metrics.export.port": {
+   "type": "java.lang.Integer",
+   "defaultValue": 2004
+  },
+  "management.graphite.metrics.export.protocol": {
+   "type": "io.micrometer.graphite.GraphiteProtocol",
+   "defaultValue": "pickled"
+  },
+  "management.graphite.metrics.export.rate-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "defaultValue": "seconds"
+  },
+  "management.graphite.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.graphite.metrics.export.tags-as-prefix": {
+   "type": "java.lang.String[]",
+   "defaultValue": []
+  },
+  "management.health.db.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.health.db.ignore-routing-data-sources": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.health.defaults.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.health.diskspace.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.health.diskspace.path": {
+   "type": "java.io.File"
+  },
+  "management.health.diskspace.threshold": {
+   "type": "org.springframework.util.unit.DataSize",
+   "defaultValue": "10MB"
+  },
+  "management.health.influxdb.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "InfluxDB support has been removed.",
+    "since": "3.2.0"
+   }
+  },
+  "management.health.livenessstate.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.health.ping.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.health.probes.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false,
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.endpoint.health.probes.enabled",
+    "since": "2.3.2"
+   }
+  },
+  "management.health.readinessstate.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.health.ssl.certificate-validity-warning-threshold": {
+   "type": "java.time.Duration",
+   "defaultValue": "14d"
+  },
+  "management.health.ssl.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.httpexchanges.recording.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.httpexchanges.recording.include": {
+   "type": "java.util.Set<org.springframework.boot.actuate.web.exchanges.Include>",
+   "defaultValue": [
+    "time-taken",
+    "request-headers",
+    "response-headers"
+   ]
+  },
+  "management.humio.metrics.export.api-token": {
+   "type": "java.lang.String"
+  },
+  "management.humio.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.humio.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "5s"
+  },
+  "management.humio.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.humio.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.humio.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.humio.metrics.export.tags": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.humio.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "https://cloud.humio.com"
+  },
+  "management.influx.metrics.export.api-version": {
+   "type": "io.micrometer.influx.InfluxApiVersion"
+  },
+  "management.influx.metrics.export.auto-create-db": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.influx.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.influx.metrics.export.bucket": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.compressed": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.influx.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.influx.metrics.export.consistency": {
+   "type": "io.micrometer.influx.InfluxConsistency",
+   "defaultValue": "one"
+  },
+  "management.influx.metrics.export.db": {
+   "type": "java.lang.String",
+   "defaultValue": "mydb"
+  },
+  "management.influx.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.influx.metrics.export.org": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.password": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.influx.metrics.export.retention-duration": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.retention-policy": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.retention-replication-factor": {
+   "type": "java.lang.Integer"
+  },
+  "management.influx.metrics.export.retention-shard-duration": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.influx.metrics.export.token": {
+   "type": "java.lang.String"
+  },
+  "management.influx.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:8086"
+  },
+  "management.influx.metrics.export.user-name": {
+   "type": "java.lang.String"
+  },
+  "management.info.build.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.info.defaults.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.info.env.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.info.git.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.info.git.mode": {
+   "type": "org.springframework.boot.actuate.info.InfoPropertiesInfoContributor$Mode",
+   "defaultValue": "simple"
+  },
+  "management.info.java.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.info.os.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.info.process.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.info.ssl.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.jmx.metrics.export.domain": {
+   "type": "java.lang.String",
+   "defaultValue": "metrics"
+  },
+  "management.jmx.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.jmx.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.kairos.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.kairos.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.kairos.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.kairos.metrics.export.password": {
+   "type": "java.lang.String"
+  },
+  "management.kairos.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.kairos.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.kairos.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "http://localhost:8080/api/v1/datapoints"
+  },
+  "management.kairos.metrics.export.user-name": {
+   "type": "java.lang.String"
+  },
+  "management.logging.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.logging.export.otlp.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.metrics.binders.files.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Instead, filter 'process.files' metrics.",
+    "since": "2.1.0"
+   }
+  },
+  "management.metrics.binders.jvm.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Instead, disable JvmMetricsAutoConfiguration or filter 'jvm' metrics.",
+    "since": "2.1.0"
+   }
+  },
+  "management.metrics.binders.logback.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Instead, disable LogbackMetricsAutoConfiguration or filter 'logback' metrics.",
+    "since": "2.1.0"
+   }
+  },
+  "management.metrics.binders.processor.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Instead, filter 'system.cpu' and 'process.cpu' metrics.",
+    "since": "2.1.0"
+   }
+  },
+  "management.metrics.binders.uptime.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Instead, filter 'process.uptime' and 'process.start.time' metrics.",
+    "since": "2.1.0"
+   }
+  },
+  "management.metrics.distribution.buffer-length": {
+   "type": "java.util.Map<java.lang.String,java.lang.Integer>"
+  },
+  "management.metrics.distribution.expiry": {
+   "type": "java.util.Map<java.lang.String,java.time.Duration>"
+  },
+  "management.metrics.distribution.maximum-expected-value": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.metrics.distribution.minimum-expected-value": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.metrics.distribution.percentiles": {
+   "type": "java.util.Map<java.lang.String,java.lang.Double[]>"
+  },
+  "management.metrics.distribution.percentiles-histogram": {
+   "type": "java.util.Map<java.lang.String,java.lang.Boolean>"
+  },
+  "management.metrics.distribution.slo": {
+   "type": "java.util.Map<java.lang.String,org.springframework.boot.micrometer.metrics.autoconfigure.ServiceLevelObjectiveBoundary[]>"
+  },
+  "management.metrics.enable": {
+   "type": "java.util.Map<java.lang.String,java.lang.Boolean>"
+  },
+  "management.metrics.export.appoptics.api-token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.api-token",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.floor-times": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.floor-times",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.host-tag": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.host-tag",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.appoptics.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.appoptics.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.config-refresh-frequency": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.config-refresh-frequency",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.config-time-to-live": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.config-time-to-live",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.config-uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.config-uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.eval-uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.eval-uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.lwc-enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.lwc-enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.meter-time-to-live": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.meter-time-to-live",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.atlas.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.atlas.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.api-key": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.api-key",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.application-key": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.application-key",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.descriptions": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.descriptions",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.host-tag": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.host-tag",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.datadog.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.datadog.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.defaults.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.defaults.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.api-token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.api-token",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.device-id": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.device-id",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.group": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.group",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.technology-type": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.technology-type",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v1.device-id": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.device-id",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v1.group": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.group",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v1.technology-type": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v1.technology-type",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v2.default-dimensions": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v2.default-dimensions",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v2.enrich-with-dynatrace-metadata": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v2.enrich-with-dynatrace-metadata",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.dynatrace.v2.metric-key-prefix": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.dynatrace.metrics.export.v2.metric-key-prefix",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.api-key-credentials": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.api-key-credentials",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.auto-create-index": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.auto-create-index",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.host": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.host",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.index": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.index",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.index-date-format": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.index-date-format",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.index-date-separator": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.index-date-separator",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.password": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.password",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.pipeline": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.pipeline",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.timestamp-field-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.timestamp-field-name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.elastic.user-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.elastic.metrics.export.user-name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.addressing-mode": {
+   "type": "info.ganglia.gmetric4j.gmetric.GMetric$UDPAddressingMode",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.addressing-mode",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.duration-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.duration-units",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.host": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.host",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.port": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.port",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.rate-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.ganglia.time-to-live": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.ganglia.metrics.export.time-to-live",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.duration-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.duration-units",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.graphite-tags-enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.graphite-tags-enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.host": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.host",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.port": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.port",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.protocol": {
+   "type": "io.micrometer.graphite.GraphiteProtocol",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.protocol",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.rate-units": {
+   "type": "java.util.concurrent.TimeUnit",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.rate-units",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.graphite.tags-as-prefix": {
+   "type": "java.lang.String[]",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.graphite.metrics.export.tags-as-prefix",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.api-token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.api-token",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.repository": {
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.tags": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.tags",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.humio.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.humio.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.api-version": {
+   "type": "io.micrometer.influx.InfluxApiVersion",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.api-version",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.auto-create-db": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.auto-create-db",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.bucket": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.bucket",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.compressed": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.compressed",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.consistency": {
+   "type": "io.micrometer.influx.InfluxConsistency",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.consistency",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.db": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.db",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.org": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.org",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.password": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.password",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.retention-duration": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.retention-duration",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.retention-policy": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.retention-policy",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.retention-replication-factor": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.retention-replication-factor",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.retention-shard-duration": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.retention-shard-duration",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.token",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.influx.user-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.influx.metrics.export.user-name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.jmx.domain": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.jmx.metrics.export.domain",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.jmx.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.jmx.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.jmx.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.jmx.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.password": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.password",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.kairos.user-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.kairos.metrics.export.user-name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.account-id": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.account-id",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.api-key": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.api-key",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.client-provider-type": {
+   "type": "io.micrometer.newrelic.ClientProviderType",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.client-provider-type",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.event-type": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.event-type",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.meter-name-event-type-enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.meter-name-event-type-enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.newrelic.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.newrelic.metrics.export.uri",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.descriptions": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.descriptions",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.histogram-flavor": {
+   "type": "io.micrometer.prometheus.HistogramFlavor",
+   "deprecation": {
+    "level": "error",
+    "reason": "No longer supported by the Prometheus client.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.base-url": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.address",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.grouping-key": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.grouping-key",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.job": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.job",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.password": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.password",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.push-rate": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.push-rate",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.shutdown-operation": {
+   "type": "org.springframework.boot.micrometer.metrics.export.prometheus.PrometheusPushGatewayManager$ShutdownOperation",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.shutdown-operation",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.pushgateway.username": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.username",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.prometheus.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.access-token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.published-histogram-type": {
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.source": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.signalfx.uri": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "SignalFX is no longer supported.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.simple.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.simple.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.simple.mode": {
+   "type": "io.micrometer.core.instrument.simple.CountingMode",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.simple.metrics.export.mode",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.simple.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.simple.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.batch-size",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.connect-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.num-threads": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.project-id": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.project-id",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.read-timeout",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.resource-labels": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.resource-labels",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.resource-type": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.resource-type",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.step",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.stackdriver.use-semantic-metric-types": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.stackdriver.metrics.export.use-semantic-metric-types",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.flavor": {
+   "type": "io.micrometer.statsd.StatsdFlavor",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.flavor",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.host": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.host",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.max-packet-length": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.max-packet-length",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.polling-frequency": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.polling-frequency",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.port": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.port",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.protocol": {
+   "type": "io.micrometer.statsd.StatsdProtocol",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.protocol",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.publish-unchanged-meters": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.statsd.metrics.export.publish-unchanged-meters",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.export.statsd.queue-size": {
+   "deprecation": {
+    "level": "error",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.observations.ignored-meters": {
+   "type": "java.util.Set<io.micrometer.core.instrument.observation.DefaultMeterObservationHandler$IgnoredMeters>"
+  },
+  "management.metrics.system.diskspace.paths": {
+   "type": "java.util.List<java.io.File>",
+   "defaultValue": [
+    "."
+   ]
+  },
+  "management.metrics.tags": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.metrics.use-global-registry": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.metrics.web.client.max-uri-tags": {
+   "type": "java.lang.Integer",
+   "defaultValue": 100
+  },
+  "management.metrics.web.client.request.autotime.enabled": {
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Requests are timed automatically.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.client.request.autotime.percentiles": {
+   "deprecation": {
+    "level": "error",
+    "reason": "Should be configured globally via management.metrics.distribution.percentiles.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.client.request.autotime.percentiles-histogram": {
+   "defaultValue": false,
+   "deprecation": {
+    "level": "error",
+    "reason": "Should be configured globally via management.metrics.distribution.percentiles-histogram.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.client.request.metric-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.observations.http.client.requests.name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.client.requests-metric-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.observations.http.client.requests.name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.auto-time-requests": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.metrics.web.server.request.autotime.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.max-uri-tags": {
+   "type": "java.lang.Integer",
+   "defaultValue": 100
+  },
+  "management.metrics.web.server.request.autotime.enabled": {
+   "defaultValue": true,
+   "deprecation": {
+    "level": "error",
+    "reason": "Requests are timed automatically.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.request.autotime.percentiles": {
+   "deprecation": {
+    "level": "error",
+    "reason": "Should be configured globally via management.metrics.distribution.percentiles.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.request.autotime.percentiles-histogram": {
+   "defaultValue": false,
+   "deprecation": {
+    "level": "error",
+    "reason": "Should be configured globally via management.metrics.distribution.percentiles-histogram.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.request.ignore-trailing-slash": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Not needed anymore, direct instrumentation in Spring MVC.",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.request.metric-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.observations.http.server.requests.name",
+    "since": "3.0.0"
+   }
+  },
+  "management.metrics.web.server.requests-metric-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.observations.http.server.requests.name",
+    "since": "3.0.0"
+   }
+  },
+  "management.newrelic.metrics.export.account-id": {
+   "type": "java.lang.String"
+  },
+  "management.newrelic.metrics.export.api-key": {
+   "type": "java.lang.String"
+  },
+  "management.newrelic.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.newrelic.metrics.export.client-provider-type": {
+   "type": "io.micrometer.newrelic.ClientProviderType",
+   "defaultValue": "insights-api"
+  },
+  "management.newrelic.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.newrelic.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.newrelic.metrics.export.event-type": {
+   "type": "java.lang.String",
+   "defaultValue": "SpringBootSample"
+  },
+  "management.newrelic.metrics.export.meter-name-event-type-enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.newrelic.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.newrelic.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.newrelic.metrics.export.uri": {
+   "type": "java.lang.String",
+   "defaultValue": "https://insights-collector.newrelic.com"
+  },
+  "management.observations.annotations.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.observations.enable": {
+   "type": "java.util.Map<java.lang.String,java.lang.Boolean>"
+  },
+  "management.observations.http.client.requests.name": {
+   "type": "java.lang.String",
+   "defaultValue": "http.client.requests"
+  },
+  "management.observations.http.server.requests.name": {
+   "type": "java.lang.String",
+   "defaultValue": "http.server.requests"
+  },
+  "management.observations.key-values": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.opentelemetry.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.opentelemetry.logging.export.max-batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 512
+  },
+  "management.opentelemetry.logging.export.max-queue-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 2048
+  },
+  "management.opentelemetry.logging.export.otlp.compression": {
+   "type": "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.OtlpLoggingProperties$Compression",
+   "defaultValue": "none"
+  },
+  "management.opentelemetry.logging.export.otlp.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.opentelemetry.logging.export.otlp.endpoint": {
+   "type": "java.lang.String"
+  },
+  "management.opentelemetry.logging.export.otlp.headers": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.opentelemetry.logging.export.otlp.ssl.bundle": {
+   "type": "java.lang.String"
+  },
+  "management.opentelemetry.logging.export.otlp.timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.opentelemetry.logging.export.otlp.transport": {
+   "type": "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.Transport",
+   "defaultValue": "http"
+  },
+  "management.opentelemetry.logging.export.schedule-delay": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.opentelemetry.logging.export.timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "30s"
+  },
+  "management.opentelemetry.logging.limits.max-attribute-value-length": {
+   "type": "java.lang.Integer"
+  },
+  "management.opentelemetry.logging.limits.max-attributes": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.map-environment-variables": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.opentelemetry.resource-attributes": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.opentelemetry.tracing.export.include-unsampled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.opentelemetry.tracing.export.max-batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 512
+  },
+  "management.opentelemetry.tracing.export.max-queue-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 2048
+  },
+  "management.opentelemetry.tracing.export.otlp.compression": {
+   "type": "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.otlp.OtlpTracingProperties$Compression",
+   "defaultValue": "none"
+  },
+  "management.opentelemetry.tracing.export.otlp.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.opentelemetry.tracing.export.otlp.endpoint": {
+   "type": "java.lang.String"
+  },
+  "management.opentelemetry.tracing.export.otlp.headers": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.opentelemetry.tracing.export.otlp.ssl.bundle": {
+   "type": "java.lang.String"
+  },
+  "management.opentelemetry.tracing.export.otlp.timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.opentelemetry.tracing.export.otlp.transport": {
+   "type": "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.otlp.Transport",
+   "defaultValue": "http"
+  },
+  "management.opentelemetry.tracing.export.schedule-delay": {
+   "type": "java.time.Duration",
+   "defaultValue": "5s"
+  },
+  "management.opentelemetry.tracing.export.timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "30s"
+  },
+  "management.opentelemetry.tracing.limits.max-attribute-value-length": {
+   "type": "java.lang.Integer"
+  },
+  "management.opentelemetry.tracing.limits.max-attributes": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.tracing.limits.max-attributes-per-event": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.tracing.limits.max-attributes-per-link": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.tracing.limits.max-events": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.tracing.limits.max-links": {
+   "type": "java.lang.Integer",
+   "defaultValue": 128
+  },
+  "management.opentelemetry.tracing.sampler": {
+   "type": "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.OpenTelemetryTracingProperties$Sampler",
+   "defaultValue": "parent-based-trace-id-ratio"
+  },
+  "management.otlp.logging.compression": {
+   "type": "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.OtlpLoggingProperties$Compression",
+   "defaultValue": "none",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.compression",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.connect-timeout",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.endpoint": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.endpoint",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.export.enabled": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.logging.export.otlp.enabled",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.headers": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.headers",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.timeout",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.logging.transport": {
+   "type": "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.Transport",
+   "defaultValue": "http",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.logging.export.otlp.transport",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.metrics.export.aggregation-temporality": {
+   "type": "io.micrometer.registry.otlp.AggregationTemporality",
+   "defaultValue": "cumulative"
+  },
+  "management.otlp.metrics.export.base-time-unit": {
+   "type": "java.util.concurrent.TimeUnit",
+   "defaultValue": "milliseconds"
+  },
+  "management.otlp.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.otlp.metrics.export.compression-mode": {
+   "type": "io.micrometer.registry.otlp.CompressionMode",
+   "defaultValue": "none"
+  },
+  "management.otlp.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.otlp.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.otlp.metrics.export.headers": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.otlp.metrics.export.histogram-flavor": {
+   "type": "io.micrometer.registry.otlp.HistogramFlavor",
+   "defaultValue": "explicit-bucket-histogram"
+  },
+  "management.otlp.metrics.export.max-bucket-count": {
+   "type": "java.lang.Integer",
+   "defaultValue": 160
+  },
+  "management.otlp.metrics.export.max-scale": {
+   "type": "java.lang.Integer",
+   "defaultValue": 20
+  },
+  "management.otlp.metrics.export.meter": {
+   "type": "java.util.Map<java.lang.String,org.springframework.boot.micrometer.metrics.autoconfigure.export.otlp.OtlpMetricsProperties$Meter>"
+  },
+  "management.otlp.metrics.export.publish-max-gauge-for-histograms": {
+   "type": "java.lang.Boolean"
+  },
+  "management.otlp.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.otlp.metrics.export.ssl.bundle": {
+   "type": "java.lang.String"
+  },
+  "management.otlp.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.otlp.metrics.export.url": {
+   "type": "java.lang.String"
+  },
+  "management.otlp.tracing.compression": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.compression",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.connect-timeout": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.connect-timeout",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.endpoint": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.endpoint",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.export.enabled": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.tracing.export.otlp.enabled",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.headers": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.headers",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.timeout": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.timeout",
+    "since": "4.0.0"
+   }
+  },
+  "management.otlp.tracing.transport": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.otlp.transport",
+    "since": "4.0.0"
+   }
+  },
+  "management.prometheus.metrics.export.descriptions": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.prometheus.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.prometheus.metrics.export.properties": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.prometheus.metrics.export.pushgateway.address": {
+   "type": "java.lang.String",
+   "defaultValue": "localhost:9091"
+  },
+  "management.prometheus.metrics.export.pushgateway.base-url": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.prometheus.metrics.export.pushgateway.address",
+    "since": "3.5.0"
+   }
+  },
+  "management.prometheus.metrics.export.pushgateway.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.prometheus.metrics.export.pushgateway.format": {
+   "type": "org.springframework.boot.micrometer.metrics.autoconfigure.export.prometheus.PrometheusProperties$Pushgateway$Format",
+   "defaultValue": "protobuf"
+  },
+  "management.prometheus.metrics.export.pushgateway.grouping-key": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.prometheus.metrics.export.pushgateway.job": {
+   "type": "java.lang.String"
+  },
+  "management.prometheus.metrics.export.pushgateway.password": {
+   "type": "java.lang.String"
+  },
+  "management.prometheus.metrics.export.pushgateway.push-rate": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.prometheus.metrics.export.pushgateway.scheme": {
+   "type": "org.springframework.boot.micrometer.metrics.autoconfigure.export.prometheus.PrometheusProperties$Pushgateway$Scheme",
+   "defaultValue": "http"
+  },
+  "management.prometheus.metrics.export.pushgateway.shutdown-operation": {
+   "type": "org.springframework.boot.micrometer.metrics.export.prometheus.PrometheusPushGatewayManager$ShutdownOperation",
+   "defaultValue": "none"
+  },
+  "management.prometheus.metrics.export.pushgateway.token": {
+   "type": "java.lang.String"
+  },
+  "management.prometheus.metrics.export.pushgateway.username": {
+   "type": "java.lang.String"
+  },
+  "management.prometheus.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.server.add-application-context-header": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.server.address": {
+   "type": "java.net.InetAddress"
+  },
+  "management.server.base-path": {
+   "type": "java.lang.String",
+   "defaultValue": ""
+  },
+  "management.server.port": {
+   "type": "java.lang.Integer"
+  },
+  "management.server.servlet.context-path": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.server.base-path",
+    "since": "3.0.0"
+   }
+  },
+  "management.server.ssl.bundle": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.certificate": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.certificate-private-key": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.ciphers": {
+   "type": "java.lang.String[]"
+  },
+  "management.server.ssl.client-auth": {
+   "type": "org.springframework.boot.web.server.Ssl$ClientAuth"
+  },
+  "management.server.ssl.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.server.ssl.enabled-protocols": {
+   "type": "java.lang.String[]"
+  },
+  "management.server.ssl.key-alias": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.key-password": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.key-store": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.key-store-password": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.key-store-provider": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.key-store-type": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.protocol": {
+   "type": "java.lang.String",
+   "defaultValue": "TLS"
+  },
+  "management.server.ssl.server-name-bundles": {
+   "type": "java.util.List<org.springframework.boot.web.server.Ssl$ServerNameSslBundle>"
+  },
+  "management.server.ssl.trust-certificate": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.trust-certificate-private-key": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.trust-store": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.trust-store-password": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.trust-store-provider": {
+   "type": "java.lang.String"
+  },
+  "management.server.ssl.trust-store-type": {
+   "type": "java.lang.String"
+  },
+  "management.server.tomcat.accesslog.prefix": {
+   "type": "java.lang.String",
+   "defaultValue": "management_"
+  },
+  "management.simple.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.simple.metrics.export.mode": {
+   "type": "io.micrometer.core.instrument.simple.CountingMode",
+   "defaultValue": "cumulative"
+  },
+  "management.simple.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.stackdriver.metrics.export.auto-create-metric-descriptors": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.stackdriver.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "defaultValue": 10000
+  },
+  "management.stackdriver.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "1s"
+  },
+  "management.stackdriver.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.stackdriver.metrics.export.metric-type-prefix": {
+   "type": "java.lang.String",
+   "defaultValue": "custom.googleapis.com/"
+  },
+  "management.stackdriver.metrics.export.project-id": {
+   "type": "java.lang.String"
+  },
+  "management.stackdriver.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.stackdriver.metrics.export.resource-labels": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>"
+  },
+  "management.stackdriver.metrics.export.resource-type": {
+   "type": "java.lang.String",
+   "defaultValue": "global"
+  },
+  "management.stackdriver.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.stackdriver.metrics.export.use-semantic-metric-types": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "management.statsd.metrics.export.buffered": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.statsd.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.statsd.metrics.export.flavor": {
+   "type": "io.micrometer.statsd.StatsdFlavor",
+   "defaultValue": "datadog"
+  },
+  "management.statsd.metrics.export.host": {
+   "type": "java.lang.String",
+   "defaultValue": "localhost"
+  },
+  "management.statsd.metrics.export.max-packet-length": {
+   "type": "java.lang.Integer",
+   "defaultValue": 1400
+  },
+  "management.statsd.metrics.export.polling-frequency": {
+   "type": "java.time.Duration",
+   "defaultValue": "10s"
+  },
+  "management.statsd.metrics.export.port": {
+   "type": "java.lang.Integer",
+   "defaultValue": 8125
+  },
+  "management.statsd.metrics.export.protocol": {
+   "type": "io.micrometer.statsd.StatsdProtocol",
+   "defaultValue": "udp"
+  },
+  "management.statsd.metrics.export.publish-unchanged-meters": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.statsd.metrics.export.step": {
+   "type": "java.time.Duration",
+   "defaultValue": "1m"
+  },
+  "management.trace.http.enabled": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.httpexchanges.recording.enabled",
+    "since": "3.0.0"
+   }
+  },
+  "management.trace.http.include": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.httpexchanges.recording.include",
+    "since": "3.0.0"
+   }
+  },
+  "management.trace.include": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.httpexchanges.recording.include",
+    "since": "3.0.0"
+   }
+  },
+  "management.tracing.baggage.correlation.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.tracing.baggage.correlation.fields": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.tracing.baggage.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.tracing.baggage.local-fields": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.tracing.baggage.remote-fields": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.tracing.baggage.tag-fields": {
+   "type": "java.util.List<java.lang.String>"
+  },
+  "management.tracing.enabled": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.tracing.export.enabled",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.exemplars.include": {
+   "type": "org.springframework.boot.micrometer.tracing.autoconfigure.TracingProperties$Exemplars$Include",
+   "defaultValue": "sampled-traces"
+  },
+  "management.tracing.export.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.tracing.export.otlp.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": true
+  },
+  "management.tracing.opentelemetry.export.include-unsampled": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.include-unsampled",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.opentelemetry.export.max-batch-size": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.max-batch-size",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.opentelemetry.export.max-queue-size": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.max-queue-size",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.opentelemetry.export.schedule-delay": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.schedule-delay",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.opentelemetry.export.timeout": {
+   "deprecation": {
+    "level": "error",
+    "replacement": "management.opentelemetry.tracing.export.timeout",
+    "since": "4.0.0"
+   }
+  },
+  "management.tracing.propagation.consume": {
+   "type": "java.util.List<org.springframework.boot.micrometer.tracing.autoconfigure.TracingProperties$Propagation$PropagationType>",
+   "defaultValue": [
+    "W3C",
+    "B3",
+    "B3_MULTI"
+   ]
+  },
+  "management.tracing.propagation.produce": {
+   "type": "java.util.List<org.springframework.boot.micrometer.tracing.autoconfigure.TracingProperties$Propagation$PropagationType>",
+   "defaultValue": [
+    "W3C"
+   ]
+  },
+  "management.tracing.propagation.type": {
+   "type": "java.util.List<org.springframework.boot.micrometer.tracing.autoconfigure.TracingProperties$Propagation$PropagationType>"
+  },
+  "management.tracing.sampling.probability": {
+   "type": "java.lang.Float",
+   "defaultValue": 0.1
+  },
+  "management.wavefront.api-token": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.api-token-type": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.application.cluster-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.application.custom-tags": {
+   "type": "java.util.Map<java.lang.String,java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.application.name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.application.service-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.application.shard-name": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.connect-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.global-prefix": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.read-timeout": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.report-day-distribution": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.report-hour-distribution": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.report-minute-distribution": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.metrics.export.step": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.sender.batch-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.sender.flush-interval": {
+   "type": "java.time.Duration",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.sender.max-queue-size": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.sender.message-size": {
+   "type": "org.springframework.util.unit.DataSize",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.source": {
+   "type": "java.lang.String",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.trace-derived-custom-tag-keys": {
+   "type": "java.util.Set<java.lang.String>",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.tracing.export.enabled": {
+   "type": "java.lang.Boolean",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "management.wavefront.uri": {
+   "type": "java.net.URI",
+   "deprecation": {
+    "level": "error",
+    "reason": "Wavefront is end-of-life.",
+    "since": "4.0.0"
+   }
+  },
+  "spring.application.admin.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  },
+  "spring.application.admin.jmx-name": {
+   "type": "java.lang.String",
+   "defaultValue": "org.springframework.boot:type=Admin,name=SpringApplication"
+  },
+  "spring.application.group": {
+   "type": "java.lang.String"
+  },
+  "spring.application.index": {
+   "type": "java.lang.Integer",
+   "deprecation": {
+    "level": "error",
+    "reason": "Application context ids are now unique by default.",
+    "since": "2.0.0"
+   }
+  },
+  "spring.application.name": {
+   "type": "java.lang.String"
+  },
+  "spring.application.version": {
+   "type": "java.lang.String"
+  },
+  "spring.threads.virtual.enabled": {
+   "type": "java.lang.Boolean",
+   "defaultValue": false
+  }
+ },
+ "hints": {
+  "management.endpoints.web.cors.allowed-headers": [
+   "*"
+  ],
+  "management.endpoints.web.cors.allowed-methods": [
+   "*"
+  ],
+  "management.endpoints.web.cors.allowed-origins": [
+   "*"
+  ],
+  "management.health.status.order": [
+   "UNKNOWN",
+   "UP",
+   "DOWN",
+   "OUT_OF_SERVICE"
+  ]
+ },
+ "enums": {
+  "io.micrometer.core.instrument.simple.CountingMode": [
+   "CUMULATIVE",
+   "STEP"
+  ],
+  "org.springframework.boot.actuate.endpoint.Access": [
+   "NONE",
+   "READ_ONLY",
+   "UNRESTRICTED"
+  ],
+  "org.springframework.boot.actuate.endpoint.Show": [
+   "ALWAYS",
+   "NEVER",
+   "WHEN_AUTHORIZED"
+  ],
+  "org.springframework.boot.actuate.info.InfoPropertiesInfoContributor$Mode": [
+   "FULL",
+   "SIMPLE"
+  ],
+  "org.springframework.boot.micrometer.metrics.autoconfigure.export.prometheus.PrometheusProperties$Pushgateway$Format": [
+   "PROTOBUF",
+   "TEXT"
+  ],
+  "org.springframework.boot.micrometer.metrics.autoconfigure.export.prometheus.PrometheusProperties$Pushgateway$Scheme": [
+   "HTTP",
+   "HTTPS"
+  ],
+  "org.springframework.boot.micrometer.metrics.export.prometheus.PrometheusPushGatewayManager$ShutdownOperation": [
+   "DELETE",
+   "NONE",
+   "POST",
+   "PUT"
+  ],
+  "org.springframework.boot.micrometer.tracing.autoconfigure.TracingProperties$Exemplars$Include": [
+   "ALL",
+   "NONE",
+   "SAMPLED_TRACES"
+  ],
+  "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.OpenTelemetryTracingProperties$Sampler": [
+   "ALWAYS_OFF",
+   "ALWAYS_ON",
+   "PARENT_BASED_ALWAYS_OFF",
+   "PARENT_BASED_ALWAYS_ON",
+   "PARENT_BASED_TRACE_ID_RATIO",
+   "TRACE_ID_RATIO"
+  ],
+  "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.otlp.OtlpTracingProperties$Compression": [
+   "GZIP",
+   "NONE"
+  ],
+  "org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.otlp.Transport": [
+   "GRPC",
+   "HTTP"
+  ],
+  "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.OtlpLoggingProperties$Compression": [
+   "GZIP",
+   "NONE"
+  ],
+  "org.springframework.boot.opentelemetry.autoconfigure.logging.otlp.Transport": [
+   "GRPC",
+   "HTTP"
+  ],
+  "org.springframework.boot.web.server.Ssl$ClientAuth": [
+   "NEED",
+   "NONE",
+   "WANT"
+  ]
+ },
+ "enums_note": "enum constants recovered from the enum class files in the same jars (identifiers of 3+ upper-case characters, $VALUES excluded)"
+}
