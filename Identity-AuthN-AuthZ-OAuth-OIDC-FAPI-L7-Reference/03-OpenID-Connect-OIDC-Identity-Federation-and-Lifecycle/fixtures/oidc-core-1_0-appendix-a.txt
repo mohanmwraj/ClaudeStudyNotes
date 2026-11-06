@@ -1,0 +1,291 @@
+Appendix A. 
+Authorization Examples
+
+
+	The following are non-normative examples of Authorization Requests with
+	different response_type values and their responses
+	(with line wraps within values for display purposes only):
+      
+
+
+ TOC 
+A.1. 
+Example using response_type=code
+
+  GET /authorize?
+    response_type=code
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb?
+    code=Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk
+    &state=af0ifjsldkj
+
+
+ TOC 
+A.2. 
+Example using response_type=id_token
+
+  GET /authorize?
+    response_type=id_token
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb#
+    id_token=eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.
+    ewogImlzcyI6ICJodHRwczovL3NlcnZlci5leGFtcGxlLmNvbSIsCiAic3ViIjog
+    IjI0ODI4OTc2MTAwMSIsCiAiYXVkIjogInM2QmhkUmtxdDMiLAogIm5vbmNlIjog
+    Im4tMFM2X1d6QTJNaiIsCiAiZXhwIjogMTMxMTI4MTk3MCwKICJpYXQiOiAxMzEx
+    MjgwOTcwLAogIm5hbWUiOiAiSmFuZSBEb2UiLAogImdpdmVuX25hbWUiOiAiSmFu
+    ZSIsCiAiZmFtaWx5X25hbWUiOiAiRG9lIiwKICJnZW5kZXIiOiAiZmVtYWxlIiwK
+    ICJiaXJ0aGRhdGUiOiAiMDAwMC0xMC0zMSIsCiAiZW1haWwiOiAiamFuZWRvZUBl
+    eGFtcGxlLmNvbSIsCiAicGljdHVyZSI6ICJodHRwOi8vZXhhbXBsZS5jb20vamFu
+    ZWRvZS9tZS5qcGciCn0.
+    NTibBYW_ZoNHGm4ZrWCqYA9oJaxr1AVrJCze6FEcac4t_EOQiJFbD2nVEPkUXPuM
+    shKjjTn7ESLIFUnfHq8UKTGibIC8uqrBgQAcUQFMeWeg-PkLvDTHk43Dn4_aNrxh
+    mWwMNQfkjqx3wd2Fvta9j8yG2Qn790Gwb5psGcmBhqMJUUnFrGpyxQDhFIzzodmP
+    okM7tnUxBNj-JuES_4CE-BvZICH4jKLp0TMu-WQsVst0ss-vY2RPdU1MzL59mq_e
+    Kk8Rv9XhxIr3WteA2ZlrgVyT0cwH3hlCnRUsLfHtIEb8k1Y_WaqKUu3DaKPxqRi6
+    u0rN7RO2uZYPzC454xe-mg
+    &state=af0ifjsldkj
+
+
+	  The value of the id_token parameter is the ID Token,
+	  which is a signed JWT,
+	  containing three base64url-encoded segments separated by period ('.') characters.
+	  The first segment represents the JOSE Header.
+	  Base64url decoding it will result in the following set of Header Parameters:
+	
+
+  {"kid":"1e9gdk7","alg":"RS256"}
+
+
+	  The alg value represents the algorithm
+	  that was used to sign the JWT, in this case
+	  RS256, representing RSASSA-PKCS1-v1_5 using SHA-256.
+	  The kid value is a key identifier used
+	  in identifying the key to be used to verify the signature.
+	  If the kid value is unknown to the RP,
+	  it needs to retrieve the contents of the OP's JWK Set again
+	  to obtain the OP's current set of keys.
+	
+
+
+	    The second segment represents the Claims in the ID Token.
+	    Verifying and decoding the ID Token will yield the following Claims:
+	  
+
+  {
+   "iss": "https://server.example.com",
+   "sub": "248289761001",
+   "aud": "s6BhdRkqt3",
+   "nonce": "n-0S6_WzA2Mj",
+   "exp": 1311281970,
+   "iat": 1311280970,
+   "name": "Jane Doe",
+   "given_name": "Jane",
+   "family_name": "Doe",
+   "gender": "female",
+   "birthdate": "0000-10-31",
+   "email": "janedoe@example.com",
+   "picture": "http://example.com/janedoe/me.jpg"
+  }
+
+
+	  The third segment represents the ID Token signature,
+	  which is verified as described in [JWS] (Jones, M., Bradley, J., and N. Sakimura, "JSON Web Signature (JWS)," May 2015.).
+	
+
+
+ TOC 
+A.3. 
+Example using response_type=id_token token
+
+  GET /authorize?
+    response_type=id_token%20token
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb#
+    access_token=jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y
+    &token_type=Bearer
+    &id_token=eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.
+    ewogImlzcyI6ICJodHRwczovL3NlcnZlci5leGFtcGxlLmNvbSIsCiAic3ViIjog
+    IjI0ODI4OTc2MTAwMSIsCiAiYXVkIjogInM2QmhkUmtxdDMiLAogIm5vbmNlIjog
+    Im4tMFM2X1d6QTJNaiIsCiAiZXhwIjogMTMxMTI4MTk3MCwKICJpYXQiOiAxMzEx
+    MjgwOTcwLAogImF0X2hhc2giOiAiNzdRbVVQdGpQZnpXdEYyQW5wSzlSUSIKfQ.
+    kdqTmftlaXg5WBYBr1wkxhkqCGZPc0k8vTiV5g2jj67jQ7XkrDamYx2bOkZLdZrp
+    MPIzkdYB1nZI_G8vQGQuamRhJcEIt21kblGPZ-yhEhdkAiZIZLu38rChalDS2Mh0
+    glE_rke5XXRhmqqoEFFdziFdnO3p61-7y51co84OEAZvARSINQaOWIzvioRfs4zw
+    IFOaT33Vpxfqr8HDyh31zo9eBW2dSQuCa071z0ENWChWoPliK1JCo_Bk9eDg2uwo
+    2ZwhsvHzj6TMQ0lYOTzufSlSmXIKfjlOsb3nftQeR697_hA-nMZyAdL8_NRfaC37
+    XnAbW8WB9wCfECp7cuNuOg
+    &state=af0ifjsldkj
+
+
+	    Verifying and decoding the ID Token will yield the following Claims:
+	  
+
+  {
+   "iss": "https://server.example.com",
+   "sub": "248289761001",
+   "aud": "s6BhdRkqt3",
+   "nonce": "n-0S6_WzA2Mj",
+   "exp": 1311281970,
+   "iat": 1311280970,
+   "at_hash": "77QmUPtjPfzWtF2AnpK9RQ"
+  }
+
+
+ TOC 
+A.4. 
+Example using response_type=code id_token
+
+  GET /authorize?
+    response_type=code%20id_token
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb#
+    code=Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk
+    &id_token=eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.
+    ewogImlzcyI6ICJodHRwczovL3NlcnZlci5leGFtcGxlLmNvbSIsCiAic3ViIjog
+    IjI0ODI4OTc2MTAwMSIsCiAiYXVkIjogInM2QmhkUmtxdDMiLAogIm5vbmNlIjog
+    Im4tMFM2X1d6QTJNaiIsCiAiZXhwIjogMTMxMTI4MTk3MCwKICJpYXQiOiAxMzEx
+    MjgwOTcwLAogImNfaGFzaCI6ICJMRGt0S2RvUWFrM1BrMGNuWHhDbHRBIgp9.
+    MRPihYtNIcwKTZ_mcMSPfreVytGR4jfl1Tzbv4tH5Jr4WqONs2lUWrIEpZ2joKbZ
+    fAGlouAqwqSYpfR3FQYKYvdgnZ3kjIJ_5M4fAARXHVSciGyhfqB-OhDUMXSHzFHi
+    GKNY9TKSgRfiXf_314WRujpqaDtj2uoXbppobYXvAZIxWtsOein0-t91LDS39EW4
+    frNWAopKTBBi_XJPlpLVynWTDvNleEBP6UxIMgYJBKlqsP7RGfHTGk3ReXDacR7R
+    GZlIVGa-0qRyDzvNqD7xfu9aYufUP0oBGqdBGgFVNmwJ7rmB0gdPtC2eJsXq9svC
+    gBBfhRQZxhx1iLJjNc9nSw
+    &state=af0ifjsldkj
+
+
+	    Verifying and decoding the ID Token will yield the following Claims:
+	  
+
+  {
+   "iss": "https://server.example.com",
+   "sub": "248289761001",
+   "aud": "s6BhdRkqt3",
+   "nonce": "n-0S6_WzA2Mj",
+   "exp": 1311281970,
+   "iat": 1311280970,
+   "c_hash": "LDktKdoQak3Pk0cnXxCltA"
+  }
+
+
+ TOC 
+A.5. 
+Example using response_type=code token
+
+  GET /authorize?
+    response_type=code%20token
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb#
+    code=Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk
+    &access_token=jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y
+    &token_type=Bearer
+    &state=af0ifjsldkj
+
+
+ TOC 
+A.6. 
+Example using response_type=code id_token token
+
+  GET /authorize?
+    response_type=code%20id_token%20token
+    &client_id=s6BhdRkqt3
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    &scope=openid%20profile%20email
+    &nonce=n-0S6_WzA2Mj
+    &state=af0ifjsldkj HTTP/1.1
+  Host: server.example.com
+
+  HTTP/1.1 302 Found
+  Location: https://client.example.org/cb#
+    code=Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk
+    &access_token=jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y
+    &token_type=Bearer
+    &id_token=eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.
+    ewogImlzcyI6ICJodHRwczovL3NlcnZlci5leGFtcGxlLmNvbSIsCiAic3ViIjog
+    IjI0ODI4OTc2MTAwMSIsCiAiYXVkIjogInM2QmhkUmtxdDMiLAogIm5vbmNlIjog
+    Im4tMFM2X1d6QTJNaiIsCiAiZXhwIjogMTMxMTI4MTk3MCwKICJpYXQiOiAxMzEx
+    MjgwOTcwLAogImF0X2hhc2giOiAiNzdRbVVQdGpQZnpXdEYyQW5wSzlSUSIsCiAi
+    Y19oYXNoIjogIkxEa3RLZG9RYWszUGswY25YeENsdEEiCn0.
+    A2OhhJzbUNaCbNLqNaqetGLJoxB3ujVbq_HLYSOWgWCJ3-B__YxlqIg8gpeL0Vhv
+    rWX0mwz7w_pGTRN4JdgsI0xAlT5fob1ZPnrazgonSyzaXcg2bgD896SsBSlG_8JX
+    6JKaztXifn8k2gy65Me-sMyQrRF8xv_q1CeC871sZpMjJzy5nx65BTI17vcXjntZ
+    HADv6o2CrHrEdHp8xSlnTLiiIqgDOmKlpkeqqOBK6dqa4rXZlSqMAUm1LYZmtb2D
+    8sHvQsxTbWlBkX7VZaTSqMJ487s4ZIEea8Bw4KGVOntQue4VhBjBnQ4bQKhB_47D
+    xlWpSyOWdy3cer_zxKrfvw
+    &state=af0ifjsldkj
+
+
+	    Verifying and decoding the ID Token will yield the following Claims:
+	  
+
+  {
+   "iss": "https://server.example.com",
+   "sub": "248289761001",
+   "aud": "s6BhdRkqt3",
+   "nonce": "n-0S6_WzA2Mj",
+   "exp": 1311281970,
+   "iat": 1311280970,
+   "at_hash": "77QmUPtjPfzWtF2AnpK9RQ",
+   "c_hash": "LDktKdoQak3Pk0cnXxCltA"
+  }
+
+
+ TOC 
+A.7. 
+RSA Key Used in Examples
+
+
+	    The following RSA public key, represented in JWK format, can be used to
+	    validate the ID Token signatures in the above examples
+	    (with line wraps within values for display purposes only):
+	  
+
+  {
+   "kty":"RSA",
+   "kid":"1e9gdk7",
+   "n":"w7Zdfmece8iaB0kiTY8pCtiBtzbptJmP28nSWwtdjRu0f2GFpajvWE4VhfJA
+        jEsOcwYzay7XGN0b-X84BfC8hmCTOj2b2eHT7NsZegFPKRUQzJ9wW8ipn_aD
+        JWMGDuB1XyqT1E7DYqjUCEOD1b4FLpy_xPn6oV_TYOfQ9fZdbE5HGxJUzeku
+        GcOKqOQ8M7wfYHhHHLxGpQVgL0apWuP2gDDOdTtpuld4D2LK1MZK99s9gaSj
+        RHE8JDb1Z4IGhEcEyzkxswVdPndUWzfvWBBWXWxtSUvQGBRkuy1BHOa4sP6F
+        KjWEeeF7gm7UMs2Nm2QUgNZw6xvEDGaLk4KASdIxRQ",
+   "e":"AQAB"
+  }
+
+
+ TOC 

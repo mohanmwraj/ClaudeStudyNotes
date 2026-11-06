@@ -2,7 +2,7 @@
 
 A library of self-contained study kits and Staff/Principal-level (L6/L7) engineering references. It covers certifications, coding and interview rounds, languages and runtimes, distributed systems and cloud, AI engineering, and career playbooks.
 
-**Size:** 25 folders · 997 Markdown files · ~5.4M words (including code listings).
+**Size:** 25 folders · 1,031 Markdown files · ~5.4M words (including code listings).
 
 **How to use it:** every folder stands on its own. Open the entry-point file linked in the tables below. It explains the folder's layout, reading order and verification status. Exam facts, versions and product names were checked against official sources on the date each folder states.
 
@@ -49,7 +49,7 @@ A library of self-contained study kits and Staff/Principal-level (L6/L7) enginee
 
 | Folder | What's inside | Files · words | Last commit |
 |---|---|---|---|
-| [Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference](Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference/README.md) | Authentication and authorization from the bytes up: passwords and Argon2id, MFA/TOTP, sessions vs tokens, WebAuthn passkeys, JOSE/JWT; then OAuth 2.1, OIDC, FAPI 2.0 (DPoP, mTLS, PAR), zero-trust service identity, RBAC/ABAC/ReBAC (Zanzibar), cloud IAM and AI-agent security. Java 21+/Spring Security 7.1 code verified against RFC and W3C test vectors. **Folder 01 of 08 is done; 02–08 are to come.** | 5 · ~58k | not yet committed |
+| [Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference](Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference/README.md) | Authentication and authorization from the bytes up: passwords and Argon2id, MFA/TOTP, sessions vs tokens, WebAuthn passkeys, JOSE/JWT; then OAuth 2.1, OIDC, FAPI 2.0 (DPoP, mTLS, PAR), zero-trust service identity, RBAC/ABAC/ReBAC (Zanzibar), cloud IAM and AI-agent security. Java 21+/Spring Security 7.1 code verified against RFC and W3C test vectors. **All 8 folders are done and gated (first principles, OAuth 2.1 grant flows, OIDC/SAML/SCIM/logout, FAPI 2.0/DPoP/mTLS/PAR/BFF, zero-trust propagation and authorization engines, cloud IAM/CIAM/AI agents and MCP, production Spring blueprints, and an attack playbook with 20 real exploits, 35 L7 chains and a study guide): 51 listings, 282 chains.** | 38 · ~238k | 2026-11-06 |
 
 ## AI engineering
 

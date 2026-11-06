@@ -39,7 +39,7 @@ What it establishes:
 
   The L7 verifier rejects all 12. One captured HS256 token signed with jwt.io's default secret `your-256-bit-secret` gives up its key in 1,338 dictionary guesses.
 - **[M] On JDK 25, the algorithm folklore is backwards for verification.** One core verifies about 21,700 RS256 tokens/s, about 14,600 ML-DSA-44, about 1,500 ES256 and only about 880 Ed25519 (L13). Across three full runs on this laptop, individual cells moved by up to ±40% (turbo and thermal effects), but these orderings never changed. ES256 and Ed25519 win on **size** (64-byte signatures, 569-character tokens vs 825 for RS256) and on signing and key-generation cost, not on JVM verify throughput.
-- **[M][D] Spring Security 7.1.2's `NimbusJwtDecoder` builders default to RS256 only** and to `JwtValidators.createDefault()`. That validator requires `typ` to be `JWT` or absent, so a correct RFC 9068 `at+jwt` token is *rejected*, while an ID token with the wrong audience is *accepted*: there is no `iss` or `aud` check. `createAtJwtValidator().issuer(..).audience(..)` fixes both (L14). Spring's `SignatureAlgorithm` enum has no EdDSA.
+- **[M][D] Spring Security 7.1.2's `NimbusJwtDecoder` builders default to RS256 only** and to `JwtValidators.createDefault()`. That validator requires `typ` to be `JWT` or absent, so a correct RFC 9068 `at+jwt` token is *rejected*, while an ID token with the wrong audience is *accepted*: there is no `iss` or `aud` check. `createAtJwtValidator().issuer(..).audience(..)` fixes both (L14). ⚠ Used alone, it drops the mTLS `x5t#S256` binding check that the default validators include. Where certificate-bound tokens exist, use Folder 07 file 03's composition (L48 row C). Spring's `SignatureAlgorithm` enum has no EdDSA.
 - **[M]** Big-bang key rotation rejects 7.6% of traffic with TTL-only JWKS caches, and still 3.4% with kid-miss refresh. That remainder comes from *old*-key tokens still in flight. Publish → wait → switch → wait → retire gives **zero** rejections. A random-`kid` flood turns 1:1 into 300,000 JWKS fetches against a naive cache, and into 2 with single-flight rate limiting (L12).
 - **[D]** RFC 9864 (October 2025) deprecates the polymorphic `EdDSA` JWS identifier in favour of `Ed25519` and `Ed448`. RFC 9068 defines the `at+jwt` access-token profile. RFC 8725 is the JWT security BCP whose rules L10 implements.
 
@@ -2500,7 +2500,7 @@ In Spring 7.1.2: `jwsAlgorithm(ES256)` plus `createAtJwtValidator().issuer(..).a
 - [ ] Strict parsing: size cap, exactly 3 (JWS) or 5 (JWE) segments, canonical base64url, I-JSON with duplicate rejection.
 - [ ] `typ=at+jwt` for access tokens; distinct `typ` per token kind; ID tokens rejected at APIs.
 - [ ] `iss` exact; `aud` element match against this resource; `exp`, `iat`, `sub`, `client_id`, `jti` required; skew ≤ 60 s; lifetime cap.
-- [ ] In Spring 7.1.2: `jwsAlgorithm(...)` set explicitly, and `createAtJwtValidator().issuer(..).audience(..)` on the decoder.
+- [ ] In Spring 7.1.2: `jwsAlgorithm(...)` set explicitly, and `createAtJwtValidator().issuer(..).audience(..)` on the decoder. With mTLS-bound tokens, wrap it as `createDefaultWithValidators([JwtTypeValidator("at+jwt"), atJwt])` (Folder 07 file 03).
 - [ ] Replay and dedup keyed on `jti`, never on token bytes; sender-constraining for high-value APIs.
 - [ ] ECDSA signatures raw r‖s with exact length; r and s range-checked; DER conversion only at the issuer.
 - [ ] JWE only for real confidentiality needs: sign-then-encrypt, pinned `alg`/`enc`, no RSA1_5, MAC-first CBC, `epk` on-curve check, no `zip`.
