@@ -2,7 +2,7 @@
 
 A library of self-contained study kits and Staff/Principal-level (L6/L7) engineering references. It covers certifications, coding and interview rounds, languages and runtimes, distributed systems and cloud, AI engineering, and career playbooks.
 
-**Size:** 23 folders · 960 Markdown files · ~5.1M words (including code listings).
+**Size:** 25 folders · 997 Markdown files · ~5.4M words (including code listings).
 
 **How to use it:** every folder stands on its own. Open the entry-point file linked in the tables below. It explains the folder's layout, reading order and verification status. Exam facts, versions and product names were checked against official sources on the date each folder states.
 
@@ -43,6 +43,13 @@ A library of self-contained study kits and Staff/Principal-level (L6/L7) enginee
 | [Unified-Dataflow-Beam-Flink-L7-Reference](Unified-Dataflow-Beam-Flink-L7-Reference/README.md) | Stream and batch processing: the Dataflow Model, Beam portability, Google Cloud Dataflow (Runner v2, Streaming Engine, Shuffle) and Apache Flink (1.20 LTS, 2.x disaggregated state) | 26 · ~133k | 2026-10-26 |
 | [AWS-vs-GCP-Under-the-Hood-L7-Reference](AWS-vs-GCP-Under-the-Hood-L7-Reference/README.md) | AWS and Google Cloud compared at the level of hypervisors, network fabrics, storage engines and control planes | 21 · ~189k | 2026-10-31 |
 | [Embedded-Linux-Secure-Boot-OTA-Wireless-L7-Reference](Embedded-Linux-Secure-Boot-OTA-Wireless-L7-Reference/README.md) | Platform firmware from reset vector to userspace: hardware root of trust, TF-A, OP-TEE, U-Boot verified boot, Yocto, OTA (OSTree, TUF), kernel and BSP drivers. **Folders 01–04 of 08 are done; 05–08 (BLE, Wi-Fi, code recipes, company playbook) are still to come.** | 17 · ~115k | 2026-10-28 |
+| [Prometheus-Grafana-Observability-L7-Reference](Prometheus-Grafana-Observability-L7-Reference/README.md) | Observability: Prometheus 3 TSDB internals and cardinality, PromQL mathematics, recording/alerting rules and multi-burn-rate SLOs, Grafana as code, OpenTelemetry/Alloy and the LGTM stack (Mimir, Loki, Tempo, Pyroscope), FinOps and market comparison | 32 · ~175k | 2026-11-05 |
+
+## Security and identity
+
+| Folder | What's inside | Files · words | Last commit |
+|---|---|---|---|
+| [Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference](Identity-AuthN-AuthZ-OAuth-OIDC-FAPI-L7-Reference/README.md) | Authentication and authorization from the bytes up: passwords and Argon2id, MFA/TOTP, sessions vs tokens, WebAuthn passkeys, JOSE/JWT; then OAuth 2.1, OIDC, FAPI 2.0 (DPoP, mTLS, PAR), zero-trust service identity, RBAC/ABAC/ReBAC (Zanzibar), cloud IAM and AI-agent security. Java 21+/Spring Security 7.1 code verified against RFC and W3C test vectors. **Folder 01 of 08 is done; 02–08 are to come.** | 5 · ~58k | not yet committed |
 
 ## AI engineering
 
@@ -72,6 +79,7 @@ A library of self-contained study kits and Staff/Principal-level (L6/L7) enginee
 | **Data platforms** | Distributed-Systems-Design → Unified-Dataflow-Beam-Flink → AWS-vs-GCP-Under-the-Hood |
 | **Systems and firmware** | Silicon-Systems-C → Modern-Cpp → Embedded-Linux |
 | **Cloud certifications** | AWS-SAP-C02 → AWS-DevOps-Pro → GCP-PCA (with AWS-vs-GCP for the why) · CKAD |
+| **Identity and security** | Identity-AuthN-AuthZ-OAuth-OIDC-FAPI (Folders 01 → 08), with Distributed-Systems-Design and AWS-vs-GCP-Under-the-Hood for the platform side |
 | **Competitive programming** | CP-Codeforces-Master-Kit, then L7-Coding-Bar-Raiser to turn contest code into production code |
 
 ## Conventions
